@@ -19,21 +19,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.S3Connection = void 0;
+exports.CloudfrontConnection = void 0;
 const aws = __importStar(require("aws-sdk"));
-const dotenv = __importStar(require("dotenv"));
-class S3Connection {
-    constructor() {
-        dotenv.config(); //환경 변수 불러오기
+class CloudfrontConnection {
+    static getCloudfront() {
         aws.config.update({
             "accessKeyId": process.env.AWS_S3_KEYID,
             "secretAccessKey": process.env.AWS_S3_SECRETKEY,
             "region": "ap-northeast-2"
         });
-        this.s3 = new aws.S3();
-    }
-    getS3() {
-        return this.s3;
+        this.cloudfront = new aws.CloudFront();
+        return this.cloudfront;
     }
 }
-exports.S3Connection = S3Connection;
+exports.CloudfrontConnection = CloudfrontConnection;

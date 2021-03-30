@@ -1,6 +1,7 @@
 var express = require('express')
 var router = express.Router()
 import {UploadFile} from '../../modules/@js/FileManager/UploadFile'     //파일 업로드 클래스 import
+import {CloudfrontConnection} from '../../modules/@js/DistributionManager/CloudfrontConnection'
 
 
 // let uploader = new UploadFile()
@@ -18,6 +19,10 @@ router.post('/upload', upload.single('imgs') ,function(req, res){      ///upload
 
 router.post('/test', test.single('imgs'), function(req, res){
     res.status(200).send('success')
+})
+
+router.post('/cloudtest', function(res, req){
+    CloudfrontConnection.getCloudfront()
 })
 
 module.exports = router

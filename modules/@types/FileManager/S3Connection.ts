@@ -1,8 +1,8 @@
-const aws = require('aws-sdk')
+import * as aws from 'aws-sdk'
 import * as dotenv from 'dotenv'
 
 export class S3Connection{
-    private s3
+    private s3: aws.S3
     constructor(){
         dotenv.config(); //환경 변수 불러오기
         aws.config.update({
@@ -13,7 +13,7 @@ export class S3Connection{
         this.s3 = new aws.S3();
     }
 
-    public getS3() {
+    public getS3():aws.S3 {
         return this.s3
     }
 }
