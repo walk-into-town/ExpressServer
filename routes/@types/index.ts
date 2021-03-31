@@ -1,7 +1,7 @@
-var express = require('express')
+import * as express from 'express'
 var router = express.Router()
 import {UploadFile} from '../../modules/@js/FileManager/UploadFile'     //파일 업로드 클래스 import
-import {CloudfrontConnection} from '../../modules/@js/DistributionManager/CloudfrontConnection'
+import {DistributionController} from '../../modules/@js/DistributionManager/DistributionController'
 
 
 // let uploader = new UploadFile()
@@ -9,20 +9,21 @@ let upload = UploadFile.uploadFile()        //static 함수로 선언된 uploadF
 
 let test = UploadFile.test()
 
-router.get('/', function(req, res, next){
+router.get('/', function(req: express.Request, res: express.Response, next: Function){
     res.render('index', {title: "Express"})
 })
 
-router.post('/upload', upload.single('imgs') ,function(req, res){      ///upload로 요청이 왔을 때, key가 imgs인 것만 업로드
+router.post('/upload', upload.single('imgs') ,function(req: express.Request, res: express.Response){      ///upload로 요청이 왔을 때, key가 imgs인 것만 업로드
     res.status(200).send('success')
 })
 
-router.post('/test', test.single('imgs'), function(req, res){
+router.post('/test', test.single('imgs'), function(req: express.Request, res: express.Response){
     res.status(200).send('success')
 })
 
-router.post('/cloudtest', function(res, req){
-    CloudfrontConnection.getCloudfront()
+router.post('/cloudtest', function(req: express.Request, res: express.Response){
+    let test = new DistributionController(res);
+    test.getDistributionConfig()
 })
 
 module.exports = router
