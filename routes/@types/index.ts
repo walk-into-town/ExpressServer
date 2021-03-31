@@ -2,6 +2,7 @@ import * as express from 'express'
 var router = express.Router()
 import {UploadFile} from '../../modules/@js/FileManager/UploadFile'     //파일 업로드 클래스 import
 import {DistributionController} from '../../modules/@js/DistributionManager/DistributionController'
+import {DBConnection} from '../../modules/@js/DBManager/DBConnection'
 
 
 // let uploader = new UploadFile()
@@ -24,6 +25,10 @@ router.post('/test', test.single('imgs'), function(req: express.Request, res: ex
 router.post('/cloudtest', function(req: express.Request, res: express.Response){
     let test = new DistributionController(res);
     test.getDistributionConfig()
+})
+
+router.get('/dbtest', function(req: express.Request, res: express.Response){
+    
 })
 
 module.exports = router

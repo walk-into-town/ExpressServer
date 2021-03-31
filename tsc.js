@@ -7,6 +7,7 @@ const ps = new Shell({
 
 ps.addCommand('cd ./modules/@types/FileManager;tsc')
 ps.addCommand('cd ../DistributionManager;tsc')
+ps.addCommand('cd ../DBManager; tsc')
 ps.addCommand('cd ../../../routes/@types; tsc')
 ps.addCommand('cd ../../models/@types; tsc')
 

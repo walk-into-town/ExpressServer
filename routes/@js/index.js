@@ -23,6 +23,7 @@ const express = __importStar(require("express"));
 var router = express.Router();
 const UploadFile_1 = require("../../modules/@js/FileManager/UploadFile"); //파일 업로드 클래스 import
 const DistributionController_1 = require("../../modules/@js/DistributionManager/DistributionController");
+const DBConnection_1 = require("../../modules/@js/DBManager/DBConnection");
 // let uploader = new UploadFile()
 let upload = UploadFile_1.UploadFile.uploadFile(); //static 함수로 선언된 uploadFile을 통해 업로드를 위한 multer 객체 획득
 let test = UploadFile_1.UploadFile.test();
@@ -38,5 +39,8 @@ router.post('/test', test.single('imgs'), function (req, res) {
 router.post('/cloudtest', function (req, res) {
     let test = new DistributionController_1.DistributionController(res);
     test.getDistributionConfig();
+});
+router.get('/dbtest', function (req, res) {
+    let conn = DBConnection_1.DBConnection.getDynamoDB();
 });
 module.exports = router;
