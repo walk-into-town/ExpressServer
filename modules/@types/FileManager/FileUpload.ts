@@ -3,7 +3,7 @@ import * as aws from 'aws-sdk'
 
 
 export abstract class UploaderInterface{
-   private static s3: aws.S3
-   private static storage: multer.StorageEngine
-   public static uploadFile(): multer.Multer { return multer.default({})}
+   private s3: aws.S3
+   private storage: multer.StorageEngine
+   public uploadFile(src: string): multer.Multer { return multer.default({})}
 }

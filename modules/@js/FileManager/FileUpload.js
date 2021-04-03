@@ -22,6 +22,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploaderInterface = void 0;
 const multer = __importStar(require("multer"));
 class UploaderInterface {
-    static uploadFile() { return multer.default({}); }
+    uploadFile(src) { return multer.default({}); }
 }
 exports.UploaderInterface = UploaderInterface;

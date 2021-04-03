@@ -26,9 +26,12 @@ class S3Connection {
     constructor() {
         dotenv.config(); //환경 변수 불러오기
         aws.config.update({
-            "accessKeyId": process.env.AWS_S3_KEYID,
-            "secretAccessKey": process.env.AWS_S3_SECRETKEY,
-            "region": "ap-northeast-2"
+            // "accessKeyId": process.env.AWS_S3_KEYID,
+            // "secretAccessKey": process.env.AWS_S3_SECRETKEY,
+            //"accessKeyId": 'ASIA4TNII6OS3M5OA7TR',
+            //"secretAccessKey": 'kHFKtiCBOL+Ks3c8shFxV4ekKQ5Hi9osGh8z7DqR',
+            //"region": "ap-northeast-2"
+            "region": 'us-east-1'
         });
         this.s3 = new aws.S3();
     }

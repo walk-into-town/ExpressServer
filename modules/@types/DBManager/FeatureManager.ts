@@ -1,5 +1,6 @@
 import {DBConnection} from './DBConnection'
 import * as aws from 'aws-sdk'
+import * as express from 'express'
 
 export enum ReadType{
     query = 'query',
@@ -8,8 +9,10 @@ export enum ReadType{
 
 export abstract class FeatureManager {
     private Dynamodb: aws.DynamoDB
-    constructor(){
+    private req: express.Request
+    constructor(req: express.Request){
         this.Dynamodb = DBConnection.getDynamoDB()
+        this.req = req
     }
 
     public abstract insert(params: any): void
