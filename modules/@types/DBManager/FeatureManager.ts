@@ -8,11 +8,13 @@ export enum ReadType{
 }
 
 export abstract class FeatureManager {
-    private Dynamodb: aws.DynamoDB
-    private req: express.Request
-    constructor(req: express.Request){
+    protected Dynamodb: aws.DynamoDB.DocumentClient
+    protected req: express.Request
+    protected res: express.Response
+    constructor(req: express.Request, res: express.Response){
         this.Dynamodb = DBConnection.getDynamoDB()
         this.req = req
+        this.res = res
     }
 
     public abstract insert(params: any): void

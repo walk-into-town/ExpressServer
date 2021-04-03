@@ -1,5 +1,9 @@
 import * as express from 'express'
+import * as randstr from 'crypto-random-string'
+
 import {UploadFile} from '../../modules/@js/FileManager/UploadFile'     //파일 업로드 클래스 import
+import {PinpointManager} from '../../modules/@js/DBManager/PinpointManager'
+
 
 const detail = require('./pinpointDetail')
 const quiz = require('./PinpointQuiz')
@@ -13,12 +17,13 @@ let upload = uploader.uploadFile('witpinpointimgss')
 
 router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
-    let imgs: Array<string>
+    let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
-        imgs.push(req.files[i])
+        imgs.push(req.files[i].filename)
     }
-
     query.imgs = imgs
+    let pinpointDB = new PinpointManager(req, res)
+    pinpointDB.insert(query)
 
 })
 

@@ -42,7 +42,7 @@ class UploadFile extends FileUpload_1.UploaderInterface {
                 let ext = `.${mime_types_1.default.extension(file.mimetype)}`;
                 let filename = crypto_random_string_1.default({ length: 40 });
                 cb(null, filename + ext);
-                file.filename = filename + ext;
+                file.filename = filename + ext; //라우터에 생성된 파일 명을 전달하기 위해서
             }
         });
         const upload = multer.default({

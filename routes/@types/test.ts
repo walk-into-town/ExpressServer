@@ -31,4 +31,18 @@ router.get('/dbtest', function(req: express.Request, res: express.Response){
     res.status(200).send('success')
 })
 
+router.get('/dateTest', function (req, res){
+    async function test(){
+        let date1 = new Date()
+        await new Promise((r) => setTimeout(r, 7000))
+        let date2 = new Date()
+
+        console.log(date1)
+        console.log(date2)
+        let date3 = new Date(Date.parse('2021-04-03T10:53:39.025Z'))
+        console.log(date3)
+    }
+    test()
+})
+
 module.exports = router

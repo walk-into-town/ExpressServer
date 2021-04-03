@@ -8,9 +8,10 @@ var ReadType;
     ReadType["scan"] = "scan";
 })(ReadType = exports.ReadType || (exports.ReadType = {}));
 class FeatureManager {
-    constructor(req) {
+    constructor(req, res) {
         this.Dynamodb = DBConnection_1.DBConnection.getDynamoDB();
         this.req = req;
+        this.res = res;
     }
 }
 exports.FeatureManager = FeatureManager;

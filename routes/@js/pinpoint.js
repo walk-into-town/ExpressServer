@@ -20,16 +20,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
+const randstr = __importStar(require("crypto-random-string"));
 const UploadFile_1 = require("../../modules/@js/FileManager/UploadFile"); //파일 업로드 클래스 import
+const PinpointManager_1 = require("../../modules/@js/DBManager/PinpointManager");
 const detail = require('./pinpointDetail');
 const quiz = require('./PinpointQuiz');
 var router = express.Router();
 let uploader = new UploadFile_1.UploadFile();
 let upload = uploader.uploadFile('witpinpointimgss');
 router.post('/register', upload.array('img'), function (req, res) {
-    let test = JSON.parse(req.body.json);
-    console.log(req.files[0].filename);
-    console.log(req.files[1].filename);
+    let query = JSON.parse(req.body.json);
+    let imgs = [];
+    for (let i = 0; i < req.files.length; i++) {
+        imgs.push(req.files[i].filename);
+    }
+    query.imgs = imgs;
+    query.id = randstr.default({ length: 40 }); //generate random id
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.insert(query);
 });
 router.post('/list', function (req, res) {
 });
