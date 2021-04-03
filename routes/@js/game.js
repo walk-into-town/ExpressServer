@@ -21,14 +21,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 var router = express.Router();
-const testroute = require('./test');
-const campaign = require('./campaign');
-const game = require('./game');
-const member = require('./member');
-const manager = require('./manager');
-router.use('/test', testroute);
-router.use('/campaign', campaign);
-router.use('/game', game);
-router.use('/member', member);
-router.use('/manager', manager);
+router.post('/monster/inquiryimg', function (req, res) {
+});
+router.post('/monster/registerimg', function (req, res) {
+});
+router.post('/clear', function (req, res) {
+});
+router.post('/ranking/inquiry', function (req, res) {
+});
 module.exports = router;

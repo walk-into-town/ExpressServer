@@ -20,15 +20,25 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
+const UploadFile_1 = require("../../modules/@js/FileManager/UploadFile"); //파일 업로드 클래스 import
+const detail = require('./pinpointDetail');
+const quiz = require('./PinpointQuiz');
 var router = express.Router();
-const testroute = require('./test');
-const campaign = require('./campaign');
-const game = require('./game');
-const member = require('./member');
-const manager = require('./manager');
-router.use('/test', testroute);
-router.use('/campaign', campaign);
-router.use('/game', game);
-router.use('/member', member);
-router.use('/manager', manager);
+let uploader = new UploadFile_1.UploadFile();
+let upload = uploader.uploadFile('witpinpointimgss');
+router.post('/register', upload.array('img'), function (req, res) {
+    let test = JSON.parse(req.body.json);
+    console.log(req.files[0].filename);
+    console.log(req.files[1].filename);
+});
+router.post('/list', function (req, res) {
+});
+router.post('/inquiry', function (req, res) {
+});
+router.post('/delete', function (req, res) {
+});
+router.post('/modify', function (req, res) {
+});
+router.use('/detail', detail);
+router.use('/quiz', quiz);
 module.exports = router;

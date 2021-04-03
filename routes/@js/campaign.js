@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * campaign 라우팅 테이블
+ * pinpoint, register, inquiry, participate, evaluate, coupon
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
@@ -21,14 +25,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 var router = express.Router();
-const testroute = require('./test');
-const campaign = require('./campaign');
-const game = require('./game');
-const member = require('./member');
-const manager = require('./manager');
-router.use('/test', testroute);
-router.use('/campaign', campaign);
-router.use('/game', game);
-router.use('/member', member);
-router.use('/manager', manager);
+const pinpoint = require('./pinpoint');
+const participate = require('./campaignParticipate');
+const evaluate = require('./campaignEvaluate');
+const coupon = require('./campaignCoupon');
+router.use('/pinpoint', pinpoint);
+router.use('participate', participate);
+router.use('/evaluate', evaluate);
+router.use('coupon', coupon);
+router.post('/register', function (req, res) {
+    res.send('test');
+});
+router.post('/modify', function (req, res) {
+});
 module.exports = router;
