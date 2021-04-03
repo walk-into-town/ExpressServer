@@ -11,33 +11,31 @@ var http = require('http');
 var fs = require('fs'); 
 var https = require('https'); 
 
-const session = require('cookie-session')
-
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '80');
-var httpsport = normalizePort(process.env.PORT || '443')
+var port = normalizePort(process.env.PORT || '3000');
+//var httpsport = normalizePort(process.env.PORT || '3001')
 app.set('port', port);
-app.set('port', httpsport)
+//app.set('port', httpsport)
 
 /**
  *set ssl to enable https 
  */
 
- var sslOptions = { 
-  ca: fs.readFileSync('../ssl/ca_bundle.crt'),
-  key: fs.readFileSync('../ssl/private.key'),
-  cert: fs.readFileSync('../ssl/certificate.crt')
-};
+//  var sslOptions = { 
+//   ca: fs.readFileSync('../ssl/ca_bundle.crt'),
+//   key: fs.readFileSync('../ssl/private.key'),
+//   cert: fs.readFileSync('../ssl/certificate.crt')
+// };
 
 /**
  * Create HTTP server.
  */
 
 var server = http.createServer(app);
-var httpsserver = https.createServer(sslOptions, app)
+//var httpsserver = https.createServer(sslOptions, app)
 
 
 /**
@@ -45,11 +43,11 @@ var httpsserver = https.createServer(sslOptions, app)
  */
 
 server.listen(port);
-httpsserver.listen(httpsport)
-httpsserver.on('error', onError)
-httpsserver.on('listening', onListening)
+//httpsserver.listen(httpsport)
 server.on('error', onError);
 server.on('listening', onListening);
+//httpsserver.on('error', onError)
+//httpsserver.on('listening', onListening)
 
 /**
  * Normalize a port into a number, string, or false.
