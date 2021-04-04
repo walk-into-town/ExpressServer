@@ -7,9 +7,18 @@ var logger = require('morgan');
 var app = express();
 
 
-// app.all('*', function(req, res){
-//   res.redirect('https://' + req.headers.host + req.url)
-// })
+// redirect HTTP to HTTPS
+// app.all('*', (req, res, next) => {
+//   let protocol = req.headers['x-forwarded-proto'] || req.protocol;
+//   if (protocol == 'https') { next(); }
+//   else {
+//           let from = `${protocol}://${req.hostname}${req.url}`;
+//           let to = `https://${req.hostname}${req.url}`;
+//           // log and redirect
+//           console.log(`[${req.method}]: ${from} -> ${to}`);
+//           res.redirect(to); }
+//   }
+// );
 
 
 // view engine setup
