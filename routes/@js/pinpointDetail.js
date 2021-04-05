@@ -20,13 +20,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
+const PinpointManager_1 = require("../../modules/@js/DBManager/PinpointManager");
 var router = express.Router();
-router.post('/register', function (req, res) {
-});
 router.post('/inquiry', function (req, res) {
+    let query = JSON.parse(req.body.json);
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.readDetail(query);
 });
 router.post('/delete', function (req, res) {
 });
 router.post('/modify', function (req, res) {
+    let query = JSON.parse(req.body.json);
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.deleteDetail(query);
 });
 module.exports = router;

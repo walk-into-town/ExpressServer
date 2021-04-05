@@ -20,7 +20,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
-const randstr = __importStar(require("crypto-random-string"));
 const UploadFile_1 = require("../../modules/@js/FileManager/UploadFile"); //파일 업로드 클래스 import
 const PinpointManager_1 = require("../../modules/@js/DBManager/PinpointManager");
 const detail = require('./pinpointDetail');
@@ -35,17 +34,33 @@ router.post('/register', upload.array('img'), function (req, res) {
         imgs.push(req.files[i].filename);
     }
     query.imgs = imgs;
-    query.id = randstr.default({ length: 40 }); //generate random id
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
     pinpointDB.insert(query);
 });
 router.post('/list', function (req, res) {
+    let query = JSON.parse(req.body.json);
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.read(query);
 });
 router.post('/inquiry', function (req, res) {
+    let query = JSON.parse(req.body.json);
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.read([query]);
 });
 router.post('/delete', function (req, res) {
+    let query = JSON.parse(req.body.json);
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.delete(query);
 });
-router.post('/modify', function (req, res) {
+router.post('/modify', upload.array('img'), function (req, res) {
+    let query = JSON.parse(req.body.json);
+    let imgs = [];
+    for (let i = 0; i < req.files.length; i++) {
+        imgs.push(req.files[i].filename);
+    }
+    query.imgs = imgs;
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.update(query);
 });
 router.use('/detail', detail);
 router.use('/quiz', quiz);
