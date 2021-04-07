@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const routes = require('./routes/@js')
+const routes = require('./@js/routes')
 
 app.use(routes)
 
