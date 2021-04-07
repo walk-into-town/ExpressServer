@@ -28,10 +28,14 @@ router.post('/inquiry', function (req, res) {
     pinpointDB.readDetail(query);
 });
 router.post('/delete', function (req, res) {
+    let query = JSON.parse(req.body.json);
+    query.description = '';
+    let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
+    pinpointDB.updateDetail(query);
 });
 router.post('/modify', function (req, res) {
     let query = JSON.parse(req.body.json);
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
-    pinpointDB.deleteDetail(query);
+    pinpointDB.updateDetail(query);
 });
 module.exports = router;

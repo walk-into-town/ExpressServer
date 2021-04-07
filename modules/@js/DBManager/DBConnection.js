@@ -26,8 +26,8 @@ class DBConnection {
     static getDynamoDB() {
         dotenv.config();
         var params = {
-            region: 'us-east-1',
-            endpoint: 'http://dynamodb.us-east-1.amazonaws.com'
+            region: 'ap-northeast-2',
+            endpoint: 'http://dynamodb.ap-northeast-2.amazonaws.com'
         };
         aws.config.update(params);
         this.DynamoDB = new aws.DynamoDB.DocumentClient();

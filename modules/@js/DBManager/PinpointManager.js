@@ -32,6 +32,9 @@ exports.PinpointManager = void 0;
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 class PinpointManager extends FeatureManager_1.FeatureManager {
+    /**
+     * 핀포인트 API
+     */
     insert(params) {
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString()); //id 중복 방지 + 이름과 위치가 같은 핀포인트 중복 방지
         params.id = hash.toString(CryptoJS.enc.Base64);
@@ -53,19 +56,19 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         this.Dynamodb.put(queryParams, this.onInsert.bind(this));
     }
     onInsert(err, data) {
-        if (err) {
+        if (err) { //에러 발생
             let result = {
                 result: 'failed',
                 error: err
             };
             this.res.status(400).send(result);
         }
-        else {
-            let resultstr = {
+        else { //정상 처리
+            let result = {
                 "result": "success",
-                "pinpointId": this.res.locals.id
+                "pinpointId": this.res.locals.id // DynamoDB에서는 insert시 결과 X. 따라서 임의로 생성되는 id를 전달하기 위해 locals에 id 추가
             };
-            this.res.status(201).send(resultstr);
+            this.res.status(201).send(result);
         }
     }
     read(params, readType) {
@@ -77,14 +80,18 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise();
-            if (this.res.locals.UnprocessedKeys != undefined) {
-                let fail = {
+            yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise(); // read를 수행할때 까지 대기
+            if (this.res.locals.UnprocessedKeys != undefined) { //오류 발생 처리
+                let result = {
                     "result": 'failed',
                     "error": "AWS Internal Server Error"
                 };
-                this.res.status(400).send(fail);
+                this.res.status(400).send(result);
             }
+            let result = {
+                'result': 'success',
+                'message': this.res.locals.result.Pinpoint
+            };
             this.res.status(201).send(this.res.locals.result.Responses.Pinpoint);
         });
         run();
@@ -98,7 +105,6 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result);
         }
         else {
-            data.Responses.Pinpoint.result = "success";
             this.res.locals.result = data;
         }
     }
@@ -122,8 +128,11 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result);
         }
         else {
-            data.Attributes.result = 'success';
-            this.res.status(201).send(data.Attributes);
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            };
+            this.res.status(201).send(result);
         }
     }
     delete(params) {
@@ -139,16 +148,22 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     onDelete(err, data) {
         if (err) {
             let result = {
-                result: 'failed',
-                error: err
+                'result': 'failed',
+                'error': err
             };
             this.res.status(401).send(result);
         }
         else {
-            data.Attributes.result = 'success';
-            this.res.status(200).send(data.Attributes);
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            };
+            this.res.status(200).send(result);
         }
     }
+    /**
+     * 핀포인트 상세 정보 API
+     */
     readDetail(params) {
         var queryParams = {
             TableName: 'Pinpoint',
@@ -169,22 +184,25 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result);
         }
         else {
-            data.Item.result = 'success';
-            this.res.status(201).send(data.Item);
+            let result = {
+                'result': 'success',
+                'message': data.Item.result
+            };
+            this.res.status(201).send(result);
         }
     }
-    deleteDetail(params) {
+    updateDetail(params) {
         var queryParams = {
             TableName: 'Pinpoint',
             Key: { id: params.id },
             UpdateExpression: 'set description = :newdesc',
-            ExpressionAttributeValues: { ':newdesc': '' },
+            ExpressionAttributeValues: { ':newdesc': params.description },
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         };
-        this.Dynamodb.update(queryParams, this.onDeleteDetail.bind(this));
+        this.Dynamodb.update(queryParams, this.onUpdateDetail.bind(this));
     }
-    onDeleteDetail(err, data) {
+    onUpdateDetail(err, data) {
         if (err) {
             let result = {
                 result: 'failed',
@@ -193,8 +211,94 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result);
         }
         else {
-            data.Attributes.result = 'success';
-            this.res.status(201).send(data.Attributes);
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            };
+            this.res.status(201).send(result);
+        }
+    }
+    /**
+     * 핀포인트 퀴즈 API
+     */
+    insertQuiz(params) {
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: { id: params.id },
+            UpdateExpression: 'set quiz = :quiz',
+            ExpressionAttributeValues: { ':quiz': params.quiz },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        this.Dynamodb.update(queryParams, this.onInsertQuiz.bind(this));
+    }
+    onInsertQuiz(err, data) {
+        if (err) {
+            let result = {
+                'result': 'failed',
+                'error': err
+            };
+            this.res.status(400).send(result);
+        }
+        else {
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            };
+            this.res.status(201).send(result);
+        }
+    }
+    readQuiz(params) {
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: {
+                'id': params.id
+            },
+            ProjectionExpression: 'quiz'
+        };
+        this.Dynamodb.get(queryParams, this.onReadQuiz.bind(this));
+    }
+    onReadQuiz(err, data) {
+        if (err) {
+            let result = {
+                'result': 'failed',
+                'error': err
+            };
+            this.res.status(400).send(result);
+        }
+        else {
+            let result = {
+                'result': 'success',
+                'message': data.Item
+            };
+            this.res.status(201).send(result);
+        }
+    }
+    updateQuiz(params) {
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: { id: params.id },
+            UpdateExpression: 'set quiz = :quiz',
+            ExpressionAttributeValues: { ':quiz': params.quiz },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        this.Dynamodb.update(queryParams, this.onUpdateQuiz.bind(this));
+    }
+    onUpdateQuiz(err, data) {
+        if (err) {
+            let result = {
+                result: 'failed',
+                error: err
+            };
+            this.res.status(400).send(result);
+        }
+        else {
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            };
+            this.res.status(201).send(result);
         }
     }
 }

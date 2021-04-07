@@ -3,6 +3,10 @@ import * as CryptoJS from 'crypto-js'
 
 
 export class PinpointManager extends FeatureManager{
+
+    /**
+     * 핀포인트 API
+     */
     public insert(params: any): void {
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString())  //id 중복 방지 + 이름과 위치가 같은 핀포인트 중복 방지
         params.id = hash.toString(CryptoJS.enc.Base64)
@@ -24,20 +28,20 @@ export class PinpointManager extends FeatureManager{
         this.Dynamodb.put(queryParams, this.onInsert.bind(this))
     }
     
-    private onInsert(err: object, data: any){
-        if(err){
+    private onInsert(err: object, data: any): void{
+        if(err){                                    //에러 발생
             let result = {
                 result: 'failed',
                 error: err
             }
             this.res.status(400).send(result)
         }
-        else{
-            let resultstr = {
+        else{                                      //정상 처리
+            let result = {
                 "result" : "success",
-                "pinpointId": this.res.locals.id
+                "pinpointId": this.res.locals.id  // DynamoDB에서는 insert시 결과 X. 따라서 임의로 생성되는 id를 전달하기 위해 locals에 id 추가
             }
-            this.res.status(201).send(resultstr)
+            this.res.status(201).send(result)
         }
     }
 
@@ -49,21 +53,25 @@ export class PinpointManager extends FeatureManager{
                 }
             }
         }
-        const run = async () => {
-            await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()
-            if(this.res.locals.UnprocessedKeys != undefined){
-                let fail = {
+        const run = async () => {              //batch 조회를 수행하기 때문에 비동기 함수를 사용
+            await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기
+            if(this.res.locals.UnprocessedKeys != undefined){              //오류 발생 처리
+                let result = {
                     "result": 'failed',
                     "error": "AWS Internal Server Error"
                 }
-                this.res.status(400).send(fail)
+                this.res.status(400).send(result)
+            }
+            let result = {
+                'result': 'success',
+                'message': this.res.locals.result.Pinpoint
             }
             this.res.status(201).send(this.res.locals.result.Responses.Pinpoint)
         }
         run()
      }
     
-    private onRead(err: object, data: any){
+    private onRead(err: object, data: any): void{
         if(err){
             let result = {
                 result: 'failed',
@@ -72,7 +80,6 @@ export class PinpointManager extends FeatureManager{
             this.res.status(400).send(result)
         }
         else{
-            data.Responses.Pinpoint.result = "success"
             this.res.locals.result = data
         }
     }
@@ -89,7 +96,7 @@ export class PinpointManager extends FeatureManager{
         this.Dynamodb.update(queryParams, this.onUpdate.bind(this))
     }
 
-    private onUpdate(err: object, data: any){
+    private onUpdate(err: object, data: any): void{
         if(err){
             let result = {
                 result: 'failed',
@@ -98,8 +105,11 @@ export class PinpointManager extends FeatureManager{
             this.res.status(400).send(result)
         }
         else{
-            data.Attributes.result = 'success'
-            this.res.status(201).send(data.Attributes)
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            }
+            this.res.status(201).send(result)
         }
     }
 
@@ -114,20 +124,28 @@ export class PinpointManager extends FeatureManager{
         this.Dynamodb.delete(queryParams, this.onDelete.bind(this))
     }
 
-    private onDelete(err: object, data: any){
+    private onDelete(err: object, data: any): void{
         if(err){
             let result = {
-                result: 'failed',
-                error: err
+                'result': 'failed',
+                'error': err
             }
             this.res.status(401).send(result)
         }
         else{
-            data.Attributes.result = 'success'
-            this.res.status(200).send(data.Attributes)
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            }
+            this.res.status(200).send(result)
         }
     }
 
+
+    /**
+     * 핀포인트 상세 정보 API
+     */
+    
     public readDetail(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
@@ -139,7 +157,7 @@ export class PinpointManager extends FeatureManager{
         this.Dynamodb.get(queryParams, this.onReadDetail.bind(this))
     }
     
-    private onReadDetail(err: object, data: any){
+    private onReadDetail(err: object, data: any): void{
         console.log(data)
         if(data.Item == undefined){
             let result = {
@@ -149,25 +167,28 @@ export class PinpointManager extends FeatureManager{
             this.res.status(400).send(result)
         }
         else{
-            data.Item.result = 'success'
-            this.res.status(201).send(data.Item)
+            let result = {
+                'result': 'success',
+                'message': data.Item.result
+            }
+            this.res.status(201).send(result)
         }
 
     }
 
-    public deleteDetail(params: any){
+    public updateDetail(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
             Key: {id: params.id},
             UpdateExpression: 'set description = :newdesc',
-            ExpressionAttributeValues: {':newdesc': ''},
+            ExpressionAttributeValues: {':newdesc': params.description},
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         }
-        this.Dynamodb.update(queryParams, this.onDeleteDetail.bind(this))
+        this.Dynamodb.update(queryParams, this.onUpdateDetail.bind(this))
     }
 
-    private onDeleteDetail(err: object, data: any){
+    private onUpdateDetail(err: object, data: any): void{
         if(err){
             let result = {
                 result: 'failed',
@@ -176,8 +197,101 @@ export class PinpointManager extends FeatureManager{
             this.res.status(400).send(result)
         }
         else{
-            data.Attributes.result = 'success'
-            this.res.status(201).send(data.Attributes)
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            }
+            this.res.status(201).send(result)
+        }
+    }
+
+
+    /**
+     * 핀포인트 퀴즈 API
+     */
+    public insertQuiz(params: any): void{
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: {id: params.id},
+            UpdateExpression: 'set quiz = :quiz',
+            ExpressionAttributeValues: {':quiz': params.quiz},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        this.Dynamodb.update(queryParams, this.onInsertQuiz.bind(this))
+    }
+
+    private onInsertQuiz(err: object, data: any){
+        if(err){
+            let result = {
+                'result': 'failed',
+                'error': err
+            }
+            this.res.status(400).send(result)
+        }
+        else{
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            }
+            this.res.status(201).send(result)
+        }
+    }
+
+    public readQuiz(params: any): void{
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: {
+                'id': params.id
+            },
+            ProjectionExpression: 'quiz'
+        }
+        this.Dynamodb.get(queryParams, this.onReadQuiz.bind(this))
+    }
+
+    private onReadQuiz(err: object, data: any): void{
+        if(err){
+            let result = {
+                'result': 'failed',
+                'error': err
+            }
+            this.res.status(400).send(result)
+        }
+        else{
+            let result = {
+                'result': 'success',
+                'message': data.Item
+            }
+            this.res.status(201).send(result)
+        }
+    }
+
+    public updateQuiz(params: any): void{
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: {id: params.id},
+            UpdateExpression: 'set quiz = :quiz',
+            ExpressionAttributeValues: {':quiz': params.quiz},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        this.Dynamodb.update(queryParams, this.onUpdateQuiz.bind(this))
+    }
+
+    private onUpdateQuiz(err: object, data: any){
+        if(err){
+            let result = {
+                result: 'failed',
+                error: err
+            }
+            this.res.status(400).send(result)
+        }
+        else{
+            let result = {
+                'result': 'success',
+                'message': data.Attributes
+            }
+            this.res.status(201).send(result)
         }
     }
 }
