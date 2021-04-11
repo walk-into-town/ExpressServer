@@ -20,10 +20,19 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
+const MemberManager_1 = require("../../modules/DBManager/MemberManager");
 var router = express.Router();
 const badge = require('./badge');
 router.use('/badge', badge);
 router.post('/register', function (req, res) {
+    let memberDB = new MemberManager_1.MemberManager(req, res);
+    let query = JSON.parse(req.body.json);
+    memberDB.insert(query);
+});
+router.post('/login', function (req, res) {
+    let memberDB = new MemberManager_1.MemberManager(req, res);
+    let query = JSON.parse(req.body.json);
+    memberDB.login(query);
 });
 router.post('/modify', function (req, res) {
 });

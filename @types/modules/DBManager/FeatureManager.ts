@@ -7,6 +7,13 @@ export enum ReadType{
     scan = 'scan'
 }
 
+export enum toRead {
+    name = 'name', 
+    region = 'region',
+    id =  'id',
+    ownner = 'ownner'
+}
+
 export abstract class FeatureManager {
     protected Dynamodb: aws.DynamoDB.DocumentClient
     protected req: express.Request
@@ -18,7 +25,7 @@ export abstract class FeatureManager {
     }
 
     public abstract insert(params: any): void
-    public abstract read(params: any, readType: ReadType): void
+    public abstract read(params: any, readType: ReadType | toRead): void
     public abstract update(params: any): void
     public abstract delete(params: any): void
 }

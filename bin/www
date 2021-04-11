@@ -24,11 +24,13 @@ app.set('port', port);
  *set ssl to enable https 
  */
 
-//  var sslOptions = { 
-//   ca: fs.readFileSync('../ssl/ca_bundle.crt'),
-//   key: fs.readFileSync('../ssl/private.key'),
-//   cert: fs.readFileSync('../ssl/certificate.crt')
-// };
+//  var domain = 'walk-into-town.ga'
+
+//  var sslOptions = {
+//    ca: fs.readFileSync(`/etc/letsencrypt/live/${domain}/chain.pem`),
+//    key: fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`),
+//    cert: fs.readFileSync(`/etc/letsencrypt/live/${domain}/cert.pem`)
+//  };
 
 /**
  * Create HTTP server.

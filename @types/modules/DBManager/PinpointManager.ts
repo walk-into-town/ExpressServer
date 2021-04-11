@@ -3,7 +3,6 @@ import * as CryptoJS from 'crypto-js'
 
 
 export class PinpointManager extends FeatureManager{
-
     /**
      * 핀포인트 API
      */
@@ -45,7 +44,7 @@ export class PinpointManager extends FeatureManager{
         }
     }
 
-    public read(params: any, readType: ReadType): void {
+    public read(params: any, readType?: ReadType): void {
         var queryParams = {
             RequestItems:{
                 'Pinpoint':{
@@ -169,7 +168,7 @@ export class PinpointManager extends FeatureManager{
         else{
             let result = {
                 'result': 'success',
-                'message': data.Item.result
+                'message': data.Item
             }
             this.res.status(201).send(result)
         }

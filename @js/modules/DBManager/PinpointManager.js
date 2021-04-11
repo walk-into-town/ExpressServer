@@ -186,7 +186,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             let result = {
                 'result': 'success',
-                'message': data.Item.result
+                'message': data.Item
             };
             this.res.status(201).send(result);
         }

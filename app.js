@@ -31,6 +31,32 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+/**
+ * Set session
+ */
+var session = require('express-session')
+const AWS = require('aws-sdk')
+AWS.config.update({region: 'us-east-1'})
+var DynamoDBStore = require('connect-dynamodb')(session)
+app.use(session({
+  secret: 'SessionSecret',
+  resave: false,                //세션에 변경사항이 생기기 전까지 저장 X
+  saveUninitialized: false,     //세션 생성 전에는 저장 X
+  store: new DynamoDBStore({    //메모리에 넣는 것이 아닌 DynamoDB에 넣기 위한 부분.
+    table: 'Session',
+    AWSConfigJSON:{
+      accessKeyId: process.env.aws_access_key_id,
+      secrestAccessKey: process.env.aws_secret_access_key,
+      region: 'us-east-1'
+    },
+    client: new AWS.DynamoDB({endpoint: new AWS.Endpoint('http://localhost:8000')})
+  }),
+  cookie:{
+    maxAge: 1000*60*60        //토큰 유효 시간.
+  }
+}))
+
 const routes = require('./@js/routes')
 
 app.use(routes)

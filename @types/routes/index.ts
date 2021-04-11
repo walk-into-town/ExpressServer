@@ -7,7 +7,6 @@ const game = require('./game/game')
 const member = require('./member/member')
 const manager = require('./manager/manager')
 
-
 router.use('/test', testroute)
 router.use('/campaign', campaign)
 router.use('/game', game)

@@ -30,6 +30,18 @@ const mime_types_1 = __importDefault(require("mime-types"));
 const crypto_random_string_1 = __importDefault(require("crypto-random-string"));
 let multerS3 = require('multer-s3');
 class UploadFile extends FileUpload_1.UploaderInterface {
+    testupload() {
+        var storage = multer.diskStorage({
+            destination: function (req, file, cb) {
+                cb(null, 'uploads/');
+            },
+            filename: function (req, file, cb) {
+                cb(null, file.originalname);
+            }
+        });
+        var upload = multer.default({ storage: storage });
+        return upload;
+    }
     uploadFile(src) {
         let getS3 = new S3Connection_1.S3Connection();
         let s3 = getS3.getS3(); //S3Connection클래스에서 S3 객체를 획득

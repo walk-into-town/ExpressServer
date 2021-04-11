@@ -11,15 +11,18 @@ const quiz = require('./PinpointQuiz')
 var router = express.Router()
 
 let uploader = new UploadFile()
-let upload = uploader.uploadFile('witpinpointimgss')
+let upload = uploader.testupload()
 
 
 router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
-    for(let i = 0; i < req.files.length; i++){
-        imgs.push(req.files[i].filename)
+    if(req.files != undefined){
+        for(let i = 0; i < req.files.length; i++){
+            imgs.push(req.files[i].filename)
+        }
     }
+
     query.imgs = imgs
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.insert(query)
@@ -29,7 +32,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 router.post('/list', function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
     let pinpointDB = new PinpointManager(req, res)
-    pinpointDB.read(query, ReadType.query)
+    pinpointDB.read(query, /*ReadType.query*/)
 })
 
 router.post('/inquiry', function(req: express.Request, res: express.Response){

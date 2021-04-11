@@ -8,6 +8,18 @@ import * as express from 'express'
 let multerS3 = require('multer-s3')
 
 export class UploadFile extends UploaderInterface{
+  public testupload(){
+    var storage = multer.diskStorage({
+      destination: function(req, file, cb){
+        cb(null, 'uploads/')
+      },
+      filename: function (req, file, cb) {
+        cb(null, file.originalname)
+      }
+    })
+    var upload = multer.default({storage: storage})
+    return upload
+  }
   public uploadFile(src: string): multer.Multer {
     let getS3 = new S3Connection();
     let s3: aws.S3 = getS3.getS3()              //S3Connection클래스에서 S3 객체를 획득
