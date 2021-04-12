@@ -21,9 +21,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DBConnection = void 0;
 const aws = __importStar(require("aws-sdk"));
-const dotenv = __importStar(require("dotenv"));
 class DBConnection {
     static getDynamoDB() {
+        const dotenv = require('dotenv');
         dotenv.config();
         var params = {
             accessKeyId: process.env.aws_access_key_id,

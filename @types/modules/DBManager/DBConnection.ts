@@ -1,9 +1,9 @@
 import * as aws from 'aws-sdk'
-import * as dotenv from 'dotenv'
 
 export class DBConnection{
     private static DynamoDB: aws.DynamoDB.DocumentClient
     public static getDynamoDB(): aws.DynamoDB.DocumentClient{
+        const dotenv = require('dotenv')
         dotenv.config()
         var params = {
             accessKeyId: process.env.aws_access_key_id,
