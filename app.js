@@ -45,7 +45,13 @@ const dotenv = require('dotenv')
 dotenv.config()
 var session = require('express-session')
 const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'})
+AWS.config.update({
+  accessKeyId: process.env.aws_access_key_id,
+  secretAccessKey: process.env.aws_secret_access_key,
+  region: 'us-east-1',
+  endpoint: 'http://localhost:8000'
+})
+const dynamodb = new AWS.DynamoDB()
 var DynamoDBStore = require('connect-dynamodb')(session)
 app.use(session({
   secret: 'SessionSecret',
@@ -53,17 +59,15 @@ app.use(session({
   saveUninitialized: false,     //세션 생성 전에는 저장 X
   store: new DynamoDBStore({    //메모리에 넣는 것이 아닌 DynamoDB에 넣기 위한 부분.
     table: 'Session',
-    AWSConfigJSON:{
-      accessKeyId: process.env.aws_access_key_id,
-      secrestAccessKey: process.env.aws_secret_access_key,
-      region: 'us-east-1'
-    },
-    client: new AWS.DynamoDB({endpoint: new AWS.Endpoint('http://localhost:8000')})
+    client: dynamodb
   }),
   cookie:{
     maxAge: 1000*60*60,        //토큰 유효 시간.
+    httpOnly: true,            //http통신에서만 쿠키 확인 가능 -> 클라이언트의 script에서 불가
+    secure: true               //https에서만 쿠키 전달
   }
 }))
+
 
 /**
  * set routes
