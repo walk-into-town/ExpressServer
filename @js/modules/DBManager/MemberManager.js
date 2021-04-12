@@ -41,6 +41,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
     login(params) {
         let id = params.id;
         let pw = params.pw;
+        let isIdValid;
+        let dbpw;
         /**
          * 이미 로그인한 ID로 로그인을 시도하는지 확인
          */
@@ -55,49 +57,112 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             },
             ProjectionExpression: 'pw'
         };
-        this.Dynamodb.get(queryParams, function (err, data) {
+        function onGet(err, data) {
             let result;
-            if (err) { //가져오기 실패
+            if (err) { //db에러 발생
                 result = {
                     result: 'failed',
                     error: err
                 };
+                console.log('onget-err');
                 this.res.status(400).send(result);
+                isIdValid = false;
                 return;
             }
-            if (data.Item == undefined) { //일치하는 id 없을 때
+            if (data.Item == undefined) { //id와 일치하는 항목 없음
+                result = {
+                    result: 'failed',
+                    error: 'Invalid User Id'
+                };
+                console.log('onget-undefined');
+                this.res.status(400).send(result);
+                isIdValid = false;
+                return;
+            }
+            else { //일치하면 isIdValid = true, dbpw = pw
+                console.log('onget-success');
+                isIdValid = true;
+                dbpw = data.Item.pw;
+            }
+        }
+        function onCreteToken(err, hash) {
+            this.req.session.token = hash;
+            this.req.session.user = {
+                id: params.id
+            };
+            this.req.session.save();
+            let result = {
+                result: 'success'
+            };
+            console.log('on-create-token');
+            this.res.status(200).send(result);
+        }
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            yield this.Dynamodb.get(queryParams, onGet.bind(this)).promise();
+            if (isIdValid == false) {
+                return;
+            }
+            const match = yield bcrypt.compare(pw, dbpw);
+            if (match == true) {
+                yield bcrypt.hash(Date.now().toString() + params.id, 10).then(onCreteToken.bind(this));
+            }
+            else {
                 let result = {
                     result: 'failed',
-                    error: 'Invalid ID'
+                    error: 'Password mismatch'
                 };
+                console.log('pwd missmatch');
                 this.res.status(400).send(result);
-                return;
             }
-            let dbpw = data.Item.pw;
-            bcrypt.compare(pw, dbpw).then(function (result) {
-                if (result == true) { //pw가 일치할 때, id + 현재 시각으로 토큰 발급
-                    bcrypt.hash(Date.now().toString() + params.id, 10, function (err, data) {
-                        bcrypt.hash(params.id + Date.now().toString(), 10).then(function (hash) {
-                            let result = {
-                                result: 'success'
-                            };
-                            this.req.session.token = hash;
-                            this.req.session.user = {
-                                id: params.id
-                            };
-                            this.res.status(201).send(result);
-                        }.bind(this));
-                    }.bind(this));
-                }
-                else {
-                    let result = {
-                        result: 'failed',
-                        error: 'Invalid Password'
-                    };
-                    this.res.status(400).send(result);
-                }
-            }.bind(this));
-        }.bind(this));
+        });
+        run();
+        // this.Dynamodb.get(queryParams, function(err: object, data: any){    //DB에서 id에 맞는 pw를 가져오는 부분
+        //     let result
+        //     if(err){                            //가져오기 실패
+        //         result = {
+        //             result: 'failed',
+        //             error: err
+        //         }
+        //         console.log(result)
+        //         this.res.status(400).send(result)
+        //         return;
+        //     }
+        //     if(data.Item == undefined){     //일치하는 id 없을 때
+        //         let result = {
+        //             result: 'failed',
+        //             error: 'Invalid ID'
+        //         }
+        //         console.log(result)
+        //         this.res.status(400).send(result)
+        //         return;
+        //     }
+        //     let dbpw = data.Item.pw
+        //     bcrypt.compare(pw, dbpw).then(function(result){         //일치하는 id를 찾고 입력받은 pw와 비교
+        //         if(result == true){                                 //pw가 일치할 때, id + 현재 시각으로 토큰 발급
+        //             bcrypt.hash(Date.now().toString() + params.id, 10, function(err, data){
+        //                 bcrypt.hash(params.id + Date.now().toString(), 10).then(function(hash){
+        //                     let result = {
+        //                         result: 'success'
+        //                     }
+        //                     console.log(result)
+        //                     this.req.session.token = hash
+        //                     this.req.session.user = {
+        //                         id: params.id
+        //                     }
+        //                     this.res.status(201).send(result)
+        //                 }.bind(this))
+        //             }.bind(this))
+        //         }
+        //         else{
+        //             let result = {
+        //                 result: 'failed',
+        //                 error: 'Invalid Password'
+        //             }
+        //             console.log(result)
+        //             this.res.status(400).send(result)
+        //         }
+        //     }.bind(this))
+        // }.bind(this))
     }
     insert(params) {
         let pw;

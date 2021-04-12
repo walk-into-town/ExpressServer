@@ -69,7 +69,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 }
             }
             yield this.Dynamodb.get(checkIdParams, onCheckId.bind(this)).promise();
-            let pinpoints;
+            let pinpoints = [];
             params.pinpoints.forEach(pinpoint => {
                 pinpoints.push({ 'id': pinpoint });
             });
@@ -168,7 +168,6 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeNames: expAttrVals,
             ExpressionAttributeValues: { ':value': params },
         };
-        console.log(params);
         this.Dynamodb.query(params, this.onRead.bind(this));
     }
     onRead(err, data) {

@@ -40,7 +40,7 @@ export class CampaignManager extends FeatureManager{
                 }
             }
             await this.Dynamodb.get(checkIdParams, onCheckId.bind(this)).promise()
-            let pinpoints: any
+            let pinpoints = []
             params.pinpoints.forEach(pinpoint => {
                 pinpoints.push({'id': pinpoint})
             })
@@ -144,7 +144,6 @@ export class CampaignManager extends FeatureManager{
             ExpressionAttributeNames : expAttrVals,
             ExpressionAttributeValues: {':value': params},
         }
-        console.log(params)
         this.Dynamodb.query(params, this.onRead.bind(this))
     }
 
