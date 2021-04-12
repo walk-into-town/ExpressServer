@@ -19,7 +19,8 @@ export abstract class FeatureManager {
     protected req: express.Request
     protected res: express.Response
     constructor(req: express.Request, res: express.Response){
-        this.Dynamodb = DBConnection.getDynamoDB()
+        let conn = new DBConnection()
+        this.Dynamodb = conn.getDynamoDB()
         this.req = req
         this.res = res
     }

@@ -1,8 +1,8 @@
 import * as aws from 'aws-sdk'
 
 export class DBConnection{
-    private static DynamoDB: aws.DynamoDB.DocumentClient
-    public static getDynamoDB(): aws.DynamoDB.DocumentClient{
+    private DynamoDB: aws.DynamoDB.DocumentClient
+    public getDynamoDB(): aws.DynamoDB.DocumentClient{
         const dotenv = require('dotenv')
         dotenv.config()
         var params = {

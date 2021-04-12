@@ -22,7 +22,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DBConnection = void 0;
 const aws = __importStar(require("aws-sdk"));
 class DBConnection {
-    static getDynamoDB() {
+    getDynamoDB() {
         const dotenv = require('dotenv');
         dotenv.config();
         var params = {

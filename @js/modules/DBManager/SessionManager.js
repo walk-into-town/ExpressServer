@@ -14,7 +14,8 @@ const DBConnection_1 = require("./DBConnection");
 class SessionManager {
     constructor(req, res) {
         this._result = [];
-        this.Dynamodb = DBConnection_1.DBConnection.getDynamoDB();
+        let conn = new DBConnection_1.DBConnection();
+        this.Dynamodb = conn.getDynamoDB();
         this.req = req;
         this.res = res;
     }
