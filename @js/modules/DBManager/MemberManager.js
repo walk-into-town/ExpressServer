@@ -30,39 +30,63 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemberManager = void 0;
 const FeatureManager_1 = require("./FeatureManager");
+const SessionManager_1 = require("./SessionManager");
 const bcrypt = __importStar(require("bcrypt"));
 class MemberManager extends FeatureManager_1.FeatureManager {
+    /**
+     * 1. get을 통해 id의 pw만 가져온 후
+     * 2. db의 비밀번호와 입력받은 비밀번호의 일치를 확인한 후
+     * 3. 일치하는 경우 현재 시간 + id로 생성한 해시값을 토큰으로 넘겨줌
+     */
     login(params) {
         let id = params.id;
         let pw = params.pw;
+        /**
+         * 이미 로그인한 ID로 로그인을 시도하는지 확인
+         */
+        let test = new SessionManager_1.SessionManager(this.req, this.res);
+        test.findById(id).then(function () {
+            test.deleteSession(test.result);
+        });
         let queryParams = {
             TableName: 'Member',
             Key: {
-                'id': id,
+                'id': params.id,
             },
             ProjectionExpression: 'pw'
         };
         this.Dynamodb.get(queryParams, function (err, data) {
             let result;
-            if (err) {
+            if (err) { //가져오기 실패
                 result = {
                     result: 'failed',
                     error: err
                 };
                 this.res.status(400).send(result);
+                return;
+            }
+            if (data.Item == undefined) { //일치하는 id 없을 때
+                let result = {
+                    result: 'failed',
+                    error: 'Invalid ID'
+                };
+                this.res.status(400).send(result);
+                return;
             }
             let dbpw = data.Item.pw;
             bcrypt.compare(pw, dbpw).then(function (result) {
-                if (result == true) {
-                    let result = {
-                        result: 'success'
-                    };
+                if (result == true) { //pw가 일치할 때, id + 현재 시각으로 토큰 발급
                     bcrypt.hash(Date.now().toString() + params.id, 10, function (err, data) {
                         bcrypt.hash(params.id + Date.now().toString(), 10).then(function (hash) {
+                            let result = {
+                                result: 'success'
+                            };
                             this.req.session.token = hash;
-                            console.log(this.req.session.token);
+                            this.req.session.user = {
+                                id: params.id
+                            };
+                            this.res.status(201).send(result);
                         }.bind(this));
-                        this.res.status(201).send(result);
                     }.bind(this));
                 }
                 else {
@@ -74,8 +98,6 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
             }.bind(this));
         }.bind(this));
-    }
-    onLogin(err, data) {
     }
     insert(params) {
         let pw;
@@ -101,7 +123,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
     onInsert(err, data) {
         if (err) {
             let result = {
-                result: 'success',
+                result: 'failed',
                 error: err
             };
             this.res.status(400).send(result);

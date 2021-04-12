@@ -21,15 +21,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const MemberManager_1 = require("../../modules/DBManager/MemberManager");
+const SessionManager_1 = require("../../modules/DBManager/SessionManager");
 var router = express.Router();
 const badge = require('./badge');
 router.use('/badge', badge);
 router.post('/register', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == true) {
+        let result = {
+            result: 'error',
+            error: 'already logged in'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let memberDB = new MemberManager_1.MemberManager(req, res);
     let query = JSON.parse(req.body.json);
     memberDB.insert(query);
 });
 router.post('/login', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == true) {
+        let result = {
+            result: 'error',
+            error: 'already logged in'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let memberDB = new MemberManager_1.MemberManager(req, res);
     let query = JSON.parse(req.body.json);
     memberDB.login(query);
