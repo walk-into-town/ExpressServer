@@ -41,6 +41,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Set session
  */
+const dotenv = require('dotenv')
+dotenv.config()
 var session = require('express-session')
 const AWS = require('aws-sdk')
 AWS.config.update({region: 'us-east-1'})
