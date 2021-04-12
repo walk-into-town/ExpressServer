@@ -43,7 +43,7 @@ router.post('/register', upload.array('img'), function (req, res) {
     let imgs = [];
     if (req.files != undefined) {
         for (let i = 0; i < req.files.length; i++) {
-            imgs.push("http://localhost:3000/" + req.files[i].filename);
+            imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
         }
     }
     query.imgs = imgs;
@@ -106,7 +106,7 @@ router.post('/modify', upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push("http://localhost:3000/" + req.files[i].filename);
+        imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
     }
     query.imgs = imgs;
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);

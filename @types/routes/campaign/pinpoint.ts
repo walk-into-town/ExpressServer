@@ -29,7 +29,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
     let imgs: Array<string> = []
     if(req.files != undefined){
         for(let i = 0; i < req.files.length; i++){
-            imgs.push("http://localhost:3000/" + req.files[i].filename)
+            imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
         }
     }
 
@@ -98,7 +98,7 @@ router.post('/modify', upload.array('img'), function(req: express.Request, res: 
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     for(let i =0; i < req.files.length; i++){
-        imgs.push("http://localhost:3000/" + req.files[i].filename)
+        imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
     }
     query.imgs = imgs
     let pinpointDB = new PinpointManager(req, res)
