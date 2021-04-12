@@ -108,5 +108,6 @@ dist
 uploads/
 
 #test Files
-@ts/routes/test.ts
+@types/routes/test.ts
 @js/routes/test.js
+temp.js
