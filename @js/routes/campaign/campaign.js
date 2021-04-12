@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const UploadFile_1 = require("../../modules/FileManager/UploadFile");
 const CampaignManager_1 = require("../../modules/DBManager/CampaignManager");
+const SessionManager_1 = require("../../modules/DBManager/SessionManager");
 var router = express.Router();
 const pinpoint = require('./pinpoint');
 const participate = require('./campaignParticipate');
@@ -38,20 +39,47 @@ router.use('participate', participate);
 router.use('/evaluate', evaluate);
 router.use('coupon', coupon);
 router.post('/register', upload.array('img'), function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push(req.files[i].filename);
+        imgs.push("http://localhost:3000/" + req.files[i].filename);
     }
     query.imgs = imgs;
     let campaignDB = new CampaignManager_1.CampaignManager(req, res);
     campaignDB.insert(query);
 });
 router.post('/inquiry', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
     let campaignDB = new CampaignManager_1.CampaignManager(req, res);
     campaignDB.read(query.value, query.type);
 });
 router.post('/modify', upload.array('img'), function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
 });
 module.exports = router;

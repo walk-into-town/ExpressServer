@@ -23,17 +23,27 @@ const express = __importStar(require("express"));
 const UploadFile_1 = require("../../modules/FileManager/UploadFile"); //파일 업로드 클래스 import
 const PinpointManager_1 = require("../../modules/DBManager/PinpointManager");
 const FeatureManager_1 = require("../../modules/DBManager/FeatureManager");
+const SessionManager_1 = require("../../modules/DBManager/SessionManager");
 const detail = require('./pinpointDetail');
 const quiz = require('./PinpointQuiz');
 var router = express.Router();
 let uploader = new UploadFile_1.UploadFile();
 let upload = uploader.testupload();
 router.post('/register', upload.array('img'), function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
     let imgs = [];
     if (req.files != undefined) {
         for (let i = 0; i < req.files.length; i++) {
-            imgs.push(req.files[i].filename);
+            imgs.push("http://localhost:3000/" + req.files[i].filename);
         }
     }
     query.imgs = imgs;
@@ -41,25 +51,62 @@ router.post('/register', upload.array('img'), function (req, res) {
     pinpointDB.insert(query);
 });
 router.post('/list', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
+    console.log(query);
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
     pinpointDB.read(query);
 });
 router.post('/inquiry', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
     pinpointDB.read([query], FeatureManager_1.ReadType.query);
 });
 router.post('/delete', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);
     pinpointDB.delete(query);
 });
 router.post('/modify', upload.array('img'), function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        };
+        res.status(400).send(result);
+        return;
+    }
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push(req.files[i].filename);
+        imgs.push("http://localhost:3000/" + req.files[i].filename);
     }
     query.imgs = imgs;
     let pinpointDB = new PinpointManager_1.PinpointManager(req, res);

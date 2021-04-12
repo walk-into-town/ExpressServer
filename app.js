@@ -7,6 +7,12 @@ var logger = require('morgan');
 var app = express();
 
 
+/**
+ * set static img folder
+ */
+app.use(express.static('uploads'));
+
+
 // redirect HTTP to HTTPS
 // app.all('*', (req, res, next) => {
 //   let protocol = req.headers['x-forwarded-proto'] || req.protocol;
@@ -41,7 +47,7 @@ AWS.config.update({region: 'us-east-1'})
 var DynamoDBStore = require('connect-dynamodb')(session)
 app.use(session({
   secret: 'SessionSecret',
-  resave: false,                //세션에 변경사항이 생기기 전까지 저장 X
+  resave: true,                //세션에 변경사항 생기기면 저장 O
   saveUninitialized: false,     //세션 생성 전에는 저장 X
   store: new DynamoDBStore({    //메모리에 넣는 것이 아닌 DynamoDB에 넣기 위한 부분.
     table: 'Session',
@@ -53,12 +59,14 @@ app.use(session({
     client: new AWS.DynamoDB({endpoint: new AWS.Endpoint('http://localhost:8000')})
   }),
   cookie:{
-    maxAge: 1000*60*60        //토큰 유효 시간.
+    maxAge: 1000*60*60,        //토큰 유효 시간.
   }
 }))
 
+/**
+ * set routes
+ */
 const routes = require('./@js/routes')
-
 app.use(routes)
 
 // catch 404 and forward to error handler

@@ -72,6 +72,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         }
     }
     read(params, readType) {
+        console.log(params);
         var queryParams = {
             RequestItems: {
                 'Pinpoint': {

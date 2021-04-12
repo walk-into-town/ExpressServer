@@ -7,6 +7,7 @@
 import * as express from 'express'
 import {UploadFile} from '../../modules/FileManager/UploadFile'
 import {CampaignManager} from '../../modules/DBManager/CampaignManager'
+import {SessionManager} from '../../modules/DBManager/SessionManager'
 
 var router = express.Router()
 
@@ -26,10 +27,19 @@ router.use('coupon', coupon)
 
 
 router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
+    let sessCheck = new SessionManager(req, res)
+    if(sessCheck.isSessionValid() == false){
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        }
+        res.status(400).send(result)
+        return;
+    }
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
-        imgs.push(req.files[i].filename)
+        imgs.push("http://localhost:3000/" + req.files[i].filename)
     }
     query.imgs = imgs
     let campaignDB = new CampaignManager(req, res)
@@ -37,12 +47,30 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 })
 
 router.post('/inquiry', function(req: express.Request, res: express.Response){
+    let sessCheck = new SessionManager(req, res)
+    if(sessCheck.isSessionValid() == false){
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        }
+        res.status(400).send(result)
+        return;
+    }
     let query = JSON.parse(req.body.json)
     let campaignDB = new CampaignManager(req, res)
     campaignDB.read(query.value, query.type)
 })
 
 router.post('/modify', upload.array('img'), function(req: express.Request, res: express.Response){
+    let sessCheck = new SessionManager(req, res)
+    if(sessCheck.isSessionValid() == false){
+        let result = {
+            result: 'error',
+            error: 'session expired'
+        }
+        res.status(400).send(result)
+        return;
+    }
     
 })
 

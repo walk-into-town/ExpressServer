@@ -36,77 +36,86 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         let hash = CryptoJS.SHA256(params.ownner + params.name + params.region);
         let id = hash.toString(CryptoJS.enc.Base64);
         this.res.locals.id = id;
-        const UniqueCheck = () => __awaiter(this, void 0, void 0, function* () {
-            let pinpointId = [];
-            let couponId = [];
+        params.imgs.forEach(e => {
+            console.log(e);
+        });
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let isValid; //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
+            let result; //사용자 id 검증 후 전달을 위한 id
+            let checkIdParams = {
+                TableName: 'Member',
+                Key: {
+                    'id': params.ownner,
+                },
+            };
+            function onCheckId(err, data) {
+                if (err) {
+                    isValid = false;
+                    result = {
+                        result: 'error',
+                        error: 'DB Error Please Contect Manager'
+                    };
+                }
+                else {
+                    if (data.Item == undefined) {
+                        isValid = false;
+                        result = {
+                            result: 'failed',
+                            error: 'Invalid User'
+                        };
+                        return;
+                    }
+                    isValid = true;
+                }
+            }
+            yield this.Dynamodb.get(checkIdParams, onCheckId.bind(this)).promise();
+            let pinpoints;
             params.pinpoints.forEach(pinpoint => {
-                let temp = {
-                    'id': pinpoint
-                };
-                pinpointId.push(temp);
+                pinpoints.push({ 'id': pinpoint });
             });
-            params.coupons.forEach(coupon => {
-                let temp = {
-                    'id': coupon
-                };
-                couponId.push(temp);
-            });
-            var checkParams = {
+            let checkPinointParams = {
                 RequestItems: {
                     'Pinpoint': {
-                        Keys: pinpointId
-                    },
-                    'Coupon': {
-                        Keys: couponId
-                    },
-                    'Member': {
-                        Keys: [params.ownner]
+                        Keys: pinpoints
                     }
                 }
             };
-            yield this.Dynamodb.batchGet(checkParams, this.onUniqueCheck.bind(this)).promise();
-            let checkresult = this.res.locals.result.Responses;
-            if ((checkresult.Pinpoint.length != params.pinpoints.length) ||
-                (checkresult.Coupon.length != params.coupons.length) ||
-                (checkresult.member.length != 1)) { //셋중 하나라도 수가 안맞다 = 키가 없다.
-                let result = {
-                    'result': 'failed',
-                    error: 'coupon, pinpoint or user does not exist'
-                };
+            function onCheckPinoint(err, data) {
+                if (err) {
+                    isValid = false;
+                    result = {
+                        result: 'error',
+                        error: 'DB Error Please Contect Manager'
+                    };
+                }
+                else {
+                    console.log;
+                }
+            }
+            this.Dynamodb.batchGet(checkPinointParams);
+            console.log(isValid);
+            if (isValid == false) {
                 this.res.status(400).send(result);
+                return;
             }
-            else {
-                var queryParams = {
-                    TableName: 'Campaign',
-                    Item: {
-                        id: id,
-                        ownner: params.ownner,
-                        imgs: params.imgs,
-                        name: params.name,
-                        description: params.description,
-                        updateTime: params.updateTime,
-                        region: params.region,
-                        pinpoints: params.pinpoints,
-                        coupons: params.coupons
-                    },
-                    ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
-                };
-                this.Dynamodb.put(queryParams, this.onInsert.bind(this));
-            }
-        });
-        UniqueCheck();
-    }
-    onUniqueCheck(err, data) {
-        if (err) {
-            let result = {
-                result: 'failed',
-                error: err
+            var queryParams = {
+                TableName: 'Campaign',
+                Item: {
+                    id: id,
+                    ownner: params.ownner,
+                    imgs: params.imgs,
+                    name: params.name,
+                    description: params.description,
+                    updateTime: params.updateTime,
+                    region: params.region,
+                    pinpoints: params.pinpoints,
+                    coupons: params.coupons
+                },
+                ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
             };
-            this.res.status(400).send(result);
-        }
-        else {
-            this.res.locals.result = data;
-        }
+            this.Dynamodb.put(queryParams, this.onInsert.bind(this));
+        });
+        run();
     }
     onInsert(err, data) {
         if (err) { //에러 발생
