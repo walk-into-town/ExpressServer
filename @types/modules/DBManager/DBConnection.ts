@@ -6,8 +6,6 @@ export class DBConnection{
     public static getDynamoDB(): aws.DynamoDB.DocumentClient{
         dotenv.config()
         var params = {
-            accessKeyId: process.env.aws_access_key_id,
-            secretAccessKey: process.env.aws_secret_access_key,
             region: 'us-east-1',
             endpoint: 'http://localhost:8000'
         }
