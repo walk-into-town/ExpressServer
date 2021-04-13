@@ -55,16 +55,17 @@ const dynamodb = new AWS.DynamoDB()
 var DynamoDBStore = require('connect-dynamodb')(session)
 app.use(session({
   secret: 'SessionSecret',
-  resave: true,                //세션에 변경사항 생기기면 저장 O
-  saveUninitialized: false,     //세션 생성 전에는 저장 X
-  store: new DynamoDBStore({    //메모리에 넣는 것이 아닌 DynamoDB에 넣기 위한 부분.
-    table: 'Session',
-    client: dynamodb
+  resave: false,                //세션에 변경사항 생기기면 저장 O
+  saveUninitialized: true,      //세션 생성 전에는 저장 X
+  store: new DynamoDBStore({    //default: 메모리에 저장 -> 분산 처리 문제 + EC2의 메모리 부족 -> DynamoDB에 저장
+    table: 'Session',           //세션을 저장할 테이블 명
+    reapInterval: 60*1000*60,   //만료된 세션 정리 간격 (ms). 1시간마다 정리
+    client: dynamodb            //사용할 DyanmoDB 클라이언트.
   }),
   cookie:{
-    maxAge: 1000*60*60,        //토큰 유효 시간.
-    httpOnly: true,            //http통신에서만 쿠키 확인 가능 -> 클라이언트의 script에서 불가
-    secure: true               //https에서만 쿠키 전달
+    maxAge: 1000*60*60*3,           //토큰 유효 시간 (ms). 3시간동안 유효
+    httpOnly: true,              //http통신에서만 쿠키 확인 가능 -> 클라이언트의 script에서 불가
+//    secure: true               //https에서만 쿠키 전달
   }
 }))
 
