@@ -25,6 +25,7 @@ const SessionManager_1 = require("../../modules/DBManager/SessionManager");
 var router = express.Router();
 const badge = require('./badge');
 router.use('/badge', badge);
+//회원가입
 router.post('/register', function (req, res) {
     let sessCheck = new SessionManager_1.SessionManager(req, res);
     if (sessCheck.isSessionValid() == true) {
@@ -39,6 +40,7 @@ router.post('/register', function (req, res) {
     let query = JSON.parse(req.body.json);
     memberDB.insert(query);
 });
+//로그인
 router.post('/login', function (req, res) {
     let sessCheck = new SessionManager_1.SessionManager(req, res);
     if (sessCheck.isSessionValid() == true) {
@@ -52,6 +54,21 @@ router.post('/login', function (req, res) {
     let memberDB = new MemberManager_1.MemberManager(req, res);
     let query = JSON.parse(req.body.json);
     memberDB.login(query);
+});
+//로그아웃
+router.post('/logout', function (req, res) {
+    let sessCheck = new SessionManager_1.SessionManager(req, res);
+    if (sessCheck.isSessionValid() == false) {
+        let result = {
+            result: 'error',
+            error: 'User Not Logged In'
+        };
+        res.status(400).send(result);
+        return;
+    }
+    let memberDB = new MemberManager_1.MemberManager(req, res);
+    let query = JSON.parse(req.body.json);
+    memberDB.logout(query);
 });
 router.post('/modify', function (req, res) {
 });
