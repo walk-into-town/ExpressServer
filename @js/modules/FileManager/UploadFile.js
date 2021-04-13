@@ -36,7 +36,10 @@ class UploadFile extends FileUpload_1.UploaderInterface {
                 cb(null, 'uploads/');
             },
             filename: function (req, file, cb) {
-                cb(null, file.originalname);
+                let ext = `.${mime_types_1.default.extension(file.mimetype)}`;
+                let filename = crypto_random_string_1.default({ length: 40 });
+                cb(null, filename + ext);
+                file.filename = filename + ext;
             }
         });
         var upload = multer.default({ storage: storage });

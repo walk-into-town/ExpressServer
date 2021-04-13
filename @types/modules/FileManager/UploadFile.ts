@@ -14,7 +14,10 @@ export class UploadFile extends UploaderInterface{
         cb(null, 'uploads/')
       },
       filename: function (req, file, cb) {
-        cb(null, file.originalname)
+        let ext = `.${mime.extension(file.mimetype)}`
+        let filename = randstr({length: 40})
+        cb(null, filename + ext)
+        file.filename = filename + ext
       }
     })
     var upload = multer.default({storage: storage})
