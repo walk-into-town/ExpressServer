@@ -3,11 +3,6 @@ import * as aws from 'aws-sdk'
 import * as express from 'express'
 
 export class SessionManager {
-    private _result = []
-    public get result() {
-        return this._result
-    }
-    private findResult
     protected Dynamodb: aws.DynamoDB.DocumentClient
     protected req: express.Request
     protected res: express.Response
@@ -25,35 +20,87 @@ export class SessionManager {
         return true
     }
 
-    public findById(id: string){
+    /**
+     * 사용자 id로 찾기 로직
+     * 1. Session 스캔
+     * 2. 찾은 값에 대하여 id와 일치하는 세션을 result에 넣기
+     * 3. res.locals.result에 찾은 결과 넣기
+     */
+    public findByUId(id: string){
         let queryParams = {
             TableName: 'Session',
             ProjectionExpression: 'sess, id'
         }
         const run = async () => {
-            await this.Dynamodb.scan(queryParams, this.onFindById.bind(this)).promise().then(() => {
-                this.findResult.forEach(element => {
-                    let json = JSON.parse(element.sess)
-                    if(json.user.id == id){
-                        this._result.push(element)
+            try{
+                this.res.locals.result = []
+                const result = await this.Dynamodb.scan(queryParams).promise()
+                result.Items.forEach(session => {
+                    let json = JSON.parse(session.sess)
+                    if(json.user == undefined){
+                        return;
                     }
-                });
-            })
+                    if(json.user.id == id){
+                        this.res.locals.result.push(session)
+                    }
+                })
+            }
+            catch(err){
+                let result = {
+                    result: 'failed',
+                    error: 'User Id Search Failed'
+                }
+                this.res.status(400).send(result)
+                return;
+            }
         }
         return run();
     }
-    private onFindById(err: object, data: any){
-        if(err){
-            console.log('error')
+
+    /**
+     * 세션 ID로 찾기 로직
+     * 1. Session 쿼리
+     * 2. 일치하는 항목은 1개 뿐이므로 Items[0]을 전달
+     */
+    public findBySId(id: string){
+        let sid = `sess:${id}`
+        let queryParams = {
+            TableName: 'Session',
+            KeyConditionExpression: '#id = :id',
+            ExpressionAttributeNames: {
+                '#id' : 'id'
+            },
+            ExpressionAttributeValues: {
+                ':id' : sid
+            },
+            ProjectionExpression: 'sess, #id'
         }
-        else{
-            this.findResult = data.Items
+        const run = async () => {
+            try{
+                const result = await this.Dynamodb.query(queryParams).promise()
+                this.res.locals.result = result.Items[0]
+            }
+            catch(err){
+                let result = {
+                    result: 'failed',
+                    error: 'Session Id Search Failed'
+                }
+                this.res.status(400).send(result)
+                return;
+            }
         }
+        return run()
     }
 
-    public deleteSession(id: Array<any>) {      //세션 지우기. 기존에 로그인된 세션을 DB에서 삭제 -> 세션이 없으므로 에러 발생
-        for(let i =0; i < id.length; i++) {    //순차 처리를 위해서 foreach대신 for문 사용
-            console.log(i)
+    /**
+     * 로그인된 세션 삭제 로직
+     * => 로그인 할 때 이미 로그인된 세션을 삭제할때만 호출됨
+     *    다른 곳에서 호출 금지
+     * 1. 입력받은 id를 이용해 세션 삭제
+     * 2. 비동기 처리를 위해 forEach대신 for문 사용
+     */
+    public deleteSession(id: Array<any>) {
+        for(let i =0; i < id.length; i++) {
             let queryParams = {
                 TableName: 'Session',
                 Key: {
