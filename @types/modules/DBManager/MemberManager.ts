@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt'
 
 export class MemberManager extends FeatureManager{
     /**
+     * 로그인 로직
      * 1. get을 통해 id의 pw만 가져온 후
      * 2. db의 비밀번호와 입력받은 비밀번호의 일치를 확인한 후
      * 3. 일치하는 경우 현재 시간 + id로 생성한 해시값을 토큰으로 넘겨줌
@@ -18,19 +19,13 @@ export class MemberManager extends FeatureManager{
          * 이미 로그인한 ID로 로그인을 시도하는지 확인
          */
 
-        let test = new SessionManager(this.req, this.res)
-        test.findById(id).then(function () {
-            test.deleteSession(test.result)
-        })   
-        
-        let queryParams = {
-            TableName : 'Member',
-            Key : {
-                'id' : params.id,
-                },
-            ProjectionExpression: 'pw'
-        }
-
+        let sessman = new SessionManager(this.req, this.res)
+        sessman.findByUId(id).then(function () {
+            sessman.deleteSession(this.res.locals.result)
+        }.bind(this))
+        /**
+         * id가 일치하는지 확인
+         */
         function onGet(err:object, data: any){
             let result
             if(err){                        //db에러 발생
@@ -38,7 +33,6 @@ export class MemberManager extends FeatureManager{
                     result: 'failed',
                     error: err
                 }
-                console.log('onget-err')
                 this.res.status(400).send(result)
                 isIdValid = false
                 return;
@@ -48,30 +42,41 @@ export class MemberManager extends FeatureManager{
                     result: 'failed',
                     error: 'Invalid User Id'
                 }
-                console.log('onget-undefined')
                 this.res.status(400).send(result)
                 isIdValid = false
                 return;
             }
             else{               //일치하면 isIdValid = true, dbpw = pw
-                console.log('onget-success')
                 isIdValid = true
                 dbpw = data.Item.pw
             }
         }
-
+        /**
+         * 토큰 생성 처리 
+         */
         function onCreteToken(err, hash){
-            this.req.session.token = hash
-            this.req.session.user = {
+            this.req.session.token = hash       //세션의 토큰에 생성된 토큰
+            this.req.session.user = {           //세션의 사용자 정보에 id추가
                 id: params.id
             }
             this.req.session.save()
             let result = {
                 result: 'success'
             }
-            console.log('on-create-token')
             this.res.status(200).send(result)
         }
+        let queryParams = {
+            TableName : 'Member',
+            Key : {
+                'id' : params.id,
+                },
+            ProjectionExpression: 'pw'
+        }
+
+        /**
+         * 비동기 처리
+         * 상기한 내용대에 따라 순서대로 처리
+         */
         const run = async () => {
             await this.Dynamodb.get(queryParams, onGet.bind(this)).promise()
             if(isIdValid == false){
@@ -85,63 +90,20 @@ export class MemberManager extends FeatureManager{
                     result: 'failed',
                     error: 'Password mismatch'
                 }
-                console.log('pwd missmatch')
                 this.res.status(400).send(result)
             }
         }
         run()
-        // this.Dynamodb.get(queryParams, function(err: object, data: any){    //DB에서 id에 맞는 pw를 가져오는 부분
-        //     let result
-        //     if(err){                            //가져오기 실패
-        //         result = {
-        //             result: 'failed',
-        //             error: err
-        //         }
-        //         console.log(result)
-        //         this.res.status(400).send(result)
-        //         return;
-        //     }
-        //     if(data.Item == undefined){     //일치하는 id 없을 때
-        //         let result = {
-        //             result: 'failed',
-        //             error: 'Invalid ID'
-        //         }
-        //         console.log(result)
-        //         this.res.status(400).send(result)
-        //         return;
-        //     }
-            
-        //     let dbpw = data.Item.pw
-        //     bcrypt.compare(pw, dbpw).then(function(result){         //일치하는 id를 찾고 입력받은 pw와 비교
-        //         if(result == true){                                 //pw가 일치할 때, id + 현재 시각으로 토큰 발급
-        //             bcrypt.hash(Date.now().toString() + params.id, 10, function(err, data){
-        //                 bcrypt.hash(params.id + Date.now().toString(), 10).then(function(hash){
-        //                     let result = {
-        //                         result: 'success'
-        //                     }
-        //                     console.log(result)
-        //                     this.req.session.token = hash
-        //                     this.req.session.user = {
-        //                         id: params.id
-        //                     }
-        //                     this.res.status(201).send(result)
-        //                 }.bind(this))
-        //             }.bind(this))
-        //         }
-        //         else{
-        //             let result = {
-        //                 result: 'failed',
-        //                 error: 'Invalid Password'
-        //             }
-        //             console.log(result)
-        //             this.res.status(400).send(result)
-        //         }
-        //     }.bind(this))
-        // }.bind(this))
     }
 
+    /**
+     * 회원가입 로직
+     * 1. 입력한 pw를 bcrypt를 이용해 DB에 저장할 pw 생성
+     * 2. 생성된 pw를 이용해 DB에 Insert
+     * 3. ConditionExpression을 통해 id가 중복되는 경우 실패
+     */
     public insert(params: any): void {
-        let pw; let saltRounds = 10
+        let pw: string; let saltRounds = 10
         const run = async () => {
             await bcrypt.hash(params.pw, saltRounds).then(function(hash){
                 pw = hash
@@ -177,6 +139,33 @@ export class MemberManager extends FeatureManager{
         }
     }
 
+    /**
+     * logout 로직
+     * 1. sessionManager에서 세션 id로 검색
+     * 2. 검색 결과의 사용자 id가 입력받은 사용자의 id와 동일한지 검증
+     * 3. 동일한 경우 세션 삭제
+     * 4. 다른 경우 잘못된 접근 경고
+     */
+    public logout(params: any){
+        let id = params.id
+        let sessman = new SessionManager(this.req, this.res)
+        const run = async() => {
+            await sessman.findBySId(this.req.session.id)
+            let json = JSON.parse(this.res.locals.result.sess)
+            let findId = json.user.id
+            if(findId == id){
+                this.req.session.destroy(() => {
+                    this.req.session
+                });
+                let result = {
+                    result: 'success',
+                    message: params.id
+                }
+                this.res.status(200).send(result)
+            }
+        }
+        run()
+    }
 
     public read(params: any, readType: ReadType): void {
         throw new Error("Method not implemented.");
