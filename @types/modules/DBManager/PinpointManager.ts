@@ -6,6 +6,14 @@ export class PinpointManager extends FeatureManager{
     /**
      * 핀포인트 API
      */
+
+
+    /**
+     * 핀포인트 등록 로직
+     * 1. 핀포인트 이름, 위/경도로 hash id 생성
+     * 2. 해당 id를 이용해 DB Insert
+     * 3. ConditionExpression을 통해 id가 중복되면 실패
+     */
     public insert(params: any): void {
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString())  //id 중복 방지 + 이름과 위치가 같은 핀포인트 중복 방지
         params.id = hash.toString(CryptoJS.enc.Base64)
@@ -44,6 +52,12 @@ export class PinpointManager extends FeatureManager{
         }
     }
 
+    /**
+     * 핀포인트 조회 로직
+     * batchGet을 사용 -> 핀포인트 목록조회와 일반 조회 모두 같은 함수로 통일
+     * 1. batchget을 통해 DB에서 핀포인트를 가져옴
+     * 2. 사용자에게 전달
+     */
     public read(params: any, readType?: ReadType): void {
         console.log(params)
         var queryParams = {
@@ -58,7 +72,7 @@ export class PinpointManager extends FeatureManager{
             if(this.res.locals.UnprocessedKeys != undefined){              //오류 발생 처리
                 let result = {
                     "result": 'failed',
-                    "error": "AWS Internal Server Error"
+                    "error": "DB Error. Please Contect Manager"
                 }
                 this.res.status(400).send(result)
             }
@@ -84,6 +98,11 @@ export class PinpointManager extends FeatureManager{
         }
     }
 
+    /**
+     * 핀포인트 수정 로직
+     * 1. 핀포인트 update수행
+     * 2. 성공 /실패 메시지 전달
+     */
     public update(params: any): void {
         var queryParams = {
             TableName: 'Pinpoint',
@@ -112,6 +131,13 @@ export class PinpointManager extends FeatureManager{
             this.res.status(201).send(result)
         }
     }
+
+    /**
+     * 핀포인트 삭제 로직
+     * 1. 사용자 입력 값으로 핀포인트 삭제
+     * 2. ReturnValues를 통해 삭제 전 항목을 받아
+     * 3. 사용자에게 전달
+     */
 
     public delete(params: any): void {
         var queryParams = {
@@ -146,6 +172,13 @@ export class PinpointManager extends FeatureManager{
      * 핀포인트 상세 정보 API
      */
     
+
+    /**
+     * 핀포인트 상세 조회 로직
+     * 1. 사용자로부터 입력받은 값으로 get 수행
+     * 2. ProjectionExpression을 통해 상세 설명만 가져옴
+     * 3. 사용자에게 전달
+     */
     public readDetail(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
@@ -176,6 +209,13 @@ export class PinpointManager extends FeatureManager{
 
     }
 
+    /**
+     * 핀포인트 상세정보 수정 로직
+     * 1. 사용자로부터 값 받기
+     * 2. ConditionExpression을 통해 이미 존재하는 핀포인트에 대해서만 수행
+     *    => DynamoDB에서는 일치하는 Key가 없는 경우 자동으로 Insert
+     * 3. 사용자에게 결과 전달
+     */
     public updateDetail(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
@@ -209,6 +249,13 @@ export class PinpointManager extends FeatureManager{
     /**
      * 핀포인트 퀴즈 API
      */
+
+    /**
+     * 퀴즈 등록 로직
+     * 1. 사용자로부터 값 받음
+     * 2. RetrunValues를 통해 생성된 값 + ConditionExpression을 통해 없는 항목에만 등록
+     * 3. 사용자에게 결과 전달
+     */
     public insertQuiz(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
@@ -238,6 +285,12 @@ export class PinpointManager extends FeatureManager{
         }
     }
 
+    /**
+     * 퀴즈 조회 로직
+     * 1. 사용자로부터 값 수신
+     * 2. ProjectionExpression을 통해 퀴즈만 가져옴
+     * 3. 사용자에게 전달
+     */
     public readQuiz(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
@@ -266,6 +319,13 @@ export class PinpointManager extends FeatureManager{
         }
     }
 
+    /**
+     * 퀴즈 수정 로직
+     * 1. 사용자로부터 값 수신
+     * 2. ReturnValues를 통해 새로 생성된 항목 받기
+     * 3. ConditionExpression을 통해 이미 존재하는 항목만 수정
+     * 4. 사용자에게 결과 전달
+     */
     public updateQuiz(params: any): void{
         var queryParams = {
             TableName: 'Pinpoint',
