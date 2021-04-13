@@ -38,6 +38,7 @@ router.use('/pinpoint', pinpoint);
 router.use('participate', participate);
 router.use('/evaluate', evaluate);
 router.use('coupon', coupon);
+//캠페인 등록
 router.post('/register', upload.array('img'), function (req, res) {
     let sessCheck = new SessionManager_1.SessionManager(req, res);
     if (sessCheck.isSessionValid() == false) {
@@ -57,6 +58,7 @@ router.post('/register', upload.array('img'), function (req, res) {
     let campaignDB = new CampaignManager_1.CampaignManager(req, res);
     campaignDB.insert(query);
 });
+//캠페인 조회
 router.post('/inquiry', function (req, res) {
     let sessCheck = new SessionManager_1.SessionManager(req, res);
     if (sessCheck.isSessionValid() == false) {
@@ -71,6 +73,7 @@ router.post('/inquiry', function (req, res) {
     let campaignDB = new CampaignManager_1.CampaignManager(req, res);
     campaignDB.read(query.value, query.type);
 });
+//캠페인 수정
 router.post('/modify', upload.array('img'), function (req, res) {
     let sessCheck = new SessionManager_1.SessionManager(req, res);
     if (sessCheck.isSessionValid() == false) {

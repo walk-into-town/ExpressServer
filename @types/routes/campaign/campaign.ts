@@ -25,7 +25,7 @@ router.use('participate', participate)
 router.use('/evaluate', evaluate)
 router.use('coupon', coupon)
 
-
+//캠페인 등록
 router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
     let sessCheck = new SessionManager(req, res)
     if(sessCheck.isSessionValid() == false){
@@ -46,6 +46,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
     campaignDB.insert(query)
 })
 
+//캠페인 조회
 router.post('/inquiry', function(req: express.Request, res: express.Response){
     let sessCheck = new SessionManager(req, res)
     if(sessCheck.isSessionValid() == false){
@@ -61,6 +62,7 @@ router.post('/inquiry', function(req: express.Request, res: express.Response){
     campaignDB.read(query.value, query.type)
 })
 
+//캠페인 수정
 router.post('/modify', upload.array('img'), function(req: express.Request, res: express.Response){
     let sessCheck = new SessionManager(req, res)
     if(sessCheck.isSessionValid() == false){
