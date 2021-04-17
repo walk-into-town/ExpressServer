@@ -1,11 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MonsterManager = void 0;
 const FeatureManager_1 = require("./FeatureManager");
 class MonsterManager extends FeatureManager_1.FeatureManager {
     insert(params) {
     }
-    read(params, readType) {
+    read(params) {
         throw new Error("Method not implemented.");
     }
     update(params) {
@@ -15,4 +14,4 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
         throw new Error("Method not implemented.");
     }
 }
-exports.MonsterManager = MonsterManager;
+exports.default = MonsterManager;

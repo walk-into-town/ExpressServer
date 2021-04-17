@@ -27,10 +27,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MemberManager = void 0;
 const FeatureManager_1 = require("./FeatureManager");
-const SessionManager_1 = require("./SessionManager");
+const SessionManager_1 = __importDefault(require("./SessionManager"));
 const bcrypt = __importStar(require("bcrypt"));
 class MemberManager extends FeatureManager_1.FeatureManager {
     /**
@@ -44,13 +46,6 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let pw = params.pw;
         let isIdValid;
         let dbpw;
-        /**
-         * 이미 로그인한 ID로 로그인을 시도하는지 확인
-         */
-        let sessman = new SessionManager_1.SessionManager(this.req, this.res);
-        sessman.findByUId(id).then(function () {
-            sessman.deleteSession(this.res.locals.result);
-        }.bind(this));
         /**
          * id가 일치하는지 확인
          */
@@ -175,7 +170,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
      */
     logout(params) {
         let id = params.id;
-        let sessman = new SessionManager_1.SessionManager(this.req, this.res);
+        let sessman = new SessionManager_1.default(this.req, this.res);
         const run = () => __awaiter(this, void 0, void 0, function* () {
             yield sessman.findBySId(this.req.session.id);
             let json = JSON.parse(this.res.locals.result.sess);
@@ -193,7 +188,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    read(params, readType) {
+    read(params) {
         throw new Error("Method not implemented.");
     }
     update(params) {
@@ -203,4 +198,4 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         throw new Error("Method not implemented.");
     }
 }
-exports.MemberManager = MemberManager;
+exports.default = MemberManager;

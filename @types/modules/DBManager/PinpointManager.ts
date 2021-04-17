@@ -1,8 +1,8 @@
-import { FeatureManager, ReadType } from "./FeatureManager";
+import { FeatureManager } from "./FeatureManager";
 import * as CryptoJS from 'crypto-js'
 
 
-export class PinpointManager extends FeatureManager{
+export default class PinpointManager extends FeatureManager{
     /**
      * 핀포인트 API
      */
@@ -58,7 +58,7 @@ export class PinpointManager extends FeatureManager{
      * 1. batchget을 통해 DB에서 핀포인트를 가져옴
      * 2. 사용자에게 전달
      */
-    public read(params: any, readType?: ReadType): void {
+    public read(params: any): void {
         console.log(params)
         var queryParams = {
             RequestItems:{

@@ -28,7 +28,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CampaignManager = void 0;
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 class CampaignManager extends FeatureManager_1.FeatureManager {
@@ -80,7 +79,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             params.pinpoints.forEach(pinpoint => {
                 pinpoints.push({ 'id': pinpoint });
             });
-            let checkPinointParams = {
+            let checkPinpointParams = {
                 RequestItems: {
                     'Pinpoint': {
                         Keys: pinpoints
@@ -106,7 +105,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     isPinpointValid = true;
                 }
             }
-            this.Dynamodb.batchGet(checkPinointParams, onCheckPinoint.bind(this));
+            this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this));
             if (isIdValid == false || isPinpointValid == false) { //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
                 this.res.status(400).send(result); //에러 메시지 전달
                 return;
@@ -205,9 +204,75 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             this.res.status(201).send(result);
         }
     }
+    /**
+     * 캠페인 수정 로직
+     * 1. 사용자가 입력한 id를 이용해 캠페인 검색
+     * 2. 송신 데이터 중 입력된 값만 변경
+     * 3. 결과 전달
+     */
     update(params) {
+        let queryParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: '#id = :id',
+            ExpressionAttributeNames: {
+                '#id': 'id'
+            },
+            ExpressionAttributeValues: { ':id': params.id }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const result = yield this.Dynamodb.query(queryParams).promise();
+                let originCampaign = result.Items[0];
+                if (originCampaign == undefined) { //일치하는 id 없음
+                    let result = {
+                        result: 'failed',
+                        error: 'Campaign id mismatch'
+                    };
+                    this.res.status(400).send(result);
+                    return;
+                }
+                let pinpoints = [];
+                let coupons = [];
+                params.pinpoints.forEach(pinpoint => {
+                    pinpoints.push({ "id": pinpoint });
+                });
+                params.coupons.forEach(coupon => {
+                    coupons.push({ "id": coupon });
+                });
+                let checkParams = {
+                    RequestItems: {
+                        'Pinpoint': {
+                            Keys: pinpoints
+                        },
+                        'Coupon': {
+                            Keys: coupons
+                        }
+                    }
+                };
+                const check = yield this.Dynamodb.batchGet(checkParams).promise();
+                let pinpointCheck = check.Responses.Pinpoint.length;
+                let couponCheck = check.Responses.Coupon.length;
+                if (pinpointCheck != pinpoints.length || couponCheck != coupons.length) {
+                    let result = {
+                        result: 'failed',
+                        error: 'One or more Pinpots or Coupons id are invalid'
+                    };
+                    this.res.status(400).send(result);
+                    return;
+                }
+            }
+            catch (error) { //DB 에러 발생
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Contect Manager',
+                    error2: error
+                };
+                this.res.status(400).send(result);
+            }
+        });
+        run();
     }
     delete(params) {
     }
 }
-exports.CampaignManager = CampaignManager;
+exports.default = CampaignManager;

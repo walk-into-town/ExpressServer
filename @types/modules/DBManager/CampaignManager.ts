@@ -1,8 +1,8 @@
-import { FeatureManager, ReadType, toRead } from "./FeatureManager"
+import { FeatureManager, toRead } from "./FeatureManager"
 import * as CryptoJS from 'crypto-js'
 
 
-export class CampaignManager extends FeatureManager{
+export default class CampaignManager extends FeatureManager{
     /**
      * 캠페인 생성 로직
      * 1. 제작자 + 이름 + 지역으로 id생성
@@ -51,7 +51,7 @@ export class CampaignManager extends FeatureManager{
             params.pinpoints.forEach(pinpoint => {      //batchget에 맞추기 위해서 {"id": "pinpointid"}로 변환
                 pinpoints.push({'id': pinpoint})
             })
-            let checkPinointParams = {
+            let checkPinpointParams = {
                 RequestItems:{
                     'Pinpoint':{
                         Keys: pinpoints
@@ -77,7 +77,7 @@ export class CampaignManager extends FeatureManager{
                     isPinpointValid = true
                 }
             }
-            this.Dynamodb.batchGet(checkPinointParams, onCheckPinoint.bind(this))
+            this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this))
 
             if(isIdValid == false || isPinpointValid == false){  //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
                 this.res.status(400).send(result)                //에러 메시지 전달
@@ -183,8 +183,73 @@ export class CampaignManager extends FeatureManager{
         }
     }
 
+    /**
+     * 캠페인 수정 로직
+     * 1. 사용자가 입력한 id를 이용해 캠페인 검색
+     * 2. 송신 데이터 중 입력된 값만 변경
+     * 3. 결과 전달
+     */
     public update(params: any): void {
-        
+        let queryParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: '#id = :id',
+            ExpressionAttributeNames : {
+                '#id' : 'id'
+            },
+            ExpressionAttributeValues: {':id': params.id}
+        }
+        const run = async() => {
+            try {
+                const result = await this.Dynamodb.query(queryParams).promise()
+                let originCampaign = result.Items[0]
+                if(originCampaign == undefined){        //일치하는 id 없음
+                    let result = {
+                        result: 'failed',
+                        error: 'Campaign id mismatch'
+                    }
+                    this.res.status(400).send(result)
+                    return;
+                }
+                let pinpoints = []; let coupons = []
+                params.pinpoints.forEach(pinpoint => {
+                    pinpoints.push({"id": pinpoint})
+                })
+                params.coupons.forEach(coupon => {
+                    coupons.push({"id": coupon})
+                })
+                let checkParams = {
+                    RequestItems:{
+                        'Pinpoint':{
+                            Keys: pinpoints
+                        },
+                        'Coupon':{
+                            Keys: coupons
+                        }
+                    }
+                }
+                const check = await this.Dynamodb.batchGet(checkParams).promise()
+                let pinpointCheck = check.Responses.Pinpoint.length
+                let couponCheck = check.Responses.Coupon.length
+                if(pinpointCheck != pinpoints.length || couponCheck != coupons.length){
+                    let result = {
+                        result: 'failed',
+                        error: 'One or more Pinpots or Coupons id are invalid'
+                    }
+                    this.res.status(400).send(result)
+                    return;
+                }
+                
+            } catch (error) {                             //DB 에러 발생
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Contect Manager',
+                    error2: error
+                }
+                this.res.status(400).send(result)
+            }
+        }
+
+        run()
     }
     public delete(params: any): void {
        

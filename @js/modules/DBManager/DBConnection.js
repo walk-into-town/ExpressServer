@@ -19,7 +19,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DBConnection = void 0;
 const aws = __importStar(require("aws-sdk"));
 class DBConnection {
     getDynamoDB() {
@@ -34,4 +33,4 @@ class DBConnection {
         return this.DynamoDB;
     }
 }
-exports.DBConnection = DBConnection;
+exports.default = DBConnection;

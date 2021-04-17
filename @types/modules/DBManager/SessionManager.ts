@@ -1,8 +1,8 @@
-import {DBConnection} from './DBConnection'
+import DBConnection from './DBConnection'
 import * as aws from 'aws-sdk'
 import * as express from 'express'
 
-export class SessionManager {
+export default class SessionManager {
     protected Dynamodb: aws.DynamoDB.DocumentClient
     protected req: express.Request
     protected res: express.Response
@@ -13,7 +13,7 @@ export class SessionManager {
         this.res = res
     }
 
-    public isSessionValid(): boolean{
+    public isSessionValid(): boolean{               //세션의 유효성 판단
         if(this.req.session.user == undefined){
             return false
         }

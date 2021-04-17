@@ -8,12 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SessionManager = void 0;
-const DBConnection_1 = require("./DBConnection");
+const DBConnection_1 = __importDefault(require("./DBConnection"));
 class SessionManager {
     constructor(req, res) {
-        let conn = new DBConnection_1.DBConnection();
+        let conn = new DBConnection_1.default();
         this.Dynamodb = conn.getDynamoDB();
         this.req = req;
         this.res = res;
@@ -121,4 +123,4 @@ class SessionManager {
         }
     }
 }
-exports.SessionManager = SessionManager;
+exports.default = SessionManager;

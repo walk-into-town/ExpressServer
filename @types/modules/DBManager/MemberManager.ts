@@ -1,9 +1,9 @@
-import { FeatureManager, ReadType } from "./FeatureManager";
-import {SessionManager} from './SessionManager'
+import { FeatureManager } from "./FeatureManager";
+import SessionManager from './SessionManager'
 import * as bcrypt from 'bcrypt'
 
 
-export class MemberManager extends FeatureManager{
+export default class MemberManager extends FeatureManager{
     /**
      * 로그인 로직
      * 1. get을 통해 id의 pw만 가져온 후
@@ -15,14 +15,6 @@ export class MemberManager extends FeatureManager{
         let pw = params.pw
         let isIdValid: boolean
         let dbpw: string
-        /**
-         * 이미 로그인한 ID로 로그인을 시도하는지 확인
-         */
-
-        let sessman = new SessionManager(this.req, this.res)
-        sessman.findByUId(id).then(function () {
-            sessman.deleteSession(this.res.locals.result)
-        }.bind(this))
         /**
          * id가 일치하는지 확인
          */
@@ -167,7 +159,7 @@ export class MemberManager extends FeatureManager{
         run()
     }
 
-    public read(params: any, readType: ReadType): void {
+    public read(params: any): void {
         throw new Error("Method not implemented.");
     }
     public update(params: any): void {

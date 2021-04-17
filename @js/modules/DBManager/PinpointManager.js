@@ -28,7 +28,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PinpointManager = void 0;
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 class PinpointManager extends FeatureManager_1.FeatureManager {
@@ -83,7 +82,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 1. batchget을 통해 DB에서 핀포인트를 가져옴
      * 2. 사용자에게 전달
      */
-    read(params, readType) {
+    read(params) {
         console.log(params);
         var queryParams = {
             RequestItems: {
@@ -358,4 +357,4 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         }
     }
 }
-exports.PinpointManager = PinpointManager;
+exports.default = PinpointManager;

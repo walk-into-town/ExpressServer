@@ -1,6 +1,6 @@
 import * as aws from 'aws-sdk'
 
-export class DBConnection{
+export default class DBConnection{
     private DynamoDB: aws.DynamoDB.DocumentClient
     public getDynamoDB(): aws.DynamoDB.DocumentClient{
         const dotenv = require('dotenv')
