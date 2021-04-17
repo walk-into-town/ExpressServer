@@ -1,5 +1,5 @@
 import * as express from 'express'
-import {PinpointManager} from '../../modules/DBManager/PinpointManager'
+import PinpointManager from '../../modules/DBManager/PinpointManager'
 var router = express.Router()
 
 

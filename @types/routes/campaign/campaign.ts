@@ -5,9 +5,8 @@
 
 
 import * as express from 'express'
-import {UploadFile} from '../../modules/FileManager/UploadFile'
-import {CampaignManager} from '../../modules/DBManager/CampaignManager'
-import {SessionManager} from '../../modules/DBManager/SessionManager'
+import UploadFile from '../../modules/FileManager/UploadFile'
+import CampaignManager from '../../modules/DBManager/CampaignManager'
 
 var router = express.Router()
 
@@ -23,19 +22,10 @@ const upload = uploader.testupload()
 router.use('/pinpoint', pinpoint)
 router.use('participate', participate)
 router.use('/evaluate', evaluate)
-router.use('coupon', coupon)
+router.use('/coupon', coupon)
 
 //캠페인 등록
 router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
-    let sessCheck = new SessionManager(req, res)
-    if(sessCheck.isSessionValid() == false){
-        let result = {
-            result: 'error',
-            error: 'session expired'
-        }
-        res.status(400).send(result)
-        return;
-    }
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
@@ -48,15 +38,6 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 
 //캠페인 조회
 router.post('/inquiry', function(req: express.Request, res: express.Response){
-    let sessCheck = new SessionManager(req, res)
-    if(sessCheck.isSessionValid() == false){
-        let result = {
-            result: 'error',
-            error: 'session expired'
-        }
-        res.status(400).send(result)
-        return;
-    }
     let query = JSON.parse(req.body.json)
     let campaignDB = new CampaignManager(req, res)
     campaignDB.read(query.value, query.type)
@@ -64,16 +45,9 @@ router.post('/inquiry', function(req: express.Request, res: express.Response){
 
 //캠페인 수정
 router.post('/modify', upload.array('img'), function(req: express.Request, res: express.Response){
-    let sessCheck = new SessionManager(req, res)
-    if(sessCheck.isSessionValid() == false){
-        let result = {
-            result: 'error',
-            error: 'session expired'
-        }
-        res.status(400).send(result)
-        return;
-    }
-    
+    let query = JSON.parse(req.body.json)
+    let campaignDB = new CampaignManager(req,res)
+    campaignDB.update(query)
 })
 
 module.exports = router
