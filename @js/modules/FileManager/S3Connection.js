@@ -19,7 +19,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.S3Connection = void 0;
 const aws = __importStar(require("aws-sdk"));
 const dotenv = __importStar(require("dotenv"));
 class S3Connection {
@@ -37,4 +36,4 @@ class S3Connection {
         return this.s3;
     }
 }
-exports.S3Connection = S3Connection;
+exports.default = S3Connection;

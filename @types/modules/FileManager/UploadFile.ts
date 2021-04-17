@@ -1,5 +1,5 @@
-import {S3Connection} from './S3Connection'
-import {UploaderInterface} from './FileUpload'
+import S3Connection from './S3Connection'
+import UploaderInterface from './FileUpload'
 import * as aws from 'aws-sdk'
 import * as multer from 'multer'
 import mime from 'mime-types'
@@ -7,7 +7,7 @@ import randstr from 'crypto-random-string'
 import * as express from 'express'
 let multerS3 = require('multer-s3')
 
-export class UploadFile extends UploaderInterface{
+export default class UploadFile extends UploaderInterface{
   public testupload(){
     var storage = multer.diskStorage({
       destination: function(req, file, cb){

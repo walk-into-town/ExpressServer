@@ -19,9 +19,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UploaderInterface = void 0;
 const multer = __importStar(require("multer"));
 class UploaderInterface {
     uploadFile(src) { return multer.default({}); }
 }
-exports.UploaderInterface = UploaderInterface;
+exports.default = UploaderInterface;

@@ -1,7 +1,7 @@
 import * as aws from 'aws-sdk'
 import * as dotenv from 'dotenv'
 
-export class S3Connection{
+export default class S3Connection{
     private s3: aws.S3
     constructor(){
         dotenv.config(); //환경 변수 불러오기
