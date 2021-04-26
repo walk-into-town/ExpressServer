@@ -8,27 +8,37 @@ let upload = fileMan.testupload()
 var router = express.Router()
 
 
-router.post('/register', upload.single('img'), function(req: express.Request, res: express.Response){
+router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
     let couponDB = new CouponManager(req, res)
-    let params = JSON.parse(req.body.json)
-    if(req.file != undefined){
-        params.img = `https://walk-into-town.ga/${req.file.filename}`
+    let query = JSON.parse(req.body.json)
+    let imgs: Array<string> = []
+    for(let i = 0; i < req.files.length; i++){
+        imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
     }
-    couponDB.insert(params)
+    query.imgs = imgs
+    couponDB.insert(query)
 })
 
 router.post('/inquiry', function(req: express.Request, res: express.Response){
     let couponDB = new CouponManager(req, res)
-    let params = JSON.parse(req.body.json)
-    couponDB.read(params)
+    let query = req.body
+    couponDB.read(query)
 })
 
 router.post('/delete', function(req: express.Request, res: express.Response){
     
 })
 
-router.post('/modify', function(req: express.Request, res: express.Response){
-    
+
+router.post('/modify', upload.array('img'), function(req: express.Request, res: express.Response){
+    let couponDB = new CouponManager(req, res)
+    let query = JSON.parse(req.body.json)
+    let imgs: Array<string> = []
+    for(let i = 0; i < req.files.length; i++){
+        imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
+    }
+    query.imgs = imgs
+    couponDB.update(query)
 })
 
 
