@@ -43,18 +43,17 @@ router.post('/register', upload.array('img'), function (req, res) {
     pinpointDB.insert(query);
 });
 router.post('/list', function (req, res) {
-    let query = JSON.parse(req.body.json);
-    console.log(query);
+    let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.read(query);
 });
 router.post('/inquiry', function (req, res) {
-    let query = JSON.parse(req.body.json);
+    let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.read([query]);
 });
 router.post('/delete', function (req, res) {
-    let query = JSON.parse(req.body.json);
+    let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.delete(query);
 });

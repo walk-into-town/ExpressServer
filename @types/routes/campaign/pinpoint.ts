@@ -30,20 +30,19 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 })
 
 router.post('/list', function(req: express.Request, res: express.Response){
-    let query = JSON.parse(req.body.json)
-    console.log(query)
+    let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.read(query, /*ReadType.query*/)
 })
 
 router.post('/inquiry', function(req: express.Request, res: express.Response){
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.read([query])
 })
 
 router.post('/delete', function(req: express.Request, res: express.Response){
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.delete(query)
 })
