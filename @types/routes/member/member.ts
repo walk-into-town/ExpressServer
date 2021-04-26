@@ -11,21 +11,36 @@ router.use('/badge', badge)
 //회원가입
 router.post('/register', function(req: express.Request, res: express.Response){
     let memberDB = new MemberManager(req, res)
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     memberDB.insert(query)
+})
+
+//ID 중복 확인
+router.post('/checkid', function(req: express.Request, res: express.Response){
+    let memberDB = new MemberManager(req, res)
+    let query = req.body
+    memberDB.check('id', query)
+})
+
+//닉네임 중복 확인
+router.post('/checknickname', function(req: express.Request, res: express.Response){
+    let memberDB = new MemberManager(req, res)
+    let query = req.body
+    memberDB.check('nickname', query)
 })
 
 //로그인
 router.post('/login', function(req: express.Request, res: express.Response){ 
+    console.log(req.body)
     let memberDB = new MemberManager(req, res)
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     memberDB.login(query)
 })
 
 //로그아웃
 router.post('/logout', function(req: express.Request, res: express.Response){
     let memberDB = new MemberManager(req, res)
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     memberDB.logout(query)
 })
 
