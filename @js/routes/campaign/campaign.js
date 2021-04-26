@@ -53,7 +53,7 @@ router.post('/register', upload.array('img'), function (req, res) {
 });
 //캠페인 조회
 router.post('/inquiry', function (req, res) {
-    let query = JSON.parse(req.body.json);
+    let query = req.body;
     let campaignDB = new CampaignManager_1.default(req, res);
     campaignDB.read(query.value, query.type);
 });

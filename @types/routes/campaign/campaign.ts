@@ -38,7 +38,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 
 //캠페인 조회
 router.post('/inquiry', function(req: express.Request, res: express.Response){
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     let campaignDB = new CampaignManager(req, res)
     campaignDB.read(query.value, query.type)
 })
