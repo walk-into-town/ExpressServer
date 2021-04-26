@@ -23,10 +23,7 @@ export default class CampaignManager extends FeatureManager{
             }                      
             let checkIdParams = {
                 TableName: 'Member',
-                KeyConditionExpression: '#id = :id',
-                ExpressionAttributeNames: {
-                    '#id': 'id'
-                },
+                KeyConditionExpression: 'id = :id',
                 ExpressionAttributeValues: {
                     ':id' : params.ownner
                 }
@@ -140,7 +137,7 @@ export default class CampaignManager extends FeatureManager{
                 break;
             case toRead.id:
                 expAttrVals = {
-                   '#id' : readType
+                   'id' : readType
                 }
                 break;
             case toRead.ownner:
@@ -192,66 +189,61 @@ export default class CampaignManager extends FeatureManager{
     public update(params: any): void {
         let queryParams = {
             TableName: 'Campaign',
-            KeyConditionExpression: '#id = :id',
-            ExpressionAttributeNames : {
-                '#id' : 'id'
-            },
+            KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {':id': params.id}
         }
         const run = async() => {
-            try {
-                const result = await this.Dynamodb.query(queryParams).promise()
-                let originCampaign = result.Items[0]
-                if(originCampaign == undefined){        //일치하는 id 없음
-                    let result = {
-                        result: 'failed',
-                        error: 'Campaign id mismatch'
-                    }
-                    this.res.status(400).send(result)
-                    return;
-                }
-                let pinpoints = []; let coupons = []
-                params.pinpoints.forEach(pinpoint => {
-                    pinpoints.push({"id": pinpoint})
-                })
-                params.coupons.forEach(coupon => {
-                    coupons.push({"id": coupon})
-                })
-                let checkParams = {
-                    RequestItems:{
-                        'Pinpoint':{
-                            Keys: pinpoints
-                        },
-                        'Coupon':{
-                            Keys: coupons
-                        }
-                    }
-                }
-                const check = await this.Dynamodb.batchGet(checkParams).promise()
-                let pinpointCheck = check.Responses.Pinpoint.length
-                let couponCheck = check.Responses.Coupon.length
-                if(pinpointCheck != pinpoints.length || couponCheck != coupons.length){
-                    let result = {
-                        result: 'failed',
-                        error: 'One or more Pinpots or Coupons id are invalid'
-                    }
-                    this.res.status(400).send(result)
-                    return;
-                }
-                
-            } catch (error) {                             //DB 에러 발생
+            const result = await this.Dynamodb.query(queryParams).promise()
+            let originCampaign = result.Items[0]
+            if(originCampaign == undefined){        //일치하는 id 없음
                 let result = {
                     result: 'failed',
-                    error: 'DB Error. Please Contect Manager',
-                    error2: error
+                    error: 'Campaign id mismatch'
                 }
                 this.res.status(400).send(result)
+                return;
+            }
+            let pinpoints = []; let coupons = []
+            params.pinpoints.forEach(pinpoint => {
+                pinpoints.push({"id": pinpoint})
+            })
+            params.coupons.forEach(coupon => {
+                coupons.push({"id": coupon})
+            })
+            let checkParams = {
+                RequestItems:{
+                    'Pinpoint':{
+                        Keys: pinpoints
+                    },
+                    'Coupon':{
+                        Keys: coupons
+                    }
+                }
+            }
+            const check = await this.Dynamodb.batchGet(checkParams).promise()
+            let pinpointCheck = check.Responses.Pinpoint.length           
+            let couponCheck = check.Responses.Coupon.length
+            if(pinpointCheck != pinpoints.length || couponCheck != coupons.length){
+                let result = {
+                    result: 'failed',
+                    error: 'One or more Pinpots or Coupons id are invalid'
+                }
+                this.res.status(400).send(result)
+                return;
             }
         }
-
-        run()
+        try{
+            run()
+        } catch (error) {                             //DB 에러 발생
+            let result = {
+                result: 'failed',
+                error: 'DB Error. Please Contect Manager',
+                error2: error
+            }
+            this.res.status(400).send(result)
+        }
     }
     public delete(params: any): void {
-       
+        
     }
 }
