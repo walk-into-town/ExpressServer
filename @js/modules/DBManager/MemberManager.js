@@ -43,6 +43,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
      */
     login(params) {
         let id = params.id;
+        let returnuser;
         let pw = params.pw;
         let isIdValid;
         let dbpw;
@@ -71,6 +72,11 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             }
             else { //일치하면 isIdValid = true, dbpw = pw
                 isIdValid = true;
+                returnuser = {
+                    profileimg: data.Item.profileImg,
+                    nickname: data.Item.nickname,
+                    selfIntroduction: data.Item.selfIntroduction
+                };
                 dbpw = data.Item.pw;
             }
         }
@@ -84,7 +90,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             };
             this.req.session.save();
             let result = {
-                result: 'success'
+                result: 'success',
+                message: returnuser
             };
             this.res.status(200).send(result);
         }
@@ -92,8 +99,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             TableName: 'Member',
             Key: {
                 'id': params.id,
-            },
-            ProjectionExpression: 'pw'
+            }
         };
         /**
          * 비동기 처리
@@ -116,7 +122,45 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 this.res.status(400).send(result);
             }
         });
-        run();
+        //run()
+        const test = () => __awaiter(this, void 0, void 0, function* () {
+            let data = yield this.Dynamodb.get(queryParams).promise();
+            if (data.Item == undefined) {
+                let result = {
+                    result: 'failed',
+                    error: 'Invalid User Id'
+                };
+                this.res.status(400).send(result);
+                return;
+            }
+            const match = yield bcrypt.compare(pw, data.Item.pw);
+            if (match == true) {
+                this.req.session.user = data.Item.id;
+                let user = {
+                    profileimg: data.Item.profileImg,
+                    nickname: data.Item.nickname,
+                    selfIntroduction: data.Item.selfIntroduction
+                };
+                let result = {
+                    result: 'success',
+                    message: user
+                };
+                this.res.status(200).send(result);
+                return;
+            }
+        });
+        try {
+            test();
+        }
+        catch (err) {
+            let result = {
+                result: 'failed',
+                error: err
+            };
+            this.res.status(400).send(result);
+            isIdValid = false;
+            return;
+        }
     }
     /**
      * 회원가입 로직
@@ -173,6 +217,14 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let sessman = new SessionManager_1.default(this.req, this.res);
         const run = () => __awaiter(this, void 0, void 0, function* () {
             yield sessman.findBySId(this.req.session.id);
+            if (this.res.locals.result == undefined) {
+                let result = {
+                    result: 'failed',
+                    error: 'Please Login First'
+                };
+                this.res.status(400).send(result);
+                return;
+            }
             let json = JSON.parse(this.res.locals.result.sess);
             let findId = json.user.id;
             if (findId == id) {
@@ -182,6 +234,13 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let result = {
                     result: 'success',
                     message: params.id
+                };
+                this.res.status(200).send(result);
+            }
+            else {
+                let result = {
+                    result: 'failed',
+                    error: 'Invalid UserID'
                 };
                 this.res.status(200).send(result);
             }
@@ -196,6 +255,54 @@ class MemberManager extends FeatureManager_1.FeatureManager {
     }
     delete(params) {
         throw new Error("Method not implemented.");
+    }
+    check(type, params) {
+        let index = null;
+        let value = null;
+        switch (type) {
+            case 'id':
+                value = params.id;
+                break;
+            case 'nickname':
+                index = 'nicknameIndex';
+                value = params.nickname;
+                break;
+            default:
+                break;
+        }
+        params = {
+            TableName: 'Member',
+            IndexName: index,
+            KeyConditionExpression: `${type} = :value`,
+            ExpressionAttributeValues: { ':value': value },
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let queryResult = yield this.Dynamodb.query(params).promise();
+            let result = {
+                result: 'success',
+                message: ''
+            };
+            if (queryResult.Items.length == 0) {
+                result.message = 'duplicated';
+                this.res.status(201).send(result);
+                return;
+            }
+            else {
+                result.message = 'clear';
+                this.res.status(201).send(result);
+                return;
+            }
+        });
+        try {
+            run();
+        }
+        catch (err) {
+            let result = {
+                result: 'failed',
+                message: 'DB Error. Please Contect Manager'
+            };
+            this.res.status(400).send(result);
+        }
     }
 }
 exports.default = MemberManager;
