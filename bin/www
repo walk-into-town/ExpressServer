@@ -16,28 +16,42 @@ var https = require('https');
  */
 
 var port = normalizePort(process.env.PORT || '3000');
-//var httpsport = normalizePort(process.env.PORT || '3001')
+var httpsport = normalizePort(process.env.PORT || '3001')
+
+/*
+var port = normalizePort(process.env.PORT || '80');
+var httpsport = normalizePort(process.env.PORT || '443')
+*/
+
 app.set('port', port);
-//app.set('port', httpsport)
+app.set('port', httpsport)
 
 /**
  *set ssl to enable https 
  */
 
-//  var domain = 'walk-into-town.ga'
+/*
+var domain = 'walk-into-town.ga'
 
-//  var sslOptions = {
-//    ca: fs.readFileSync(`/etc/letsencrypt/live/${domain}/chain.pem`),
-//    key: fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`),
-//    cert: fs.readFileSync(`/etc/letsencrypt/live/${domain}/cert.pem`)
-//  };
+var sslOptions = {
+  ca: fs.readFileSync(`/etc/letsencrypt/live/${domain}/chain.pem`),
+  key: fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`),
+  cert: fs.readFileSync(`/etc/letsencrypt/live/${domain}/cert.pem`)
+};
+*/
+
+const sslOptions = {
+  ca: fs.readFileSync('./certs/dev_ssl.csr'),
+  key: fs.readFileSync('./certs/dev_ssl.key'),
+  cert: fs.readFileSync('./certs/dev_ssl.crt')
+}
 
 /**
  * Create HTTP server.
  */
 
 var server = http.createServer(app);
-//var httpsserver = https.createServer(sslOptions, app)
+var httpsserver = https.createServer(sslOptions, app)
 
 
 /**
@@ -45,11 +59,11 @@ var server = http.createServer(app);
  */
 
 server.listen(port);
-//httpsserver.listen(httpsport)
+httpsserver.listen(httpsport)
 server.on('error', onError);
 server.on('listening', onListening);
-//httpsserver.on('error', onError)
-//httpsserver.on('listening', onListening)
+httpsserver.on('error', onError)
+httpsserver.on('listening', onListening)
 
 /**
  * Normalize a port into a number, string, or false.
