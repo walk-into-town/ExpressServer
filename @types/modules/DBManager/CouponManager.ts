@@ -10,14 +10,6 @@ export default class CouponManager extends FeatureManager{
      * 4. 쿼리 결과에 따라 사용자에게 응답
      */
     public insert(params: any): void {
-        if(params.goods.length != params.limit.length){
-            let result = {
-                result: 'failed',
-                error: 'amounts of goods and limit are different'
-            }
-            this.res.status(200).send(result)
-            return;
-        }
         let hash = CryptoJS.SHA256(Date().toString() + params.title)
         let id = hash.toString(CryptoJS.enc.Base64)
         var queryParams = {
@@ -30,7 +22,7 @@ export default class CouponManager extends FeatureManager{
                 endDate: params.endDate,
                 issued: 0,
                 limit: params.limit,
-                imgs: params.imgs
+                img: params.img
             },
             ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         }
