@@ -18,12 +18,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 var router = express.Router();
+const uploader = new UploadFile_1.default();
+const upload = uploader.testupload();
 router.post('/monster/inquiryimg', function (req, res) {
 });
-router.post('/monster/registerimg', function (req, res) {
+router.post('/monster/registerimg', upload.single('img'), function (req, res) {
 });
 router.post('/clear', function (req, res) {
 });
