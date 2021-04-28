@@ -1,4 +1,5 @@
 import * as express from 'express'
+import passport from 'passport'
 import MemberManager from '../../modules/DBManager/MemberManager'
 import SessionManager from '../../modules/DBManager/SessionManager'
 
@@ -30,12 +31,17 @@ router.post('/checknickname', function(req: express.Request, res: express.Respon
 })
 
 //로그인
-router.post('/login', function(req: express.Request, res: express.Response){ 
-    console.log(req.body)
-    let memberDB = new MemberManager(req, res)
-    let query = req.body
-    memberDB.login(query)
-})
+// router.post('/login', function(req: express.Request, res: express.Response){
+//     let memberDB = new MemberManager(req, res)
+//     let query = req.body
+//     memberDB.login(query)
+// })
+router.post('/login', passport.authenticate('local', {
+  successRedirect: '/login/result/success',
+  failureRedirect: '/login/result/fail',
+  failureFlash: true
+}))
+
 
 //로그아웃
 router.post('/logout', function(req: express.Request, res: express.Response){

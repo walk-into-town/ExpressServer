@@ -22,7 +22,6 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
             imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
         }
     }
-
     query.imgs = imgs
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.insert(query)
