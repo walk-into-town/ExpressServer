@@ -14,6 +14,7 @@ export default class SessionManager {
     }
 
     public isSessionValid(): boolean{               //세션의 유효성 판단
+        this.req.isAuthenticated()
         if(this.req.session.user == undefined){
             return false
         }
@@ -37,10 +38,10 @@ export default class SessionManager {
                 const result = await this.Dynamodb.scan(queryParams).promise()
                 result.Items.forEach(session => {
                     let json = JSON.parse(session.sess)
-                    if(json.user == undefined){
+                    if(json.passport.user == undefined){
                         return;
                     }
-                    if(json.user.id == id){
+                    if(json.passport.user.id == id){
                         this.res.locals.result.push(session)
                     }
                 })
@@ -66,14 +67,11 @@ export default class SessionManager {
         let sid = `sess:${id}`
         let queryParams = {
             TableName: 'Session',
-            KeyConditionExpression: '#id = :id',
-            ExpressionAttributeNames: {
-                '#id' : 'id'
-            },
+            KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {
                 ':id' : sid
             },
-            ProjectionExpression: 'sess, #id'
+            ProjectionExpression: 'sess, id'
         }
         const run = async () => {
             try{

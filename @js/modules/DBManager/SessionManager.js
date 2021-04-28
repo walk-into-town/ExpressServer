@@ -21,6 +21,7 @@ class SessionManager {
         this.res = res;
     }
     isSessionValid() {
+        this.req.isAuthenticated();
         if (this.req.session.user == undefined) {
             return false;
         }
@@ -43,10 +44,10 @@ class SessionManager {
                 const result = yield this.Dynamodb.scan(queryParams).promise();
                 result.Items.forEach(session => {
                     let json = JSON.parse(session.sess);
-                    if (json.user == undefined) {
+                    if (json.passport.user == undefined) {
                         return;
                     }
-                    if (json.user.id == id) {
+                    if (json.passport.user.id == id) {
                         this.res.locals.result.push(session);
                     }
                 });
@@ -71,14 +72,11 @@ class SessionManager {
         let sid = `sess:${id}`;
         let queryParams = {
             TableName: 'Session',
-            KeyConditionExpression: '#id = :id',
-            ExpressionAttributeNames: {
-                '#id': 'id'
-            },
+            KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {
                 ':id': sid
             },
-            ProjectionExpression: 'sess, #id'
+            ProjectionExpression: 'sess, id'
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
