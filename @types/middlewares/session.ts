@@ -26,7 +26,7 @@ function getSession() {
           client: dynamodb            //사용할 DyanmoDB 클라이언트.
         }),
         cookie:{
-          maxAge: 1000*60*3,           //토큰 유효 시간 (ms). 3시간동안 유효
+          maxAge: 1000*60*60*3,           //토큰 유효 시간 (ms). 3시간동안 유효
           httpOnly: true,              //http통신에서만 쿠키 확인 가능 -> 클라이언트의 script에서 불가
       //    secure: true               //https에서만 쿠키 전달
         }
