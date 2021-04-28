@@ -5,134 +5,6 @@ import * as bcrypt from 'bcrypt'
 
 export default class MemberManager extends FeatureManager{
     /**
-     * 로그인 로직
-     * 1. get을 통해 id의 pw만 가져온 후
-     * 2. db의 비밀번호와 입력받은 비밀번호의 일치를 확인한 후
-     * 3. 일치하는 경우 현재 시간 + id로 생성한 해시값을 토큰으로 넘겨줌
-     */
-    public login(params: any): void{
-        let id = params.id
-        let returnuser: any
-        let pw = params.pw
-        let isIdValid: boolean
-        let dbpw: string
-        /**
-         * id가 일치하는지 확인
-         */
-        function onGet(err:object, data: any){
-            let result
-            if(err){                        //db에러 발생
-                result = {
-                    result: 'failed',
-                    error: err
-                }
-                this.res.status(400).send(result)
-                isIdValid = false
-                return;
-            }
-            if(data.Item == undefined){     //id와 일치하는 항목 없음
-                result = {
-                    result: 'failed',
-                    error: 'Invalid User Id'
-                }
-                this.res.status(400).send(result)
-                isIdValid = false
-                return;
-            }
-            else{               //일치하면 isIdValid = true, dbpw = pw
-                isIdValid = true
-                returnuser = {
-                    profileimg: data.Item.profileImg,
-                    nickname: data.Item.nickname,
-                    selfIntroduction: data.Item.selfIntroduction
-                }
-                dbpw = data.Item.pw
-            }
-        }
-        /**
-         * 토큰 생성 처리 
-         */
-        function onCreteToken(err, hash){
-            this.req.session.token = hash       //세션의 토큰에 생성된 토큰
-            this.req.session.user = {           //세션의 사용자 정보에 id추가
-                id: params.id
-            }
-            this.req.session.save()
-            let result = {
-                result: 'success',
-                message: returnuser
-            }
-            this.res.status(200).send(result)
-        }
-        let queryParams = {
-            TableName : 'Member',
-            Key : {
-                'id' : params.id,
-            }
-        }
-
-        /**
-         * 비동기 처리
-         * 상기한 내용대에 따라 순서대로 처리
-         */
-        const run = async () => {
-            await this.Dynamodb.get(queryParams, onGet.bind(this)).promise()
-            if(isIdValid == false){
-                return;
-            }
-            const match = await bcrypt.compare(pw, dbpw)
-            if(match == true){
-                await bcrypt.hash(Date.now().toString() + params.id, 10).then(onCreteToken.bind(this))
-            }else{
-                let result = {
-                    result: 'failed',
-                    error: 'Password mismatch'
-                }
-                this.res.status(400).send(result)
-            }
-        }
-        //run()
-        const test = async() => {
-            let data = await this.Dynamodb.get(queryParams).promise()
-            if(data.Item == undefined){
-                let result = {
-                    result: 'failed',
-                    error: 'Invalid User Id'
-                }
-                this.res.status(400).send(result)
-                return;
-            }
-            const match = await bcrypt.compare(pw, data.Item.pw)
-            if(match == true){
-                this.req.session.user = data.Item.id
-                let user = {
-                    profileimg: data.Item.profileImg,
-                    nickname: data.Item.nickname,
-                    selfIntroduction: data.Item.selfIntroduction
-                }
-                let result = {
-                    result: 'success',
-                    message: user
-                }
-                this.res.status(200).send(result)
-                return;
-            }
-        }
-        try{
-            test();
-        }
-        catch(err){
-            let result = {
-                result: 'failed',
-                error: err
-            }
-            this.res.status(400).send(result)
-            isIdValid = false
-            return;
-        }
-    }
-
-    /**
      * 회원가입 로직
      * 1. 입력한 pw를 bcrypt를 이용해 DB에 저장할 pw 생성
      * 2. 생성된 pw를 이용해 DB에 Insert
@@ -156,8 +28,18 @@ export default class MemberManager extends FeatureManager{
             }
             this.Dynamodb.put(queryParams, this.onInsert.bind(this))
         }
-        run()
+        try{
+            run()
+        }
+        catch(err){
+            let result = {
+                result: 'failed',
+                error: 'DB Error! Please Contect Manager'
+            }
+            this.res.status(402).send(result)
+        }
     }
+
     private onInsert(err: object, data: any): void{
         if(err){
             let result = {
@@ -196,7 +78,7 @@ export default class MemberManager extends FeatureManager{
                 return;
             }
             let json = JSON.parse(this.res.locals.result.sess)
-            let findId = json.user.id
+            let findId = json.passport.user.id
             if(findId == id){
                 this.req.session.destroy(() => {
                     this.req.session
@@ -215,7 +97,20 @@ export default class MemberManager extends FeatureManager{
                 this.res.status(200).send(result)
             }
         }
-        run()
+        try{
+            run()
+        }
+        catch(err){
+            let result = {
+                result: 'failed',
+                error: err
+            }
+            this.res.status(402).send(result)
+        }
+    }
+
+    public findMember(id: string){
+        
     }
 
     public read(params: any): void {
