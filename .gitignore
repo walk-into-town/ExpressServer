@@ -111,3 +111,6 @@ uploads/
 @types/routes/test.ts
 @js/routes/test.js
 temp.js
+
+#cert Files
+certs/
