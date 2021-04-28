@@ -15,7 +15,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
     for(let i = 0; i < req.files.length; i++){
         imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
     }
-    query.imgs = imgs
+    query.img = imgs
     couponDB.insert(query)
 })
 
