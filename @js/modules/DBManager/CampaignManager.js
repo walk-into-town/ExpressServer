@@ -45,10 +45,40 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             let isIdValid; //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
             let isPinpointValid;
+            let isCouponValid;
             let result = {
                 result: 'failed',
                 error: []
             };
+            if (params.coupon != undefined) {
+                let checkCouponParams = {
+                    TableName: 'Coupon',
+                    KeyConditionExpression: 'id = :id',
+                    ExpressionAttributeValues: {
+                        ':id': params.coupon
+                    }
+                };
+                function onCheckCoupon(err, data) {
+                    if (isCouponValid == false) {
+                        return;
+                    }
+                    if (err) {
+                        isCouponValid = false;
+                        result.error.push('DB Error. Please Contect Manager');
+                    }
+                    else {
+                        if (data.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
+                            isCouponValid = false;
+                            result.error.push('Invalid Coupon');
+                            return;
+                        }
+                        isCouponValid = true;
+                    }
+                }
+                console.log('start coupon');
+                yield this.Dynamodb.query(checkCouponParams, onCheckCoupon.bind(this)).promise();
+                console.log('fin Coupon');
+            }
             let checkIdParams = {
                 TableName: 'Member',
                 KeyConditionExpression: 'id = :id',
@@ -57,6 +87,9 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 }
             };
             function onCheckId(err, data) {
+                if (isIdValid == false) {
+                    return;
+                }
                 if (err) { //DB오류
                     isIdValid = false;
                     result.error.push('DB Error. Please Contect Manager');
@@ -84,6 +117,10 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 }
             };
             function onCheckPinoint(err, data) {
+                console.log('check pionpoint');
+                if (isPinpointValid == false) {
+                    return;
+                }
                 if (err) { //DB에러
                     isPinpointValid = false;
                     result.error.push('DB Error. Please Contect Manager');
@@ -102,8 +139,9 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     isPinpointValid = true;
                 }
             }
-            this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this));
-            if (isIdValid == false || isPinpointValid == false) { //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
+            yield this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this)).promise();
+            console.log('fin pinpoint');
+            if (isIdValid == false || isPinpointValid == false || isCouponValid == false) { //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
                 this.res.status(400).send(result); //에러 메시지 전달
                 return;
             }

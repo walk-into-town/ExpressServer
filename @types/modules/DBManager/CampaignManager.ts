@@ -17,10 +17,40 @@ export default class CampaignManager extends FeatureManager{
         const run = async () => {
             let isIdValid: boolean            //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
             let isPinpointValid: boolean
+            let isCouponValid: boolean
             let result = {                    //사용자 id 검증 후 전달을 위한 id
                 result: 'failed',
                 error: []
-            }                      
+            }
+            
+            if(params.coupon != undefined){
+                let checkCouponParams = {
+                    TableName: 'Coupon',
+                    KeyConditionExpression: 'id = :id',
+                    ExpressionAttributeValues: {
+                        ':id' : params.coupon
+                    }
+                }
+    
+                function onCheckCoupon(err: object, data: any){
+                    if(isCouponValid == false){
+                        return;
+                    }
+                    if(err){
+                        isCouponValid = false
+                        result.error.push('DB Error. Please Contect Manager')
+                    }
+                    else{
+                        if(data.Items[0] == undefined){     //data.Item == undefined -> 해당하는 ID가 없음
+                            isCouponValid = false
+                            result.error.push('Invalid Coupon')
+                            return;
+                        }
+                        isCouponValid = true
+                    }
+                }
+                await this.Dynamodb.query(checkCouponParams, onCheckCoupon.bind(this)).promise()
+            }
             let checkIdParams = {
                 TableName: 'Member',
                 KeyConditionExpression: 'id = :id',
@@ -29,6 +59,9 @@ export default class CampaignManager extends FeatureManager{
                 }
             }
             function onCheckId(err: object, data: any){     //사용자 ID를 확인할 떄 호출되는 함수
+                if(isIdValid == false){
+                    return;
+                }
                 if(err){                        //DB오류
                     isIdValid = false
                     result.error.push('DB Error. Please Contect Manager')
@@ -44,18 +77,25 @@ export default class CampaignManager extends FeatureManager{
                 }
             }
             await this.Dynamodb.query(checkIdParams, onCheckId.bind(this)).promise()  //id를 가져온 후 확인
+
+            
             let pinpoints = []
             params.pinpoints.forEach(pinpoint => {      //batchget에 맞추기 위해서 {"id": "pinpointid"}로 변환
                 pinpoints.push({'id': pinpoint})
             })
+
             let checkPinpointParams = {
                 RequestItems:{
                     'Pinpoint':{
-                        Keys: pinpoints
+                        Keys: pinpoints,
+                        ProjectionExpression: 'coupons'
                     }
                 }
             }
             function onCheckPinoint(err: object, data: any){    //핀포인트 ID를 확인할 때 호출되는 함수
+                if(isPinpointValid == false){
+                    return;
+                }
                 if(err){                            //DB에러
                     isPinpointValid = false
                     result.error.push('DB Error. Please Contect Manager')
@@ -74,9 +114,10 @@ export default class CampaignManager extends FeatureManager{
                     isPinpointValid = true
                 }
             }
-            this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this))
 
-            if(isIdValid == false || isPinpointValid == false){  //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
+            await this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this)).promise()
+            
+            if(isIdValid == false || isPinpointValid == false || isCouponValid == false){  //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
                 this.res.status(400).send(result)                //에러 메시지 전달
                 return;
             }
@@ -92,7 +133,8 @@ export default class CampaignManager extends FeatureManager{
                     updateTime: params.updateTime,
                     region: params.region,
                     pinpoints: params.pinpoints,
-                    coupons: params.coupons
+                    coupons: params.coupons,
+                    pcoupons: params.pcoupons
                 },
                 ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 }
