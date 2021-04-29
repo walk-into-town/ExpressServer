@@ -6,7 +6,7 @@ export default class CampaignManager extends FeatureManager{
     /**
      * 캠페인 생성 로직
      * 1. 제작자 + 이름 + 지역으로 id생성
-     * 2. 사용자 id와 핀포인트 id의 유효성 검사
+     * 2. 사용자 id와 핀포인트 id, 쿠폰 id의 유효성 검사
      * 3. 유효하다면 isValid = true
      * 4. 유효할 때 캠페인 생성 아닐경우 error
      */
@@ -14,6 +14,8 @@ export default class CampaignManager extends FeatureManager{
         let hash = CryptoJS.SHA256(params.ownner + params.name + params.region)
         let id = hash.toString(CryptoJS.enc.Base64)
         this.res.locals.id = id
+        
+        params.pcoupons = []
         const run = async () => {
             let isIdValid: boolean            //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
             let isPinpointValid: boolean
@@ -87,12 +89,13 @@ export default class CampaignManager extends FeatureManager{
             let checkPinpointParams = {
                 RequestItems:{
                     'Pinpoint':{
-                        Keys: pinpoints,
-                        ProjectionExpression: 'coupons'
+                        Keys: pinpoints
                     }
                 }
             }
+
             function onCheckPinoint(err: object, data: any){    //핀포인트 ID를 확인할 때 호출되는 함수
+                data = data.Responses.Pinpoint
                 if(isPinpointValid == false){
                     return;
                 }
@@ -101,17 +104,22 @@ export default class CampaignManager extends FeatureManager{
                     result.error.push('DB Error. Please Contect Manager')
                 }
                 else{
-                    if(data.Items == undefined){        //일치하는 핀포인트 ID가 하나도 없을 때
+                    if(data == undefined){        //일치하는 핀포인트 ID가 하나도 없을 때
                         isPinpointValid = false
                         result.error.push('Invalid Pinpoint')
                         return;
                     }
-                    if(data.Items.length != pinpoints.length){  //DB가 준 핀포인트 수와 사용자 입력 핀포인트 수가 다름 = 잘못된 핀포인트 존재
+                    if(data.length != pinpoints.length){  //DB가 준 핀포인트 수와 사용자 입력 핀포인트 수가 다름 = 잘못된 핀포인트 존재
                         isPinpointValid = false
                         result.error.push('Invalid Pinpoint')
                         return;
                     }
                     isPinpointValid = true
+                    data.forEach(pinpoint => {
+                        if(pinpoint.coupon != undefined){
+                            params.pcoupons.push(pinpoint.coupon)
+                        }
+                    })
                 }
             }
 
@@ -179,7 +187,7 @@ export default class CampaignManager extends FeatureManager{
                 break;
             case toRead.id:
                 expAttrVals = {
-                   'id' : readType
+                   '#id' : readType
                 }
                 break;
             case toRead.ownner:
