@@ -47,7 +47,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {
-                ':id': params.coupon
+                ':id': params.coupons
             }
         };
         var queryParams = {
@@ -61,7 +61,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 updateTime: params.updateTime,
                 description: params.description,
                 quiz: params.quiz,
-                coupon: params.coupon
+                coupons: params.coupons
             },
             ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         };
@@ -103,7 +103,6 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 2. 사용자에게 전달
      */
     read(params) {
-        console.log(params);
         var queryParams = {
             RequestItems: {
                 'Pinpoint': {
@@ -126,7 +125,16 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             };
             this.res.status(201).send(this.res.locals.result.Responses.Pinpoint);
         });
-        run();
+        try {
+            run();
+        }
+        catch (err) {
+            let result = {
+                result: 'failed',
+                error: 'DB Error. please contect manager'
+            };
+            this.res.status(400).send(result);
+        }
     }
     onRead(err, data) {
         if (err) {
@@ -224,7 +232,6 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         this.Dynamodb.get(queryParams, this.onReadDetail.bind(this));
     }
     onReadDetail(err, data) {
-        console.log(data);
         if (data.Item == undefined) {
             let result = {
                 'result': 'failed',

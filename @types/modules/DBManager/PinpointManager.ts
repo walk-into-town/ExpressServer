@@ -80,7 +80,6 @@ export default class PinpointManager extends FeatureManager{
      * 2. 사용자에게 전달
      */
     public read(params: any): void {
-        console.log(params)
         var queryParams = {
             RequestItems:{
                 'Pinpoint':{
@@ -103,7 +102,16 @@ export default class PinpointManager extends FeatureManager{
             }
             this.res.status(201).send(this.res.locals.result.Responses.Pinpoint)
         }
-        run()
+        try{
+            run()
+        }
+        catch(err){
+            let result = {
+                result: 'failed',
+                error: 'DB Error. please contect manager'
+            }
+            this.res.status(400).send(result)
+        }
      }
     
     private onRead(err: object, data: any): void{
@@ -212,7 +220,6 @@ export default class PinpointManager extends FeatureManager{
     }
     
     private onReadDetail(err: object, data: any): void{
-        console.log(data)
         if(data.Item == undefined){
             let result = {
                 'result': 'failed',
