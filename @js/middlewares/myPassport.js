@@ -69,7 +69,7 @@ module.exports = () => {
                 ExpressionAttributeValues: { ':id': username }
             }).promise();
             if (result.Items[0] == undefined) {
-                return done(null, false, { message: 'Invalid Username' });
+                return done(null, false, { message: 'ID 또는 패스워드가 잘못되었습니다.' });
             }
             let pw = result.Items[0].pw;
             const match = yield bcrypt.compare(password, pw);
@@ -83,7 +83,7 @@ module.exports = () => {
                 return done(null, user);
             }
             else {
-                return done(null, false, { message: 'Invalid Password' });
+                return done(null, false, { message: 'ID 또는 패스워드가 잘못되었습니다.' });
             }
         });
     }));
@@ -107,7 +107,7 @@ module.exports = () => {
                 let query = {
                     id: username,
                     pw: accessToken,
-                    nickname: ' ',
+                    nickname: 'Guest randmom',
                     isManager: false
                 };
                 let social = new SocialRegister_1.default();
