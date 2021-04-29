@@ -30,8 +30,13 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 
 router.post('/list', function(req: express.Request, res: express.Response){
     let query = req.body
+    let read: Array<any> = []
+    query.id.forEach(id => {
+        let obj = {'id': id}
+        read.push(obj)
+    });
     let pinpointDB = new PinpointManager(req, res)
-    pinpointDB.read(query, /*ReadType.query*/)
+    pinpointDB.read(read)
 })
 
 router.post('/inquiry', function(req: express.Request, res: express.Response){
