@@ -45,10 +45,15 @@ router.post('/register', upload.array('img'), function (req, res) {
 router.post('/list', function (req, res) {
     let query = req.body;
     let read = [];
-    query.id.forEach(id => {
-        let obj = { 'id': id };
-        read.push(obj);
-    });
+    if (typeof (query.id) == 'string') {
+        read.push({ 'id': query.id });
+    }
+    else {
+        query.id.forEach(id => {
+            let obj = { 'id': id };
+            read.push(obj);
+        });
+    }
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.read(read);
 });
