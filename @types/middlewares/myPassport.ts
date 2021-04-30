@@ -74,6 +74,11 @@ module.exports = () => {
         ExpressionAttributeValues: {':id' : username}
       }
       const run = async() => {
+        const getRandomNumber = () => {           //GUEST 계정을 위한 닉네임 번호 생성
+          const array = new Uint32Array(1);
+          window.crypto.getRandomValues(array)
+          return array[0]
+        }
         console.log(profile._json.picture)
         let data = await doclient.query(params).promise()
         let result = data.Items[0]
@@ -81,14 +86,14 @@ module.exports = () => {
           let query = {
             id: username,
             pw: accessToken,
-            nickname: 'Guest randmom',
+            nickname: `손님 ${getRandomNumber()}`,
             isManager: false
           }
           let social = new SocialReg()
           await social.insert(query)
           let user = {
             id: username,
-            nickname: ' ',
+            nickname: query.nickname,
             profileImg: '',
             selfIntroduction: ''
         }
