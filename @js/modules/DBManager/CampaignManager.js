@@ -238,8 +238,15 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         else {
             let result = {
                 result: 'success',
-                message: data.Items
+                message: ''
             };
+            if (data.Items[0] == undefined) {
+                result.result = 'failed',
+                    result.message = 'No Campaign found';
+            }
+            else {
+                result.message = data.Items;
+            }
             this.res.status(201).send(result);
         }
     }
