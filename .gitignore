@@ -112,5 +112,8 @@ uploads/
 @js/routes/test.js
 temp.js
 
-#cert Files
+#localhost cert Files
 certs/
+
+#typescript config
+tsconfig.json
