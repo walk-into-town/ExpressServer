@@ -105,6 +105,14 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 2. 사용자에게 전달
      */
     read(params) {
+        if (params[0].id == undefined) {
+            let result = {
+                result: 'failed',
+                error: 'Invalid Request Data'
+            };
+            this.res.status(400).send(result);
+            return;
+        }
         var queryParams = {
             RequestItems: {
                 'Pinpoint': {
