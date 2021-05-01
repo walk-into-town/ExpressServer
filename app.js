@@ -8,8 +8,6 @@ const flash = require('connect-flash')
 var passport = require('passport')
 var passportConfig = require('./@js/middlewares/myPassport')
 
-const middle = require('./@js/middlewares/sessionMiddle')
-
 var app = express();
 
 /**
@@ -56,11 +54,6 @@ app.use(passport.session())
 app.use(flash())
 passportConfig();
 
-/**
- * Persional MiddleWares
- */
-
-//app.use(middle.sessionCheck)
 
 /**
  * set routes
