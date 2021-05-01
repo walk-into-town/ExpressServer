@@ -66,14 +66,16 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let checkCoupon = yield this.Dynamodb.query(checkCouponParams).promise();
-            if (checkCoupon.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
-                let result = {
-                    result: 'failed',
-                    error: 'Invalid Coupon'
-                };
-                this.res.status(400).send(result);
-                return;
+            if (params.coupons != undefined) {
+                let checkCoupon = yield this.Dynamodb.query(checkCouponParams).promise();
+                if (checkCoupon.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
+                    let result = {
+                        result: 'failed',
+                        error: 'Invalid Coupon'
+                    };
+                    this.res.status(400).send(result);
+                    return;
+                }
             }
             this.res.locals.id = params.id;
             this.Dynamodb.put(queryParams, this.onInsert.bind(this));
