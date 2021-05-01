@@ -38,8 +38,8 @@ const AWS = require('aws-sdk');
 AWS.config.update({
     accessKeyId: process.env.aws_access_key_id,
     secretAccessKey: process.env.aws_secret_access_key,
-    region: 'us-east-1',
-    endpoint: 'http://localhost:8000'
+    region: process.env.dynamoRegion,
+    endpoint: process.env.dynamoEndpoint
 });
 const bcrypt = require('bcrypt');
 var passport = require('passport');
@@ -57,10 +57,9 @@ module.exports = () => {
         passwordField: 'pw'
     }, function (username, password, done) {
         return __awaiter(this, void 0, void 0, function* () {
-            dotenv.config();
             AWS.config.update({
-                region: 'us-east-1',
-                endpoint: 'http://localhost:8000'
+                region: process.env.dynamoRegion,
+                endpoint: process.env.dynamoEndpoint
             });
             let doclient = new AWS.DynamoDB.DocumentClient();
             let result = yield doclient.query({
@@ -90,7 +89,7 @@ module.exports = () => {
     passport.use(new GoogleStrategy({
         clientID: process.env.googleID,
         clientSecret: process.env.googleSecret,
-        callbackURL: "https://localhost:3001/auth/google/callback"
+        callbackURL: process.env.googleAuthCallback
     }, function (accessToken, refreshToken, profile, cb) {
         let doclient = new AWS.DynamoDB.DocumentClient();
         let username = `google${profile.id}`;

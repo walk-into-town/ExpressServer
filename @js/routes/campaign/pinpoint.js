@@ -25,9 +25,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile")); //파일 업로드 클래스 import
 const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
+const dotenv = __importStar(require("dotenv"));
 const detail = require('./pinpointDetail');
 const quiz = require('./PinpointQuiz');
 var router = express.Router();
+dotenv.config();
 let uploader = new UploadFile_1.default();
 let upload = uploader.testupload();
 router.post('/register', upload.array('img'), function (req, res) {
@@ -35,7 +37,7 @@ router.post('/register', upload.array('img'), function (req, res) {
     let imgs = [];
     if (req.files != undefined) {
         for (let i = 0; i < req.files.length; i++) {
-            imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
+            imgs.push(process.env.domain + req.files[i].filename);
         }
     }
     query.imgs = imgs;
@@ -71,7 +73,7 @@ router.post('/modify', upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
+        imgs.push(process.env.domain + req.files[i].filename);
     }
     query.imgs = imgs;
     let pinpointDB = new PinpointManager_1.default(req, res);

@@ -15,6 +15,9 @@ export default class UploadFile extends UploaderInterface{
       },
       filename: function (req, file, cb) {
         let ext = `.${mime.extension(file.mimetype)}`
+        if(ext == '.mpga'){
+          ext = '.mp3'
+        }
         let filename = randstr({length: 40})
         cb(null, filename + ext)
         file.filename = filename + ext

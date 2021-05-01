@@ -14,7 +14,7 @@ router.post('/monster/registerimg', upload.array('img'), function(req: express.R
     let query = req.body
     let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
+        imgs.push(process.env.domain + req.files[i].filename)
     }
     query.imgs = imgs
     let monsterDB = new MonsterManager(req, res)

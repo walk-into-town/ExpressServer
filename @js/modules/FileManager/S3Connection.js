@@ -27,8 +27,7 @@ class S3Connection {
         aws.config.update({
             "accessKeyId": process.env.AWS_S3_KEYID,
             "secretAccessKey": process.env.AWS_S3_SECRETKEY,
-            //"region": "ap-northeast-2"
-            "region": 'ap-northeast-2'
+            "region": process.env.S3Region
         });
         this.s3 = new aws.S3();
     }

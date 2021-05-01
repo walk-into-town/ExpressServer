@@ -45,6 +45,21 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let pw;
         let saltRounds = 10;
         const run = () => __awaiter(this, void 0, void 0, function* () {
+            let checkparams = {
+                TableName: 'Member',
+                IndexName: 'nicknameIndex',
+                KeyConditionExpression: 'nickname = :value',
+                ExpressionAttributeValues: { ':value': params.nickname },
+            };
+            let checkResult = yield this.Dynamodb.query(params).promise();
+            if (checkResult.Items.length == 0) {
+                let result = {
+                    result: 'failed',
+                    error: '닉네임이 중복되었어요.'
+                };
+                this.res.status(400).send(result);
+                return;
+            }
             yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
                 pw = hash;
             });

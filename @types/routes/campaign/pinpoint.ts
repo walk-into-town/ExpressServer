@@ -2,13 +2,14 @@ import * as express from 'express'
 
 import UploadFile from '../../modules/FileManager/UploadFile'     //파일 업로드 클래스 import
 import PinpointManager from '../../modules/DBManager/PinpointManager'
-import SessionManager from '../../modules/DBManager/SessionManager'
+import * as dotenv from 'dotenv'
 
 
 const detail = require('./pinpointDetail')
 const quiz = require('./PinpointQuiz')
 
 var router = express.Router()
+dotenv.config()
 
 let uploader = new UploadFile()
 let upload = uploader.testupload()
@@ -19,7 +20,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
     let imgs: Array<string> = []
     if(req.files != undefined){
         for(let i = 0; i < req.files.length; i++){
-            imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
+            imgs.push(process.env.domain + req.files[i].filename)
         }
     }
     query.imgs = imgs
@@ -60,7 +61,7 @@ router.post('/modify', upload.array('img'), function(req: express.Request, res: 
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     for(let i =0; i < req.files.length; i++){
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
+        imgs.push(process.env.domain + req.files[i].filename)
     }
     query.imgs = imgs
     let pinpointDB = new PinpointManager(req, res)

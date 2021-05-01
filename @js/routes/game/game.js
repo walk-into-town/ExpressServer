@@ -34,7 +34,7 @@ router.post('/monster/registerimg', upload.array('img'), function (req, res) {
     let query = req.body;
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
+        imgs.push(process.env.domain + req.files[i].filename);
     }
     query.imgs = imgs;
     let monsterDB = new MonsterManager_1.default(req, res);

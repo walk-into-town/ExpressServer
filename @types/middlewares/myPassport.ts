@@ -6,8 +6,8 @@ const AWS = require('aws-sdk')
 AWS.config.update({
   accessKeyId: process.env.aws_access_key_id,
   secretAccessKey: process.env.aws_secret_access_key,
-  region: 'us-east-1',
-  endpoint: 'http://localhost:8000'
+  region: process.env.dynamoRegion,
+  endpoint: process.env.dynamoEndpoint
 })
 const bcrypt = require('bcrypt')
 
@@ -29,10 +29,9 @@ module.exports = () => {
         passwordField: 'pw'
     },
     async function(username: string, password: string, done: Function){
-        dotenv.config()
         AWS.config.update({
-          region: 'us-east-1',
-          endpoint: 'http://localhost:8000'
+          region: process.env.dynamoRegion,
+          endpoint: process.env.dynamoEndpoint
         })
         let doclient = new AWS.DynamoDB.DocumentClient()
         let result = await doclient.query({
@@ -60,12 +59,12 @@ module.exports = () => {
     }
     ))
 
-    passport.use(new GoogleStrategy({
-      clientID: process.env.googleID,
+    passport.use(new GoogleStrategy({             // 구글 전략 설정
+      clientID: process.env.googleID,             // OAuth 생성시 API 호출을 위한 ID, Secret
       clientSecret: process.env.googleSecret,
-      callbackURL: "https://localhost:3001/auth/google/callback"
+      callbackURL: process.env.googleAuthCallback // 로그인 성공시 이동하는 페이지
     },
-    function(accessToken, refreshToken, profile, cb) {
+    function(accessToken, refreshToken, profile, cb) {      // 로그인 성공시 callback 페이지에서 호출하는 함수
       let doclient = new AWS.DynamoDB.DocumentClient()
       let username = `google${profile.id}`
       let params = {

@@ -13,6 +13,22 @@ export default class MemberManager extends FeatureManager{
     public insert(params: any): void {
         let pw: string; let saltRounds = 10
         const run = async () => {
+            let checkparams = {
+                TableName: 'Member',
+                IndexName: 'nicknameIndex',
+                KeyConditionExpression: 'nickname = :value',
+                ExpressionAttributeValues: {':value': params.nickname},
+            }
+            let checkResult = await this.Dynamodb.query(params).promise()
+            if(checkResult.Items.length == 0){
+                let result = {
+                    result: 'failed',
+                    error: '닉네임이 중복되었어요.'
+                }
+                this.res.status(400).send(result)
+                return;
+            }
+
             await bcrypt.hash(params.pw, saltRounds).then(function(hash){
                 pw = hash
               })

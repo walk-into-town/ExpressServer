@@ -29,7 +29,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
+const dotenv = __importStar(require("dotenv"));
 var router = express.Router();
+dotenv.config();
 const pinpoint = require('./pinpoint');
 const participate = require('./campaignParticipate');
 const evaluate = require('./campaignEvaluate');
@@ -45,7 +47,7 @@ router.post('/register', upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
+        imgs.push(process.env.domain + req.files[i].filename);
     }
     query.imgs = imgs;
     let campaignDB = new CampaignManager_1.default(req, res);

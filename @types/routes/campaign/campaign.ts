@@ -7,8 +7,10 @@
 import * as express from 'express'
 import UploadFile from '../../modules/FileManager/UploadFile'
 import CampaignManager from '../../modules/DBManager/CampaignManager'
+import * as dotenv from 'dotenv'
 
 var router = express.Router()
+dotenv.config()
 
 const pinpoint = require('./pinpoint')
 const participate = require('./campaignParticipate')
@@ -29,7 +31,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename)
+        imgs.push(process.env.domain + req.files[i].filename)
     }
     query.imgs = imgs
     let campaignDB = new CampaignManager(req, res)

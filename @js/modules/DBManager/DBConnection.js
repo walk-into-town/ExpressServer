@@ -25,8 +25,8 @@ class DBConnection {
         const dotenv = require('dotenv');
         dotenv.config();
         var params = {
-            region: 'us-east-1',
-            endpoint: 'http://localhost:8000'
+            region: process.env.dynamoRegion,
+            endpoint: process.env.dynamoEndpoint
         };
         aws.config.update(params);
         this.DynamoDB = new aws.DynamoDB.DocumentClient();

@@ -6,7 +6,7 @@ export class CloudfrontConnection{
         aws.config.update({
             "accessKeyId": process.env.AWS_S3_KEYID,
             "secretAccessKey": process.env.AWS_S3_SECRETKEY,
-            "region": "ap-northeast-2"
+            "region": process.env.S3Region
         })
         this.cloudfront = new aws.CloudFront()
         return this.cloudfront

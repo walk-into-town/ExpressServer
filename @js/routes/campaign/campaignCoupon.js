@@ -25,15 +25,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const CouponManager_1 = __importDefault(require("../../modules/DBManager/CouponManager"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
+const dotenv = __importStar(require("dotenv"));
 let fileMan = new UploadFile_1.default();
 let upload = fileMan.testupload();
 var router = express.Router();
+dotenv.config();
 router.post('/register', upload.array('img'), function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
+        imgs.push(process.env.domain + req.files[i].filename);
     }
     query.img = imgs;
     couponDB.insert(query);
@@ -50,7 +52,7 @@ router.post('/modify', upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
-        imgs.push("https://walk-into-town.ga/" + req.files[i].filename);
+        imgs.push(process.env.domain + req.files[i].filename);
     }
     query.imgs = imgs;
     couponDB.update(query);
