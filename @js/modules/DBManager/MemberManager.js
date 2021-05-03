@@ -69,6 +69,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 Item: {
                     id: params.id,
                     pw: pw,
+                    profileImg: process.env.domain + 'defaultProfileImg.jpg',
                     nickname: params.nickname,
                     isManager: params.isManager
                 },
@@ -91,7 +92,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         if (err) {
             let result = {
                 result: 'failed',
-                error: err
+                error: 'ID가 중복되었어요'
             };
             this.res.status(400).send(result);
         }

@@ -42,6 +42,9 @@ router.use('/pinpoint', pinpoint);
 router.use('participate', participate);
 router.use('/evaluate', evaluate);
 router.use('/coupon', coupon);
+router.get('/', function (req, res) {
+    res.send('success');
+});
 //캠페인 등록
 router.post('/register', upload.array('img'), function (req, res) {
     let query = req.body;
