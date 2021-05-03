@@ -41,7 +41,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. ConditionExpression을 통해 id가 중복되면 실패
      */
     insert(params) {
-        let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString()); //id 중복 방지 + 이름과 위치가 같은 핀포인트 중복 방지
+        let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + Date.toString()); //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64);
         var checkCouponParams = {
             TableName: 'Coupon',
@@ -63,12 +63,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 quiz: params.quiz,
                 coupons: params.coupons
             },
-            ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+            ConditionExpression: "attribute_not_exists(id)" // 항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            if (params.coupons != undefined) {
+            if (params.coupons != undefined) { // 핀포인트 쿠폰이 있는경우 쿠폰 유효성 파악
                 let checkCoupon = yield this.Dynamodb.query(checkCouponParams).promise();
                 if (checkCoupon.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
+                    console.log(`핀포인트 쿠폰 체크\nDB 요청 Params\n${JSON.stringify(queryParams, null, 2)}`);
                     let result = {
                         result: 'failed',
                         error: 'Invalid Coupon'
@@ -78,24 +79,23 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
             }
             this.res.locals.id = params.id;
-            this.Dynamodb.put(queryParams, this.onInsert.bind(this));
+            let queryResult = yield this.Dynamodb.put(queryParams).promise();
+            let result = {
+                'result': 'success',
+                'pinpointId': params.id
+            };
+            this.res.status(201).send(result);
+            console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
         });
-        run();
-    }
-    onInsert(err, data) {
-        if (err) { //에러 발생
+        try {
+            run();
+        }
+        catch (err) {
             let result = {
                 result: 'failed',
                 error: err
             };
-            this.res.status(400).send(result);
-        }
-        else { //정상 처리
-            let result = {
-                "result": "success",
-                "pinpointId": this.res.locals.id // DynamoDB에서는 insert시 결과 X. 따라서 임의로 생성되는 id를 전달하기 위해 locals에 id 추가
-            };
-            this.res.status(201).send(result);
+            this.res.send(400).send(result);
         }
     }
     /**

@@ -46,9 +46,11 @@ var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 module.exports = () => {
+    // 전략에서 넘어온 User값을 세션에 저장하는 함수
     passport.serializeUser(function (user, done) {
         done(null, user);
     });
+    // DB에 저장된 세션과 비교할 때 사용하는 함수
     passport.deserializeUser(function (id, done) {
         done(null, id);
     });
@@ -62,15 +64,19 @@ module.exports = () => {
                 endpoint: process.env.dynamoEndpoint
             });
             let doclient = new AWS.DynamoDB.DocumentClient();
+            console.log('로컬 계정 로그인');
             let result = yield doclient.query({
                 TableName: 'Member',
                 KeyConditionExpression: 'id = :id',
                 ExpressionAttributeValues: { ':id': username }
             }).promise();
             if (result.Items[0] == undefined) {
+                console.log('ID 불일치');
                 return done(null, false, { message: 'ID 또는 패스워드가 잘못되었습니다.' });
             }
+            console.log('ID 일치');
             let pw = result.Items[0].pw;
+            console.log('PW 비교중...');
             const match = yield bcrypt.compare(password, pw);
             if (match == true) {
                 let user = {
@@ -79,9 +85,11 @@ module.exports = () => {
                     profileImg: result.Items[0].profileImg,
                     selfIntroduction: result.Items[0].selfIntroduction
                 };
+                console.log('PW 일치');
                 return done(null, user);
             }
             else {
+                console.log('비밀번호 불일치');
                 return done(null, false, { message: 'ID 또는 패스워드가 잘못되었습니다.' });
             }
         });
@@ -89,7 +97,7 @@ module.exports = () => {
     passport.use(new GoogleStrategy({
         clientID: process.env.googleID,
         clientSecret: process.env.googleSecret,
-        callbackURL: process.env.googleAuthCallback
+        callbackURL: process.env.googleAuthCallback // 로그인 성공시 이동하는 페이지
     }, function (accessToken, refreshToken, profile, cb) {
         let doclient = new AWS.DynamoDB.DocumentClient();
         let username = `google${profile.id}`;
@@ -99,6 +107,7 @@ module.exports = () => {
             ExpressionAttributeValues: { ':id': username }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
+            console.log('구글 로그인');
             const getRandomNumber = () => {
                 const array = new Uint32Array(1);
                 window.crypto.getRandomValues(array);
@@ -108,6 +117,7 @@ module.exports = () => {
             let data = yield doclient.query(params).promise();
             let result = data.Items[0];
             if (result == undefined) { //id 없는경우
+                console.log('새로운 구글 ID');
                 let query = {
                     id: username,
                     pw: accessToken,
@@ -124,7 +134,8 @@ module.exports = () => {
                 };
                 return cb(null, user);
             }
-            else {
+            else { // 기존에 로그인 했던 경우
+                console.log('기존에 사용한 구글 ID');
                 let user = {
                     id: username,
                     nickname: result.nickname,
