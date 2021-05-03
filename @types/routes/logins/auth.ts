@@ -3,7 +3,7 @@ var router = express.Router()
 var passport = require('passport')
 
 router.get('/google', passport.authenticate('google', {
-    scope: ['profile'],
+    scope: ['profile', 'email'],
     accessType: 'offline'
   })
   )
