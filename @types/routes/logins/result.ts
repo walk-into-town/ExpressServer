@@ -29,6 +29,7 @@ router.get('/success', function(req, res){
         }
         await run()
         sessman.deleteSession(toDelete)
+        console.log('로그인 성공!')
     })
 
     let result = {
@@ -44,6 +45,7 @@ router.get('/fail', function(req: express.Request, res: express.Response){
         result : 'failed',
         error: req.flash().error[0]
       }
+      console.log('로그인 실패')
       res.status(402).send(result)
 })
 

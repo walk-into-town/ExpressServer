@@ -51,8 +51,9 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 KeyConditionExpression: 'nickname = :value',
                 ExpressionAttributeValues: { ':value': params.nickname },
             };
-            let checkResult = yield this.Dynamodb.query(params).promise();
-            if (checkResult.Items.length == 0) {
+            let checkResult = yield this.Dynamodb.query(checkparams).promise();
+            console.log(checkResult.Items);
+            if (checkResult.Items.length != 0) {
                 let result = {
                     result: 'failed',
                     error: '닉네임이 중복되었어요.'
