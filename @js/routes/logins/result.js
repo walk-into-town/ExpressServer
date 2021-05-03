@@ -60,6 +60,7 @@ router.get('/success', function (req, res) {
         });
         yield run();
         sessman.deleteSession(toDelete);
+        console.log('로그인 성공!');
     }));
     let result = {
         result: 'success',
@@ -73,6 +74,7 @@ router.get('/fail', function (req, res) {
         result: 'failed',
         error: req.flash().error[0]
     };
+    console.log('로그인 실패');
     res.status(402).send(result);
 });
 module.exports = router;
