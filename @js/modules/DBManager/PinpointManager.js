@@ -32,9 +32,6 @@ const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 class PinpointManager extends FeatureManager_1.FeatureManager {
     /**
-     * 핀포인트 API
-     */
-    /**
      * 핀포인트 등록 로직
      * 1. 핀포인트 이름, 위/경도로 hash id 생성
      * 2. 해당 id를 이용해 DB Insert
@@ -80,12 +77,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             }
             this.res.locals.id = params.id;
             let queryResult = yield this.Dynamodb.put(queryParams).promise();
-            let result = {
-                'result': 'success',
-                'pinpointId': params.id
-            };
-            this.res.status(201).send(result);
-            console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
+            this.res.locals.pinpoints.push(params.id);
+            // let result = {
+            //     'result': 'success',
+            //     'pinpointId': params.id
+            // }
+            // this.res.status(201).send(result)
+            // console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
         });
         try {
             run();

@@ -4,11 +4,6 @@ import * as CryptoJS from 'crypto-js'
 
 export default class PinpointManager extends FeatureManager{
     /**
-     * 핀포인트 API
-     */
-
-
-    /**
      * 핀포인트 등록 로직
      * 1. 핀포인트 이름, 위/경도로 hash id 생성
      * 2. 해당 id를 이용해 DB Insert
@@ -56,12 +51,13 @@ export default class PinpointManager extends FeatureManager{
 
             this.res.locals.id = params.id
             let queryResult = await this.Dynamodb.put(queryParams).promise()
-            let result = {
-                'result': 'success',
-                'pinpointId': params.id
-            }
-            this.res.status(201).send(result)
-            console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
+            this.res.locals.pinpoints.push(params.id)
+            // let result = {
+            //     'result': 'success',
+            //     'pinpointId': params.id
+            // }
+            // this.res.status(201).send(result)
+            // console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
         }
         try{
             run()

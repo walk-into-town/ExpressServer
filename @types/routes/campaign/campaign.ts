@@ -8,6 +8,8 @@
 import * as express from 'express'
 import UploadFile from '../../modules/FileManager/UploadFile'
 import CampaignManager from '../../modules/DBManager/CampaignManager'
+import CouponManager from '../../modules/DBManager/CouponManager'
+import PinpointManager from '../../modules/DBManager/PinpointManager'
 import * as dotenv from 'dotenv'
 import isAuthenticated from '../../middlewares/authentication'
 
@@ -32,7 +34,34 @@ router.use('/coupon', coupon)
 
 //캠페인 등록
 router.post('/',isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
+    res.locals.coupons = [];
     let query = req.body
+    query.pcouons = []
+    let coupons = req.body.coupons
+    let couponDB = new CouponManager(req, res)
+    let pinpoints = req.body.pinpoints
+
+    for (const coupon of coupons) {
+        couponDB.insert(coupon)
+    }
+    for (const coupon of res.locals.coupons){
+        if(coupon.id == -1){
+            query.coupons = coupon.id
+        }
+        else{
+            query.pcoupons.push(coupon.id)
+            pinpoints[coupon.paymentCondition].coupon = coupon.id
+        }
+    }
+    
+    res.locals.pinpoints = []
+    let pinpointDB = new PinpointManager(req, res)
+    for (const pinpoint of pinpoints){
+        pinpointDB.insert(pinpoint)
+    }
+    query.pinpoints = res.locals.pinpoints
+
+
     let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
         imgs.push(process.env.domain + req.files[i].filename)

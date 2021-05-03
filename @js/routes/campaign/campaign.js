@@ -30,6 +30,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
+const CouponManager_1 = __importDefault(require("../../modules/DBManager/CouponManager"));
+const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
 const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
@@ -44,12 +46,32 @@ router.use('/pinpoint', pinpoint);
 router.use('/participate', participate);
 router.use('/evaluate', evaluate);
 router.use('/coupon', coupon);
-router.get('/', function (req, res) {
-    res.send('success');
-});
 //캠페인 등록
 router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
+    res.locals.coupons = [];
     let query = req.body;
+    query.pcouons = [];
+    let coupons = req.body.coupons;
+    let couponDB = new CouponManager_1.default(req, res);
+    let pinpoints = req.body.pinpoints;
+    for (const coupon of coupons) {
+        couponDB.insert(coupon);
+    }
+    for (const coupon of res.locals.coupons) {
+        if (coupon.id == -1) {
+            query.coupons = coupon.id;
+        }
+        else {
+            query.pcoupons.push(coupon.id);
+            pinpoints[coupon.paymentCondition].coupon = coupon.id;
+        }
+    }
+    res.locals.pinpoints = [];
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    for (const pinpoint of pinpoints) {
+        pinpointDB.insert(pinpoint);
+    }
+    query.pinpoints = res.locals.pinpoints;
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
         imgs.push(process.env.domain + req.files[i].filename);
