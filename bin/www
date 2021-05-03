@@ -31,12 +31,11 @@ app.set('port', httpsport)
  */
 
 /*
-var domain = 'walk-into-town.ga'
 
 var sslOptions = {
-  ca: fs.readFileSync(`/etc/letsencrypt/live/${domain}/chain.pem`),
-  key: fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`),
-  cert: fs.readFileSync(`/etc/letsencrypt/live/${domain}/cert.pem`)
+  ca: fs.readFileSync(`/etc/letsencrypt/live/${process.env.certs}/chain.pem`),
+  key: fs.readFileSync(`/etc/letsencrypt/live/${process.env.certs}/privkey.pem`),
+  cert: fs.readFileSync(`/etc/letsencrypt/live/${process.env.certs}/cert.pem`)
 };
 */
 
@@ -54,7 +53,7 @@ var server = http.createServer(app);
 var httpsserver = https.createServer(sslOptions, app)
 
 
-/**
+/** 
  * Listen on provided port, on all network interfaces.
  */
 

@@ -23,6 +23,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -30,8 +39,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
-const CouponManager_1 = __importDefault(require("../../modules/DBManager/CouponManager"));
-const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
+const tempCoupon_1 = __importDefault(require("../../modules/DBManager/tempCoupon"));
+const tempPinpoint_1 = __importDefault(require("../../modules/DBManager/tempPinpoint"));
 const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
@@ -50,35 +59,67 @@ router.use('/coupon', coupon);
 router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
     res.locals.coupons = [];
     let query = req.body;
-    query.pcouons = [];
-    let coupons = req.body.coupons;
-    let couponDB = new CouponManager_1.default(req, res);
-    let pinpoints = req.body.pinpoints;
-    for (const coupon of coupons) {
-        couponDB.insert(coupon);
-    }
-    for (const coupon of res.locals.coupons) {
-        if (coupon.id == -1) {
-            query.coupons = coupon.id;
-        }
-        else {
-            query.pcoupons.push(coupon.id);
-            pinpoints[coupon.paymentCondition].coupon = coupon.id;
-        }
-    }
+    query.pcoupons = [];
+    let coupons = JSON.parse(req.body.coupons);
+    let couponDB = new tempCoupon_1.default(req, res);
+    let pinpoints = JSON.parse(req.body.pinpoints);
     res.locals.pinpoints = [];
-    let pinpointDB = new PinpointManager_1.default(req, res);
-    for (const pinpoint of pinpoints) {
-        pinpointDB.insert(pinpoint);
+    if (pinpoints == undefined) {
+        let result = {
+            result: 'failed',
+            error: 'Missing Required Values: pinpoint'
+        };
+        res.status(400).send(result);
+        return;
     }
-    query.pinpoints = res.locals.pinpoints;
-    let imgs = [];
-    for (let i = 0; i < req.files.length; i++) {
-        imgs.push(process.env.domain + req.files[i].filename);
+    if (coupons == undefined) {
+        let result = {
+            result: 'failed',
+            error: 'Missing Requried Value: Coupon'
+        };
+        res.status(400).send(result);
+        return;
     }
-    query.imgs = imgs;
-    let campaignDB = new CampaignManager_1.default(req, res);
-    campaignDB.insert(query);
+    // if(coupons != undefined){
+    //     for (const coupon of coupons) {
+    //         console.log(coupon)
+    //         console.log(`\n\n`)
+    //         couponDB.insert(coupon)
+    //     }
+    //     for (const coupon of res.locals.coupons){
+    //         if(coupon.id == -1){
+    //             query.coupons = coupon
+    //         }
+    //         else{
+    //             query.pcoupons.push(coupon)
+    //             pinpoints[coupon.paymentCondition].coupon = coupon.id
+    //         }
+    //     }
+    // }
+    let pinpointDB = new tempPinpoint_1.default(req, res);
+    const run = () => __awaiter(this, void 0, void 0, function* () {
+        for (let i = 0; i < coupons.length; i++) {
+            console.log(coupons[i]);
+            yield couponDB.insert(coupons[i])();
+        }
+        console.log(res.locals.coupons);
+        for (let i = 0; i < res.locals.coupons.length; i++) {
+            if (res.locals.coupons[i].paymentCondition == -1) {
+                query.coupons = res.locals.coupons[i].id;
+            }
+            else {
+                query.pcoupons.push(res.locals.coupons[i].id);
+                pinpoints[res.locals.coupons[i].paymentCondition].coupon = coupons[i].id;
+            }
+        }
+        for (let i = 0; i < pinpoints.length; i++) {
+            yield pinpointDB.insert(pinpoints[i])();
+        }
+        query.pinpoints = res.locals.pinpoints;
+        let campaignDB = new CampaignManager_1.default(req, res);
+        campaignDB.insert(query);
+    });
+    run();
 });
 //캠페인 조회
 router.get('/', function (req, res) {

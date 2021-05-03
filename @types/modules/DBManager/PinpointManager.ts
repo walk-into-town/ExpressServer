@@ -10,7 +10,8 @@ export default class PinpointManager extends FeatureManager{
      * 3. ConditionExpression을 통해 id가 중복되면 실패
      */
     public insert(params: any): void {
-        let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + Date.toString())  //id 생성
+        let date = new Date()
+        let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + date.toString())  //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64)
         var checkCouponParams = {                   // 쿠폰 id 체크 파라미터
             TableName: 'Coupon',

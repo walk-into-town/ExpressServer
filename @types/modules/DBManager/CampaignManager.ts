@@ -11,7 +11,8 @@ export default class CampaignManager extends FeatureManager{
      * 4. 유효할 때 캠페인 생성 아닐경우 error
      */
     public insert(params: any): void {
-        let hash = CryptoJS.SHA256(params.ownner + params.name + params.region)
+        let date = new Date()
+        let hash = CryptoJS.SHA256(params.ownner + params.name + params.region + date.toString())
         let id = hash.toString(CryptoJS.enc.Base64)
         this.res.locals.id = id
         

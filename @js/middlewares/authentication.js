@@ -1,8 +1,10 @@
 "use strict";
 module.exports = function (req, res, next) {
     console.log('called');
+    console.log(req.isAuthenticated());
     if (req.isAuthenticated() == true) {
         next();
+        return;
     }
     let result = {
         result: 'failed',
