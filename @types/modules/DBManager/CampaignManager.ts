@@ -87,7 +87,7 @@ export default class CampaignManager extends FeatureManager{
                 }
             }
 
-            console.log(`사용자 체크\nDB 요청 params\n${checkIdParams}`)
+            console.log(`사용자 체크\nDB 요청 params\n${JSON.stringify(checkIdParams, null, 2)}`)
             await this.Dynamodb.query(checkIdParams, onCheckId.bind(this)).promise()  //id를 가져온 후 확인
             
             let pinpoints = []

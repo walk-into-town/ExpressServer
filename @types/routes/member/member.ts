@@ -30,12 +30,6 @@ router.post('/checknickname', function(req: express.Request, res: express.Respon
     memberDB.check('nickname', query)
 })
 
-//로그인
-// router.post('/login', function(req: express.Request, res: express.Response){
-//     let memberDB = new MemberManager(req, res)
-//     let query = req.body
-//     memberDB.login(query)
-// })
 router.post('/login', passport.authenticate('local', {
   successRedirect: '/login/result/success',
   failureRedirect: '/login/result/fail',

@@ -44,7 +44,7 @@ router.use('/evaluate', evaluate);
 router.use('/coupon', coupon);
 //캠페인 등록
 router.post('/register', upload.array('img'), function (req, res) {
-    let query = JSON.parse(req.body.json);
+    let query = req.body;
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
         imgs.push(process.env.domain + req.files[i].filename);
