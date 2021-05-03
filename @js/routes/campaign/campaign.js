@@ -1,6 +1,7 @@
 "use strict";
 /**
  * campaign 라우팅 테이블
+ * /campaign
  * pinpoint, register, inquiry, participate, evaluate, coupon
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -30,6 +31,7 @@ const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
 const dotenv = __importStar(require("dotenv"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
 dotenv.config();
 const pinpoint = require('./pinpoint');
@@ -39,11 +41,11 @@ const coupon = require('./campaignCoupon');
 const uploader = new UploadFile_1.default();
 const upload = uploader.testupload();
 router.use('/pinpoint', pinpoint);
-router.use('participate', participate);
+router.use('/participate', participate);
 router.use('/evaluate', evaluate);
 router.use('/coupon', coupon);
 //캠페인 등록
-router.post('/register', upload.array('img'), function (req, res) {
+router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = req.body;
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
@@ -54,13 +56,13 @@ router.post('/register', upload.array('img'), function (req, res) {
     campaignDB.insert(query);
 });
 //캠페인 조회
-router.post('/inquiry', function (req, res) {
+router.get('/', function (req, res) {
     let query = req.body;
     let campaignDB = new CampaignManager_1.default(req, res);
     campaignDB.read(query.value, query.type);
 });
 //캠페인 수정
-router.post('/modify', upload.array('img'), function (req, res) {
+router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let campaignDB = new CampaignManager_1.default(req, res);
     campaignDB.update(query);
