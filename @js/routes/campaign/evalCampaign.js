@@ -18,9 +18,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /campaign/evaluate/campaign
+ */
 const express = __importStar(require("express"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
-const rate = require('./campaignRate');
-router.use('/rate', rate);
+router.post('/', authentication_1.default, function (req, res) {
+});
+router.get('/', function (req, res) {
+});
+router.delete('/', authentication_1.default, function (req, res) {
+});
+router.put('/', authentication_1.default, function (req, res) {
+});
 module.exports = router;

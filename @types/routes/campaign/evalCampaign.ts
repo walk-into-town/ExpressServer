@@ -1,8 +1,24 @@
+/**
+ * /campaign/evaluate/campaign
+ */
 import * as express from 'express'
+import isAuthenticated from '../../middlewares/authentication'
+
 var router = express.Router()
 
-const rate = require('./campaignRate')
+router.post('/', isAuthenticated, function(req: express.Request, res: express.Response){
 
-router.use('/rate', rate)
+})
 
+router.get('/', function(req: express.Request, res: express.Response){
+    
+})
+
+router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
+    
+})
+
+router.put('/', isAuthenticated, function(req: express.Request, res: express.Response){
+    
+})
 module.exports = router

@@ -1,8 +1,12 @@
+/**
+ * /campaign/pinpoint
+ */
 import * as express from 'express'
 
 import UploadFile from '../../modules/FileManager/UploadFile'     //파일 업로드 클래스 import
 import PinpointManager from '../../modules/DBManager/PinpointManager'
 import * as dotenv from 'dotenv'
+import isAuthenticated from '../../middlewares/authentication'
 
 
 const detail = require('./pinpointDetail')
@@ -15,7 +19,7 @@ let uploader = new UploadFile()
 let upload = uploader.testupload()
 
 
-router.post('/register', upload.array('img'), function(req: express.Request, res: express.Response){
+router.post('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     if(req.files != undefined){
@@ -29,7 +33,7 @@ router.post('/register', upload.array('img'), function(req: express.Request, res
 
 })
 
-router.post('/list', function(req: express.Request, res: express.Response){
+router.get('/', function(req: express.Request, res: express.Response){
     let query = req.body
     let read: Array<any> = []
     if(typeof(query.id) == 'string'){
@@ -45,19 +49,19 @@ router.post('/list', function(req: express.Request, res: express.Response){
     pinpointDB.read(read)
 })
 
-router.post('/inquiry', function(req: express.Request, res: express.Response){
-    let query = req.body
-    let pinpointDB = new PinpointManager(req, res)
-    pinpointDB.read([query])
-})
+// router.post('/inquiry', function(req: express.Request, res: express.Response){
+//     let query = req.body
+//     let pinpointDB = new PinpointManager(req, res)
+//     pinpointDB.read([query])
+// })
 
-router.post('/delete', function(req: express.Request, res: express.Response){
+router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.delete(query)
 })
 
-router.post('/modify', upload.array('img'), function(req: express.Request, res: express.Response){
+router.put('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
     for(let i =0; i < req.files.length; i++){

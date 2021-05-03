@@ -22,15 +22,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /campaign/coupon
+ */
 const express = __importStar(require("express"));
 const CouponManager_1 = __importDefault(require("../../modules/DBManager/CouponManager"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const dotenv = __importStar(require("dotenv"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 let fileMan = new UploadFile_1.default();
 let upload = fileMan.testupload();
 var router = express.Router();
 dotenv.config();
-router.post('/register', upload.array('img'), function (req, res) {
+router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
     let query = JSON.parse(req.body.json);
     let imgs = [];
@@ -40,14 +44,14 @@ router.post('/register', upload.array('img'), function (req, res) {
     query.img = imgs;
     couponDB.insert(query);
 });
-router.post('/inquiry', function (req, res) {
+router.get('/', function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
     let query = req.body;
     couponDB.read(query);
 });
-router.post('/delete', function (req, res) {
+router.delete('/', authentication_1.default, function (req, res) {
 });
-router.post('/modify', upload.array('img'), function (req, res) {
+router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
     let query = JSON.parse(req.body.json);
     let imgs = [];

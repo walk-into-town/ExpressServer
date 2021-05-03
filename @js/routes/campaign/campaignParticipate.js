@@ -18,16 +18,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /campaign/participate
+ */
 const express = __importStar(require("express"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
-router.post('/campaign', function (req, res) {
+router.post('/campaign', authentication_1.default, function (req, res) {
 });
-router.post('/quiz', function (req, res) {
+router.post('/quiz', authentication_1.default, function (req, res) {
 });
-router.post('/inquiry/campaign', function (req, res) {
-    res.send('testest');
+router.get('/campaign', function (req, res) {
 });
-router.post('/inquiry/user', function (req, res) {
+router.get('/user', function (req, res) {
 });
 module.exports = router;

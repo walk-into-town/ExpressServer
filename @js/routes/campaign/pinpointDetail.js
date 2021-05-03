@@ -22,21 +22,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /campaign/pinpoint/detail
+ */
 const express = __importStar(require("express"));
 const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
-router.post('/inquiry', function (req, res) {
+router.get('/', function (req, res) {
     let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.readDetail(query);
 });
-router.post('/delete', function (req, res) {
+router.delete('/', authentication_1.default, function (req, res) {
     let query = req.body;
     query.description = '';
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.updateDetail(query);
 });
-router.post('/modify', function (req, res) {
+router.put('/', authentication_1.default, function (req, res) {
     let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.updateDetail(query);

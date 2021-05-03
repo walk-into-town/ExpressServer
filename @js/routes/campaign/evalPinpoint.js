@@ -19,6 +19,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /campaign/evaluate/pinpoint
+ */
 const express = __importStar(require("express"));
 var router = express.Router();
 const comment = require('./pinpointComment');

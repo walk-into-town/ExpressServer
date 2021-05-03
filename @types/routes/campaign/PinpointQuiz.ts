@@ -1,28 +1,33 @@
+/**
+ * /campaign/pinpoint/quiz
+ */
 import * as express from 'express'
 import PinpointManager from '../../modules/DBManager/PinpointManager'
+import isAuthenticated from '../../middlewares/authentication'
+
 var router = express.Router()
 
 
-router.post('/register', function(req: express.Request, res: express.Response){
+router.post('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let DBManager = new PinpointManager(req, res)
     DBManager.insertQuiz(query)
 })
 
-router.post('/inquiry', function(req: express.Request, res: express.Response){
+router.get('/', function(req: express.Request, res: express.Response){
     let query = req.body
     let DBManager = new PinpointManager(req, res)
     DBManager.readQuiz(query)
 })
 
-router.post('/delete', function(req: express.Request, res: express.Response){
+router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     query.quiz = null
     let DBManager = new PinpointManager(req, res)
     DBManager.updateQuiz(query)
 })
 
-router.post('/modify', function(req: express.Request, res: express.Response){
+router.put('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let DBManager = new PinpointManager(req, res)
     DBManager.updateQuiz(query)
