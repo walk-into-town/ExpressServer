@@ -74,7 +74,7 @@ module.exports = () => {
     },
     function(accessToken, refreshToken, profile, cb) {      // 로그인 성공시 callback 페이지에서 호출하는 함수
       let doclient = new AWS.DynamoDB.DocumentClient()
-      let username = `google${profile.id}`
+      let username = `google${profile.emails[0].value}`
       let params = {
         TableName: 'Member',
         KeyConditionExpression: 'id = :id',
@@ -83,11 +83,8 @@ module.exports = () => {
       const run = async() => {
         console.log('구글 로그인')
         const getRandomNumber = () => {           //GUEST 계정을 위한 닉네임 번호 생성
-          const array = new Uint32Array(1);
-          window.crypto.getRandomValues(array)
-          return array[0]
+          return Math.floor(Math.random() * (999999 - 100000)) + 100000
         }
-        console.log(profile._json.picture)
         let data = await doclient.query(params).promise()
         let result = data.Items[0]
         if(result == undefined){  //id 없는경우
@@ -95,6 +92,7 @@ module.exports = () => {
           let query = {
             id: username,
             pw: accessToken,
+            profileImg: profile._json.picture,
             nickname: `손님 ${getRandomNumber()}`,
             isManager: false
           }
@@ -103,7 +101,7 @@ module.exports = () => {
           let user = {
             id: username,
             nickname: query.nickname,
-            profileImg: '',
+            profileImg: query.profileImg,
             selfIntroduction: ''
           }
           return cb(null, user)

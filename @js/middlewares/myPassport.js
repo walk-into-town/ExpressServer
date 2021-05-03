@@ -100,7 +100,7 @@ module.exports = () => {
         callbackURL: process.env.googleAuthCallback // 로그인 성공시 이동하는 페이지
     }, function (accessToken, refreshToken, profile, cb) {
         let doclient = new AWS.DynamoDB.DocumentClient();
-        let username = `google${profile.id}`;
+        let username = `google${profile.emails[0].value}`;
         let params = {
             TableName: 'Member',
             KeyConditionExpression: 'id = :id',
@@ -109,11 +109,8 @@ module.exports = () => {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             console.log('구글 로그인');
             const getRandomNumber = () => {
-                const array = new Uint32Array(1);
-                window.crypto.getRandomValues(array);
-                return array[0];
+                return Math.floor(Math.random() * (999999 - 100000)) + 100000;
             };
-            console.log(profile._json.picture);
             let data = yield doclient.query(params).promise();
             let result = data.Items[0];
             if (result == undefined) { //id 없는경우
@@ -121,6 +118,7 @@ module.exports = () => {
                 let query = {
                     id: username,
                     pw: accessToken,
+                    profileImg: profile._json.picture,
                     nickname: `손님 ${getRandomNumber()}`,
                     isManager: false
                 };
@@ -129,7 +127,7 @@ module.exports = () => {
                 let user = {
                     id: username,
                     nickname: query.nickname,
-                    profileImg: '',
+                    profileImg: query.profileImg,
                     selfIntroduction: ''
                 };
                 return cb(null, user);
