@@ -1,15 +1,20 @@
+/**
+ * /manager
+ */
 import * as express from 'express'
+import isAuthenticated from '../../middlewares/authentication'
+
 var router = express.Router()
 
-router.post('/report/inquiry', function(req: express.Request, res: express.Response){
+router.get('/report', function(req: express.Request, res: express.Response){
 
 })
 
-router.post('/report/state', function(req: express.Request, res: express.Response){
+router.put('/report', isAuthenticated, function(req: express.Request, res: express.Response){
     
 })
 
-router.post('/report/process', function(req: express.Request, res: express.Response){
+router.put('/report/process', isAuthenticated, function(req: express.Request, res: express.Response){
     
 })
 

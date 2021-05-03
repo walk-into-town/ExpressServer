@@ -1,19 +1,24 @@
+/**
+ * /campaign/participate
+ */
 import * as express from 'express'
+import isAuthenticated from '../../middlewares/authentication'
+
 var router = express.Router()
 
-router.post('/campaign', function(req: express.Request, res: express.Response){
+router.post('/campaign', isAuthenticated, function(req: express.Request, res: express.Response){
 
 })
 
-router.post('/quiz', function(req: express.Request, res: express.Response){
+router.post('/quiz', isAuthenticated, function(req: express.Request, res: express.Response){
     
 })
 
-router.post('/inquiry/campaign', function(req: express.Request, res: express.Response){
-    res.send('testest')
+router.get('/campaign', function(req: express.Request, res: express.Response){
+    
 })
 
-router.post('/inquiry/user', function(req: express.Request, res: express.Response){
+router.get('/user', function(req: express.Request, res: express.Response){
     
 })
 

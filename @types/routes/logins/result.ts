@@ -1,3 +1,6 @@
+/**
+ * /login/result
+ */
 import * as express from 'express'
 import SessionManager from '../../modules/DBManager/SessionManager'
 var router = express.Router()

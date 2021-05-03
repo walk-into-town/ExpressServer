@@ -22,26 +22,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /member
+ */
 const express = __importStar(require("express"));
 const passport_1 = __importDefault(require("passport"));
 const MemberManager_1 = __importDefault(require("../../modules/DBManager/MemberManager"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
 const badge = require('./badge');
 router.use('/badge', badge);
 //회원가입
-router.post('/register', function (req, res) {
+router.put('/', function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     let query = req.body;
     memberDB.insert(query);
 });
 //ID 중복 확인
-router.post('/checkid', function (req, res) {
+router.get('/checkid', function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     let query = req.body;
     memberDB.check('id', query);
 });
 //닉네임 중복 확인
-router.post('/checknickname', function (req, res) {
+router.get('/checknickname', function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     let query = req.body;
     memberDB.check('nickname', query);
@@ -52,17 +56,19 @@ router.post('/login', passport_1.default.authenticate('local', {
     failureFlash: true
 }));
 //로그아웃
-router.post('/logout', function (req, res) {
+router.delete('/logout', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     let query = req.body;
     memberDB.logout(query);
 });
-router.post('/modify', function (req, res) {
+//회원정보 수정
+router.put('/', authentication_1.default, function (req, res) {
 });
-router.post('/withdraw', function (req, res) {
+//회원탈퇴
+router.delete('/', authentication_1.default, function (req, res) {
 });
-router.post('/coupon/inquiry', function (req, res) {
+router.get('/coupon', authentication_1.default, function (req, res) {
 });
-router.post('/coupon/use', function (req, res) {
+router.put('/coupon', authentication_1.default, function (req, res) {
 });
 module.exports = router;

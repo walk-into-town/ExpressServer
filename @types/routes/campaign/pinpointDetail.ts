@@ -1,22 +1,26 @@
+/**
+ * /campaign/pinpoint/detail
+ */
 import * as express from 'express'
 import PinpointManager from '../../modules/DBManager/PinpointManager'
+import isAuthenticated from '../../middlewares/authentication'
 
 var router = express.Router()
 
-router.post('/inquiry', function(req: express.Request, res: express.Response){
+router.get('/', function(req: express.Request, res: express.Response){
     let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.readDetail(query)
 })
 
-router.post('/delete', function(req: express.Request, res: express.Response){
+router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     query.description = ''
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.updateDetail(query)
 })
 
-router.post('/modify', function(req: express.Request, res: express.Response){
+router.put('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.updateDetail(query)

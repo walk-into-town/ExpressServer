@@ -19,10 +19,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /campaign/evaluate
+ */
 const express = __importStar(require("express"));
 var router = express.Router();
 const pinpoint = require('./evalPinpoint');
 const campaign = require('./evalCampaign');
 router.use('/pinpoint', pinpoint);
-router.use('./campaign', campaign);
+router.use('/campaign', campaign);
 module.exports = router;
