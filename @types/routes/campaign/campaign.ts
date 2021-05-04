@@ -37,6 +37,7 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     res.locals.coupons = [];
     let query = req.body
     query.pcoupons = []
+    console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`)
     let coupons = JSON.parse(req.body.coupons)
     let couponDB = new CouponManager(req, res)
     let pinpoints = JSON.parse(req.body.pinpoints)
@@ -51,14 +52,14 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
         return;
     }
 
-    if(coupons == undefined){
-        let result = {
-            result: 'failed',
-            error: 'Missing Requried Value: Coupon'
-        }
-        res.status(400).send(result)
-        return;
-    }
+    // if(coupons == undefined){
+    //     let result = {
+    //         result: 'failed',
+    //         error: 'Missing Requried Value: Coupon'
+    //     }
+    //     res.status(400).send(result)
+    //     return;
+    // }
 
     // if(coupons != undefined){
     //     for (const coupon of coupons) {
@@ -78,11 +79,11 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     // }
     let pinpointDB = new PinpointManager(req, res)
     const run = async() => {
+        console.log(`쿠폰 등록중...`)
         for(let i = 0; i < coupons.length; i++){
-            console.log(coupons[i])
+            console.log(`${i}번째 쿠폰 등록`)
             await couponDB.insert(coupons[i])()
         }
-        console.log(res.locals.coupons)
         for(let i = 0; i < res.locals.coupons.length; i++){
             if(res.locals.coupons[i].paymentCondition == -1){
                 query.coupons = res.locals.coupons[i].id
@@ -93,10 +94,13 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
             }
         }
 
+        console.log(`핀포인트 등록중...`)
         for(let i = 0; i < pinpoints.length; i++){
+            console.log(`${i}번째 핀포인트 등록`)
             await pinpointDB.insert(pinpoints[i])()
         }
         query.pinpoints = res.locals.pinpoints
+        console.log('캠페인 등록중...')
         let campaignDB = new CampaignManager(req, res)
         campaignDB.insert(query)
     }

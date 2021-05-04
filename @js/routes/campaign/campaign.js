@@ -60,6 +60,7 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     res.locals.coupons = [];
     let query = req.body;
     query.pcoupons = [];
+    console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`);
     let coupons = JSON.parse(req.body.coupons);
     let couponDB = new tempCoupon_1.default(req, res);
     let pinpoints = JSON.parse(req.body.pinpoints);
@@ -72,14 +73,14 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
         res.status(400).send(result);
         return;
     }
-    if (coupons == undefined) {
-        let result = {
-            result: 'failed',
-            error: 'Missing Requried Value: Coupon'
-        };
-        res.status(400).send(result);
-        return;
-    }
+    // if(coupons == undefined){
+    //     let result = {
+    //         result: 'failed',
+    //         error: 'Missing Requried Value: Coupon'
+    //     }
+    //     res.status(400).send(result)
+    //     return;
+    // }
     // if(coupons != undefined){
     //     for (const coupon of coupons) {
     //         console.log(coupon)
@@ -98,11 +99,11 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     // }
     let pinpointDB = new tempPinpoint_1.default(req, res);
     const run = () => __awaiter(this, void 0, void 0, function* () {
+        console.log(`쿠폰 등록중...`);
         for (let i = 0; i < coupons.length; i++) {
-            console.log(coupons[i]);
+            console.log(`${i}번째 쿠폰 등록`);
             yield couponDB.insert(coupons[i])();
         }
-        console.log(res.locals.coupons);
         for (let i = 0; i < res.locals.coupons.length; i++) {
             if (res.locals.coupons[i].paymentCondition == -1) {
                 query.coupons = res.locals.coupons[i].id;
@@ -112,10 +113,13 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
                 pinpoints[res.locals.coupons[i].paymentCondition].coupon = coupons[i].id;
             }
         }
+        console.log(`핀포인트 등록중...`);
         for (let i = 0; i < pinpoints.length; i++) {
+            console.log(`${i}번째 핀포인트 등록`);
             yield pinpointDB.insert(pinpoints[i])();
         }
         query.pinpoints = res.locals.pinpoints;
+        console.log('캠페인 등록중...');
         let campaignDB = new CampaignManager_1.default(req, res);
         campaignDB.insert(query);
     });

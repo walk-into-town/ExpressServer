@@ -37,8 +37,10 @@ export default class CouponManager extends FeatureManager{
             ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         }
         const run = async() => {
+            console.log(`DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`)
             let result = await this.Dynamodb.put(queryParams).promise()
             this.res.locals.coupons.push(queryParams.Item)
+            console.log(`등록 완료,\n 생성된 쿠폰 id : ${id}`)
             // let result = {
             //     result: 'success',
             //     message: {

@@ -160,7 +160,7 @@ export default class CampaignManager extends FeatureManager{
                 },
                 ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 }
-                console.log('캠페인 등록중...')
+                console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`)
                 this.Dynamodb.put(queryParams, this.onInsert.bind(this))
         }
         run()
@@ -173,7 +173,7 @@ export default class CampaignManager extends FeatureManager{
                 error: err
             }
             this.res.status(400).send(result)
-            console.log(`응답 JSON\n${JSON.stringify(result)}`)
+            console.log(`DB에러\n응답 JSON\n${JSON.stringify(result)}`)
         }
         else{                                      //정상 처리
             let result = {
@@ -181,7 +181,7 @@ export default class CampaignManager extends FeatureManager{
                 "message": this.res.locals.id  // DynamoDB에서는 insert시 결과 X. 따라서 임의로 생성되는 id를 전달하기 위해 locals에 id 추가
             }
             this.res.status(201).send(result)
-            console.log(`응답 JSON\n${JSON.stringify(result)}`)
+            console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(result)}`)
         }
     }
 

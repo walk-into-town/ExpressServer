@@ -105,6 +105,8 @@ export default class MemberManager extends FeatureManager{
                     result: 'success',
                     message: params.id
                 }
+                console.log('로그아웃 성공')
+                console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
                 this.res.status(200).send(result)
             }
             else{
@@ -112,7 +114,7 @@ export default class MemberManager extends FeatureManager{
                     result: 'failed',
                     error: 'Invalid UserID'
                 }
-                this.res.status(200).send(result)
+                this.res.status(400).send(result)
             }
         }
         try{

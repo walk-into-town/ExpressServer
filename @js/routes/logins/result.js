@@ -70,6 +70,7 @@ router.get('/success', function (req, res) {
         message: req.user,
         session: req.sessionID
     };
+    console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
     res.status(200).send(result);
 });
 router.get('/fail', function (req, res) {
