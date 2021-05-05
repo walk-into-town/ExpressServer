@@ -404,6 +404,9 @@ export default class PinpointManager extends FeatureManager{
      */
     public insertComment(params: any): void{
         let userid = this.req.session.passport.user.id
+        let date = new Date()
+        let hash = CryptoJS.SHA256(params.pid + date.toString())  //id 생성
+        params.id = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){
             let result = {
                 result: 'failed',
@@ -412,8 +415,8 @@ export default class PinpointManager extends FeatureManager{
             this.res.status(400).send(result)
         }
         let comment = [{
-            id: params.pid,
-            userId: params.comments.uerId,
+            id: params.id,
+            userId: userid,
             test: params.comments.text,
             rated: 0,
             imgs: params.imgs
@@ -421,9 +424,8 @@ export default class PinpointManager extends FeatureManager{
         var queryParams = {
             TableName: 'Pinpoint',
             Key: {id: params.pid},
-            UpdateExpression: 'set comments = list_append(comments, :newcomment)',
-            //ExpressionAttributeNames: {'#comments': 'comments'},
-            ExpressionAttributeValues: {':newcomment': comment},
+            UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
+            ExpressionAttributeValues: {':newcomment': comment, 'emptylist': []},
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         }
