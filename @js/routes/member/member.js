@@ -33,7 +33,7 @@ var router = express.Router();
 const badge = require('./badge');
 router.use('/badge', badge);
 //회원가입
-router.put('/', function (req, res) {
+router.post('/', function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     let query = req.body;
     memberDB.insert(query);

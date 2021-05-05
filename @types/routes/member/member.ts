@@ -13,7 +13,7 @@ const badge = require('./badge')
 router.use('/badge', badge)
 
 //회원가입
-router.put('/', function(req: express.Request, res: express.Response){
+router.post('/', function(req: express.Request, res: express.Response){
     let memberDB = new MemberManager(req, res)
     let query = req.body
     memberDB.insert(query)

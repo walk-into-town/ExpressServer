@@ -43,6 +43,7 @@ const tempCoupon_1 = __importDefault(require("../../modules/DBManager/tempCoupon
 const tempPinpoint_1 = __importDefault(require("../../modules/DBManager/tempPinpoint"));
 const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const FeatureManager_1 = require("../../modules/DBManager/FeatureManager");
 var router = express.Router();
 dotenv.config();
 const pinpoint = require('./pinpoint');
@@ -61,9 +62,9 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     let query = req.body;
     query.pcoupons = [];
     console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`);
-    let coupons = JSON.parse(req.body.coupons);
+    let coupons = req.body.coupons;
     let couponDB = new tempCoupon_1.default(req, res);
-    let pinpoints = JSON.parse(req.body.pinpoints);
+    let pinpoints = req.body.pinpoints;
     res.locals.pinpoints = [];
     if (pinpoints == undefined) {
         let result = {
@@ -100,6 +101,7 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     let pinpointDB = new tempPinpoint_1.default(req, res);
     const run = () => __awaiter(this, void 0, void 0, function* () {
         console.log(`쿠폰 등록중...`);
+        console.log(coupons.length);
         for (let i = 0; i < coupons.length; i++) {
             console.log(`${i}번째 쿠폰 등록`);
             yield couponDB.insert(coupons[i])();
@@ -127,9 +129,24 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
 });
 //캠페인 조회
 router.get('/', function (req, res) {
-    let query = req.body;
+    let query = req.query;
+    console.log('요청 JSON');
     let campaignDB = new CampaignManager_1.default(req, res);
-    campaignDB.read(query.value, query.type);
+    let type = FeatureManager_1.toRead.id;
+    if (query.type == 'name') {
+        type = FeatureManager_1.toRead.name;
+    }
+    else if (query.type == 'ownner') {
+        type = FeatureManager_1.toRead.ownner;
+    }
+    else if (query.type == 'region') {
+        type = FeatureManager_1.toRead.region;
+    }
+    campaignDB.read(query.value, type);
+});
+router.get('/scan', function (req, res) {
+    let campaignDB = new CampaignManager_1.default(req, res);
+    campaignDB.scan();
 });
 //캠페인 수정
 router.put('/', authentication_1.default, upload.array('img'), function (req, res) {

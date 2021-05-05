@@ -23,19 +23,24 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
             ConditionExpression: "attribute_exists(#number)"
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let data = yield this.Dynamodb.update(queryParams).promise();
-            let result = {
-                result: 'success',
-                message: data.Attributes.imgs
-            };
-            this.res.status(200).send(result);
+            try {
+                let data = yield this.Dynamodb.update(queryParams).promise();
+                let result = {
+                    result: 'success',
+                    message: data.Attributes.imgs
+                };
+                this.res.status(200).send(result);
+            }
+            catch (err) {
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Connect Manager',
+                    errcode: err
+                };
+                this.res.status(400).send(result);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            this.res.status(400).send('DB Error. Please Connect Manager');
-        }
+        run();
     }
     read(params) {
         throw new Error("Method not implemented.");

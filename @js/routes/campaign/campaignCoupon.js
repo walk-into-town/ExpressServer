@@ -50,6 +50,10 @@ router.get('/', function (req, res) {
     couponDB.read(query);
 });
 router.delete('/', authentication_1.default, function (req, res) {
+    let couponDB = new CouponManager_1.default(req, res);
+    let query = req.body;
+    console.log(query);
+    couponDB.delete(query);
 });
 router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);

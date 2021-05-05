@@ -12,6 +12,7 @@ import CouponManager from '../../modules/DBManager/tempCoupon'
 import PinpointManager from '../../modules/DBManager/tempPinpoint'
 import * as dotenv from 'dotenv'
 import isAuthenticated from '../../middlewares/authentication'
+import { toRead } from '../../modules/DBManager/FeatureManager'
 
 
 var router = express.Router()
@@ -38,9 +39,9 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     let query = req.body
     query.pcoupons = []
     console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`)
-    let coupons = JSON.parse(req.body.coupons)
+    let coupons = req.body.coupons
     let couponDB = new CouponManager(req, res)
-    let pinpoints = JSON.parse(req.body.pinpoints)
+    let pinpoints = req.body.pinpoints
     res.locals.pinpoints = []
 
     if(pinpoints == undefined){
@@ -80,6 +81,7 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     let pinpointDB = new PinpointManager(req, res)
     const run = async() => {
         console.log(`쿠폰 등록중...`)
+        console.log(coupons.length)
         for(let i = 0; i < coupons.length; i++){
             console.log(`${i}번째 쿠폰 등록`)
             await couponDB.insert(coupons[i])()
@@ -109,9 +111,25 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
 
 //캠페인 조회
 router.get('/', function(req: express.Request, res: express.Response){
-    let query = req.body
+    let query = req.query
+    console.log('요청 JSON')
     let campaignDB = new CampaignManager(req, res)
-    campaignDB.read(query.value, query.type)
+    let type = toRead.id
+    if(query.type == 'name') {
+        type = toRead.name
+    }
+    else if(query.type == 'ownner'){
+        type = toRead.ownner
+    }
+    else if(query.type == 'region'){
+        type = toRead.region
+    }
+    campaignDB.read(query.value, type)
+})
+
+router.get('/scan', function(req: express.Request, res: express.Response){
+    let campaignDB = new CampaignManager(req, res)
+    campaignDB.scan()
 })
 
 //캠페인 수정

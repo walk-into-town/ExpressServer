@@ -32,44 +32,44 @@ export default class PinpointManager extends FeatureManager{
                 updateTime: params.updateTime,
                 description: params.description,
                 quiz: params.quiz,
-                coupons: params.coupons
+                coupons: params.coupons,
+                comments: []
             },
             ConditionExpression: "attribute_not_exists(id)"      // 항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         }
         const run = async() => {
-            if(params.coupons != undefined){                // 핀포인트 쿠폰이 있는경우 쿠폰 유효성 파악
-                let checkCoupon = await this.Dynamodb.query(checkCouponParams).promise()
-                if(checkCoupon.Items[0] == undefined){     //data.Item == undefined -> 해당하는 ID가 없음
-                    console.log(`핀포인트 쿠폰 체크\nDB 요청 Params\n${JSON.stringify(queryParams, null, 2)}`)
-                    let result = {
-                        result : 'failed',
-                        error: 'Invalid Coupon'
+            try{
+                if(params.coupons != undefined){                // 핀포인트 쿠폰이 있는경우 쿠폰 유효성 파악                
+                    let checkCoupon = await this.Dynamodb.query(checkCouponParams).promise()
+                    if(checkCoupon.Items[0] == undefined){     //data.Item == undefined -> 해당하는 ID가 없음
+                        console.log(`핀포인트 쿠폰 체크\nDB 요청 Params\n${JSON.stringify(queryParams, null, 2)}`)
+                        let result = {
+                            result : 'failed',
+                            error: 'Invalid Coupon'
+                        }
+                        this.res.status(400).send(result)
+                        return;
                     }
-                    this.res.status(400).send(result)
-                    return;
                 }
-            }
 
-            this.res.locals.id = params.id
-            let queryResult = await this.Dynamodb.put(queryParams).promise()
-            this.res.locals.pinpoints.push(params.id)
-            // let result = {
-            //     'result': 'success',
-            //     'pinpointId': params.id
-            // }
-            // this.res.status(201).send(result)
-            // console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
-        }
-        try{
-            run()
-        }
-        catch(err){
-            let result = {
-                result: 'failed',
-                error: err
+                this.res.locals.id = params.id
+                let queryResult = await this.Dynamodb.put(queryParams).promise()
+                let result = {
+                    'result': 'success',
+                    'message': params.id
+                }
+                this.res.status(201).send(result)
+                console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
             }
-            this.res.send(400).send(result)
+            catch(err){
+                let result = {
+                    result: 'failed',
+                    error: err
+                }
+                this.res.status(400).send(result)
+            }
         }
+        run()
 
     }
 
@@ -96,30 +96,30 @@ export default class PinpointManager extends FeatureManager{
             }
         }
         const run = async () => {              //batch 조회를 수행하기 때문에 비동기 함수를 사용
-            await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기
-            if(this.res.locals.UnprocessedKeys != undefined){              //오류 발생 처리
+            try{
+                await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기
+                if(this.res.locals.UnprocessedKeys != undefined){              //오류 발생 처리
+                    let result = {
+                        "result": 'failed',
+                        "error": "DB Error. Please Contect Manager"
+                    }
+                    this.res.status(400).send(result)
+                }
                 let result = {
-                    "result": 'failed',
-                    "error": "DB Error. Please Contect Manager"
+                    'result': 'success',
+                    'message': this.res.locals.result.Pinpoint
+                }
+                this.res.status(201).send(this.res.locals.result.Responses.Pinpoint)
+            }
+            catch(err){
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. please contect manager'
                 }
                 this.res.status(400).send(result)
             }
-            let result = {
-                'result': 'success',
-                'message': this.res.locals.result.Pinpoint
-            }
-            this.res.status(201).send(this.res.locals.result.Responses.Pinpoint)
         }
-        try{
-            run()
-        }
-        catch(err){
-            let result = {
-                result: 'failed',
-                error: 'DB Error. please contect manager'
-            }
-            this.res.status(400).send(result)
-        }
+        run()
      }
     
     private onRead(err: object, data: any): void{
@@ -389,5 +389,62 @@ export default class PinpointManager extends FeatureManager{
             }
             this.res.status(201).send(result)
         }
+    }
+
+    /**
+     * 핀포인트 댓글 API
+     */
+
+    /**
+     * 핀포인트 댓글 등록 API
+     * 1. 사용자 id와 세션에 저장된 id 확인
+     * 2. 핀포인트 id + 시간으로 댓글 id 생성
+     * 3. rated = 0으로 설정
+     * 4. DB 등록 후 결과 반환
+     */
+    public insertComment(params: any): void{
+        let userid = this.req.session.passport.user.id
+        if(userid != params.comments.userId){
+            let result = {
+                result: 'failed',
+                error: 'Invalid User ID'
+            }
+            this.res.status(400).send(result)
+        }
+        let comment = [{
+            id: params.pid,
+            userId: params.comments.uerId,
+            test: params.comments.text,
+            rated: 0,
+            imgs: params.imgs
+        }]
+        var queryParams = {
+            TableName: 'Pinpoint',
+            Key: {id: params.pid},
+            UpdateExpression: 'set comments = list_append(comments, :newcomment)',
+            //ExpressionAttributeNames: {'#comments': 'comments'},
+            ExpressionAttributeValues: {':newcomment': comment},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        const run = async() => {
+            try{
+                let queryResult = await this.Dynamodb.update(queryParams).promise()
+                let result = {
+                    result: 'success',
+                    message: queryResult.Attributes
+                }
+                this.res.status(200).send(result)
+            }
+            catch(err){                
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Connect Manager',
+                    errcode: err
+                }
+                this.res.status(400).send(result)
+            }
+        }
+        run();
     }
 }

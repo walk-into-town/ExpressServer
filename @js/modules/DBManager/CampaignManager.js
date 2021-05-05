@@ -31,6 +31,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 class CampaignManager extends FeatureManager_1.FeatureManager {
+    constructor() {
+        super(...arguments);
+        this.nbsb2plus = (query) => {
+            for (let i = 0; i < query.length; i++) {
+                query = query.replace(' ', '+');
+            }
+            return query;
+        };
+    }
     /**
      * 캠페인 생성 로직
      * 1. 제작자 + 이름 + 지역으로 id생성
@@ -45,141 +54,153 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         this.res.locals.id = id;
         params.pcoupons = [];
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let isIdValid; //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
-            let isPinpointValid;
-            let isCouponValid;
-            let result = {
-                result: 'failed',
-                error: []
-            };
-            if (params.coupon != undefined) {
+            try {
+                let isIdValid; //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
+                let isPinpointValid;
+                let isCouponValid;
+                let result = {
+                    result: 'failed',
+                    error: []
+                };
                 if (params.coupon != undefined) {
-                    let checkCouponParams = {
-                        TableName: 'Coupon',
-                        KeyConditionExpression: 'id = :id',
-                        ExpressionAttributeValues: {
-                            ':id': params.coupon
-                        }
-                    };
-                    console.log(`쿠폰 체크\nDB 요청 params\n${checkCouponParams}`);
-                    yield this.Dynamodb.query(checkCouponParams, onCheckCoupon.bind(this)).promise();
-                }
-                function onCheckCoupon(err, data) {
-                    if (isCouponValid == false) {
-                        return;
+                    if (params.coupon != undefined) {
+                        let checkCouponParams = {
+                            TableName: 'Coupon',
+                            KeyConditionExpression: 'id = :id',
+                            ExpressionAttributeValues: {
+                                ':id': params.coupon
+                            }
+                        };
+                        console.log(`쿠폰 체크\nDB 요청 params\n${JSON.stringify(checkCouponParams, null, 2)}`);
+                        yield this.Dynamodb.query(checkCouponParams, onCheckCoupon.bind(this)).promise();
                     }
-                    if (err) {
-                        isCouponValid = false;
-                        result.error.push('DB Error. Please Contect Manager');
-                        console.log('쿠폰 체크 DB 에러 발생');
-                    }
-                    else {
-                        if (data.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
-                            isCouponValid = false;
-                            result.error.push('Invalid Coupon');
-                            console.log('일치하는 쿠폰 없음');
+                    function onCheckCoupon(err, data) {
+                        if (isCouponValid == false) {
                             return;
                         }
-                        isCouponValid = true;
-                    }
-                }
-            }
-            let checkIdParams = {
-                TableName: 'Member',
-                KeyConditionExpression: 'id = :id',
-                ExpressionAttributeValues: {
-                    ':id': params.ownner
-                }
-            };
-            function onCheckId(err, data) {
-                if (isIdValid == false) {
-                    return;
-                }
-                if (err) { //DB오류
-                    isIdValid = false;
-                    result.error.push('DB Error. Please Contect Manager');
-                    console.log('ID 체크 DB 에러 발생');
-                    return;
-                }
-                else {
-                    if (data.Items == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
-                        isIdValid = false;
-                        result.error.push('Invalid User');
-                        console.log('일치하는 사용자 없음');
-                        return;
-                    }
-                    isIdValid = true;
-                }
-            }
-            console.log(`사용자 체크\nDB 요청 params\n${JSON.stringify(checkIdParams, null, 2)}`);
-            yield this.Dynamodb.query(checkIdParams, onCheckId.bind(this)).promise(); //id를 가져온 후 확인
-            let pinpoints = [];
-            params.pinpoints.forEach(pinpoint => {
-                pinpoints.push({ 'id': pinpoint });
-            });
-            let checkPinpointParams = {
-                RequestItems: {
-                    'Pinpoint': {
-                        Keys: pinpoints
-                    }
-                }
-            };
-            function onCheckPinoint(err, data) {
-                data = data.Responses.Pinpoint;
-                if (isPinpointValid == false) {
-                    return;
-                }
-                if (err) { //DB에러
-                    isPinpointValid = false;
-                    result.error.push('DB Error. Please Contect Manager');
-                    console.log('핀포인트 체크 DB 에러 발생');
-                }
-                else {
-                    if (data == undefined) { //일치하는 핀포인트 ID가 하나도 없을 때
-                        isPinpointValid = false;
-                        result.error.push('Invalid Pinpoint');
-                        console.log('일치하는 핀포인트 없음');
-                        return;
-                    }
-                    if (data.length != pinpoints.length) { //DB가 준 핀포인트 수와 사용자 입력 핀포인트 수가 다름 = 잘못된 핀포인트 존재
-                        isPinpointValid = false;
-                        result.error.push('Invalid Pinpoint');
-                        console.log('일부 핀포인트가 일치하지 않음');
-                        return;
-                    }
-                    isPinpointValid = true;
-                    data.forEach(pinpoint => {
-                        if (pinpoint.coupon != undefined) {
-                            params.pcoupons.push(pinpoint.coupon);
+                        if (err) {
+                            isCouponValid = false;
+                            result.error.push('DB Error. Please Contect Manager');
+                            console.log('쿠폰 체크 DB 에러 발생');
                         }
-                    });
+                        else {
+                            if (data.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
+                                isCouponValid = false;
+                                result.error.push('Invalid Coupon');
+                                console.log('일치하는 쿠폰 없음');
+                                return;
+                            }
+                            isCouponValid = true;
+                        }
+                    }
                 }
+                let checkIdParams = {
+                    TableName: 'Member',
+                    KeyConditionExpression: 'id = :id',
+                    ExpressionAttributeValues: {
+                        ':id': params.ownner
+                    }
+                };
+                function onCheckId(err, data) {
+                    if (isIdValid == false) {
+                        return;
+                    }
+                    if (err) { //DB오류
+                        isIdValid = false;
+                        result.error.push('DB Error. Please Contect Manager');
+                        console.log('ID 체크 DB 에러 발생');
+                        return;
+                    }
+                    else {
+                        if (data.Items == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
+                            isIdValid = false;
+                            result.error.push('Invalid User');
+                            console.log('일치하는 사용자 없음');
+                            return;
+                        }
+                        isIdValid = true;
+                    }
+                }
+                console.log(`사용자 체크\nDB 요청 params\n${JSON.stringify(checkIdParams, null, 2)}`);
+                yield this.Dynamodb.query(checkIdParams, onCheckId.bind(this)).promise(); //id를 가져온 후 확인
+                let pinpoints = [];
+                params.pinpoints.forEach(pinpoint => {
+                    pinpoints.push({ 'id': pinpoint });
+                });
+                let checkPinpointParams = {
+                    RequestItems: {
+                        'Pinpoint': {
+                            Keys: pinpoints
+                        }
+                    }
+                };
+                function onCheckPinoint(err, data) {
+                    data = data.Responses.Pinpoint;
+                    if (isPinpointValid == false) {
+                        return;
+                    }
+                    if (err) { //DB에러
+                        isPinpointValid = false;
+                        result.error.push('DB Error. Please Contect Manager');
+                        console.log('핀포인트 체크 DB 에러 발생');
+                    }
+                    else {
+                        if (data == undefined) { //일치하는 핀포인트 ID가 하나도 없을 때
+                            isPinpointValid = false;
+                            result.error.push('Invalid Pinpoint');
+                            console.log('일치하는 핀포인트 없음');
+                            return;
+                        }
+                        if (data.length != pinpoints.length) { //DB가 준 핀포인트 수와 사용자 입력 핀포인트 수가 다름 = 잘못된 핀포인트 존재
+                            isPinpointValid = false;
+                            result.error.push('Invalid Pinpoint');
+                            console.log('일부 핀포인트가 일치하지 않음');
+                            return;
+                        }
+                        isPinpointValid = true;
+                        data.forEach(pinpoint => {
+                            if (pinpoint.coupon != undefined) {
+                                params.pcoupons.push(pinpoint.coupon);
+                            }
+                        });
+                    }
+                }
+                console.log(`핀포인트 체크\nDB 요청 params\n${JSON.stringify(checkPinpointParams, null, 2)}`);
+                yield this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this)).promise();
+                if (isIdValid == false || isPinpointValid == false || isCouponValid == false) { //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
+                    this.res.status(400).send(result); //에러 메시지 전달
+                    console.log(`응답 jSON\n${JSON.stringify(result, null, 2)}`);
+                    return;
+                }
+                let date = new Date();
+                params.updateTime = date.toISOString();
+                var queryParams = {
+                    TableName: 'Campaign',
+                    Item: {
+                        id: id,
+                        ownner: params.ownner,
+                        imgs: params.imgs,
+                        name: params.name,
+                        description: params.description,
+                        updateTime: params.updateTime,
+                        region: params.region,
+                        pinpoints: params.pinpoints,
+                        coupons: params.coupons,
+                        pcoupons: params.pcoupons,
+                        comments: []
+                    },
+                    ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+                };
+                console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`);
+                this.Dynamodb.put(queryParams, this.onInsert.bind(this));
             }
-            console.log(`핀포인트 체크\nDB 요청 params\n${checkPinpointParams}`);
-            yield this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this)).promise();
-            if (isIdValid == false || isPinpointValid == false || isCouponValid == false) { //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
-                this.res.status(400).send(result); //에러 메시지 전달
-                console.log(`응답 jSON\n${JSON.stringify(result, null, 2)}`);
-                return;
+            catch (err) {
+                let result = {
+                    result: 'failed',
+                    error: err
+                };
+                this.res.status(400).send(result);
             }
-            var queryParams = {
-                TableName: 'Campaign',
-                Item: {
-                    id: id,
-                    ownner: params.ownner,
-                    imgs: params.imgs,
-                    name: params.name,
-                    description: params.description,
-                    updateTime: params.updateTime,
-                    region: params.region,
-                    pinpoints: params.pinpoints,
-                    coupons: params.coupons,
-                    pcoupons: params.pcoupons
-                },
-                ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
-            };
-            console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`);
-            this.Dynamodb.put(queryParams, this.onInsert.bind(this));
         });
         run();
     }
@@ -190,7 +211,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 error: err
             };
             this.res.status(400).send(result);
-            console.log(`DB에러\n응답 JSON\n${JSON.stringify(result)}`);
+            console.log(`DB에러\n응답 JSON\n${JSON.stringify(result, null, 2)}`);
         }
         else { //정상 처리
             let result = {
@@ -198,7 +219,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 "message": this.res.locals.id // DynamoDB에서는 insert시 결과 X. 따라서 임의로 생성되는 id를 전달하기 위해 locals에 id 추가
             };
             this.res.status(201).send(result);
-            console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(result)}`);
+            console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(result, null, 2)}`);
         }
     }
     /**
@@ -218,6 +239,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 };
                 break;
             case FeatureManager_1.toRead.id:
+                params = this.nbsb2plus(params);
                 expAttrVals = {
                     '#id': readType
                 };
@@ -242,7 +264,30 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeNames: expAttrVals,
             ExpressionAttributeValues: { ':value': params },
         };
+        console.log(params);
         this.Dynamodb.query(params, this.onRead.bind(this));
+    }
+    scan() {
+        let queryParams = {
+            TableName: 'Campaign'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let queryResult = yield this.Dynamodb.scan(queryParams).promise();
+                let result = {
+                    result: 'success',
+                    message: queryResult.Items
+                };
+                this.res.status(200).send(result);
+            }
+            catch (err) {
+                let result = {
+                    result: 'failed',
+                    error: err
+                };
+            }
+        });
+        run();
     }
     onRead(err, data) {
         if (err) { //에러 발생
@@ -255,11 +300,11 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         else {
             let result = {
                 result: 'success',
-                message: ''
+                message: null
             };
             if (data.Items[0] == undefined) {
-                result.result = 'failed',
-                    result.message = 'No Campaign found';
+                result.result = 'success',
+                    result.message = [];
             }
             else {
                 result.message = data.Items;
@@ -280,57 +325,57 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':id': params.id }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.Dynamodb.query(queryParams).promise();
-            let originCampaign = result.Items[0];
-            if (originCampaign == undefined) { //일치하는 id 없음
-                let result = {
-                    result: 'failed',
-                    error: 'Campaign id mismatch'
-                };
-                this.res.status(400).send(result);
-                return;
-            }
-            let pinpoints = [];
-            let coupons = [];
-            params.pinpoints.forEach(pinpoint => {
-                pinpoints.push({ "id": pinpoint });
-            });
-            params.coupons.forEach(coupon => {
-                coupons.push({ "id": coupon });
-            });
-            let checkParams = {
-                RequestItems: {
-                    'Pinpoint': {
-                        Keys: pinpoints
-                    },
-                    'Coupon': {
-                        Keys: coupons
-                    }
+            try {
+                const result = yield this.Dynamodb.query(queryParams).promise();
+                let originCampaign = result.Items[0];
+                if (originCampaign == undefined) { //일치하는 id 없음
+                    let result = {
+                        result: 'failed',
+                        error: 'Campaign id mismatch'
+                    };
+                    this.res.status(400).send(result);
+                    return;
                 }
-            };
-            const check = yield this.Dynamodb.batchGet(checkParams).promise();
-            let pinpointCheck = check.Responses.Pinpoint.length;
-            let couponCheck = check.Responses.Coupon.length;
-            if (pinpointCheck != pinpoints.length || couponCheck != coupons.length) {
+                let pinpoints = [];
+                let coupons = [];
+                params.pinpoints.forEach(pinpoint => {
+                    pinpoints.push({ "id": pinpoint });
+                });
+                params.coupons.forEach(coupon => {
+                    coupons.push({ "id": coupon });
+                });
+                let checkParams = {
+                    RequestItems: {
+                        'Pinpoint': {
+                            Keys: pinpoints
+                        },
+                        'Coupon': {
+                            Keys: coupons
+                        }
+                    }
+                };
+                const check = yield this.Dynamodb.batchGet(checkParams).promise();
+                let pinpointCheck = check.Responses.Pinpoint.length;
+                let couponCheck = check.Responses.Coupon.length;
+                if (pinpointCheck != pinpoints.length || couponCheck != coupons.length) {
+                    let result = {
+                        result: 'failed',
+                        error: 'One or more Pinpots or Coupons id are invalid'
+                    };
+                    this.res.status(400).send(result);
+                    return;
+                }
+            }
+            catch (error) { //DB 에러 발생
                 let result = {
                     result: 'failed',
-                    error: 'One or more Pinpots or Coupons id are invalid'
+                    error: 'DB Error. Please Contect Manager',
+                    error2: error
                 };
                 this.res.status(400).send(result);
-                return;
             }
         });
-        try {
-            run();
-        }
-        catch (error) { //DB 에러 발생
-            let result = {
-                result: 'failed',
-                error: 'DB Error. Please Contect Manager',
-                error2: error
-            };
-            this.res.status(400).send(result);
-        }
+        run();
     }
     delete(params) {
     }

@@ -31,7 +31,10 @@ router.get('/', function(req: express.Request, res: express.Response){
 })
 
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let couponDB = new CouponManager(req, res)
+    let query = req.body
+    console.log(query)
+    couponDB.delete(query)
 })
 
 

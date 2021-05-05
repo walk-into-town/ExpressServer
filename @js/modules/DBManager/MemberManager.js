@@ -45,48 +45,48 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let pw;
         let saltRounds = 10;
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let checkparams = {
-                TableName: 'Member',
-                IndexName: 'nicknameIndex',
-                KeyConditionExpression: 'nickname = :value',
-                ExpressionAttributeValues: { ':value': params.nickname },
-            };
-            let checkResult = yield this.Dynamodb.query(checkparams).promise();
-            console.log(checkResult.Items);
-            if (checkResult.Items.length != 0) {
+            try {
+                let checkparams = {
+                    TableName: 'Member',
+                    IndexName: 'nicknameIndex',
+                    KeyConditionExpression: 'nickname = :value',
+                    ExpressionAttributeValues: { ':value': params.nickname },
+                };
+                let checkResult = yield this.Dynamodb.query(checkparams).promise();
+                console.log(checkResult.Items);
+                if (checkResult.Items.length != 0) {
+                    let result = {
+                        result: 'failed',
+                        error: '닉네임이 중복되었어요.'
+                    };
+                    this.res.status(400).send(result);
+                    return;
+                }
+                yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
+                    pw = hash;
+                });
+                var queryParams = {
+                    TableName: 'Member',
+                    Item: {
+                        id: params.id,
+                        pw: pw,
+                        profileImg: process.env.domain + 'defaultProfileImg.jpg',
+                        nickname: params.nickname,
+                        isManager: params.isManager
+                    },
+                    ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+                };
+                this.Dynamodb.put(queryParams, this.onInsert.bind(this));
+            }
+            catch (err) {
                 let result = {
                     result: 'failed',
-                    error: '닉네임이 중복되었어요.'
+                    error: 'DB Error! Please Contect Manager'
                 };
-                this.res.status(400).send(result);
-                return;
+                this.res.status(402).send(result);
             }
-            yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
-                pw = hash;
-            });
-            var queryParams = {
-                TableName: 'Member',
-                Item: {
-                    id: params.id,
-                    pw: pw,
-                    profileImg: process.env.domain + 'defaultProfileImg.jpg',
-                    nickname: params.nickname,
-                    isManager: params.isManager
-                },
-                ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
-            };
-            this.Dynamodb.put(queryParams, this.onInsert.bind(this));
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                error: 'DB Error! Please Contect Manager'
-            };
-            this.res.status(402).send(result);
-        }
+        run();
     }
     onInsert(err, data) {
         if (err) {
@@ -115,47 +115,47 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let id = params.id;
         let sessman = new SessionManager_1.default(this.req, this.res);
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            yield sessman.findBySId(this.req.session.id);
-            if (this.res.locals.result == undefined) {
+            try {
+                yield sessman.findBySId(this.req.session.id);
+                if (this.res.locals.result == undefined) {
+                    let result = {
+                        result: 'failed',
+                        error: 'Please Login First'
+                    };
+                    this.res.status(400).send(result);
+                    return;
+                }
+                let json = JSON.parse(this.res.locals.result.sess);
+                let findId = json.passport.user.id;
+                if (findId == id) {
+                    this.req.session.destroy(() => {
+                        this.req.session;
+                    });
+                    let result = {
+                        result: 'success',
+                        message: params.id
+                    };
+                    console.log('로그아웃 성공');
+                    console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
+                    this.res.status(200).send(result);
+                }
+                else {
+                    let result = {
+                        result: 'failed',
+                        error: 'Invalid UserID'
+                    };
+                    this.res.status(400).send(result);
+                }
+            }
+            catch (err) {
                 let result = {
                     result: 'failed',
-                    error: 'Please Login First'
+                    error: err
                 };
-                this.res.status(400).send(result);
-                return;
-            }
-            let json = JSON.parse(this.res.locals.result.sess);
-            let findId = json.passport.user.id;
-            if (findId == id) {
-                this.req.session.destroy(() => {
-                    this.req.session;
-                });
-                let result = {
-                    result: 'success',
-                    message: params.id
-                };
-                console.log('로그아웃 성공');
-                console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
-                this.res.status(200).send(result);
-            }
-            else {
-                let result = {
-                    result: 'failed',
-                    error: 'Invalid UserID'
-                };
-                this.res.status(400).send(result);
+                this.res.status(402).send(result);
             }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(402).send(result);
-        }
+        run();
     }
     findMember(id) {
     }
@@ -189,32 +189,32 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':value': value },
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let queryResult = yield this.Dynamodb.query(params).promise();
-            let result = {
-                result: 'success',
-                message: ''
-            };
-            if (queryResult.Items.length == 0) {
-                result.message = 'duplicated';
-                this.res.status(201).send(result);
-                return;
+            try {
+                let queryResult = yield this.Dynamodb.query(params).promise();
+                let result = {
+                    result: 'success',
+                    message: ''
+                };
+                if (queryResult.Items.length == 0) {
+                    result.message = 'duplicated';
+                    this.res.status(201).send(result);
+                    return;
+                }
+                else {
+                    result.message = 'clear';
+                    this.res.status(201).send(result);
+                    return;
+                }
             }
-            else {
-                result.message = 'clear';
-                this.res.status(201).send(result);
-                return;
+            catch (err) {
+                let result = {
+                    result: 'failed',
+                    message: 'DB Error. Please Contect Manager'
+                };
+                this.res.status(400).send(result);
             }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                message: 'DB Error. Please Contect Manager'
-            };
-            this.res.status(400).send(result);
-        }
+        run();
     }
 }
 exports.default = MemberManager;

@@ -50,6 +50,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         let date = new Date();
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + date.toString()); //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64);
+        let time = new Date();
+        params.updateTime = time.toISOString();
         var queryParams = {
             TableName: 'Pinpoint',
             Item: {
@@ -61,7 +63,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 updateTime: params.updateTime,
                 description: params.description,
                 quiz: params.quiz,
-                coupons: params.coupons
+                coupons: params.coupons,
+                comments: []
             },
             ConditionExpression: "attribute_not_exists(id)" // 항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         };

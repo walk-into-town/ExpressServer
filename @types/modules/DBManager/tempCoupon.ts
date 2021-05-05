@@ -50,6 +50,5 @@ export default class CouponManager extends FeatureManager{
             // this.res.status(201).send(result)
         }
         return run
-        
     }
 }

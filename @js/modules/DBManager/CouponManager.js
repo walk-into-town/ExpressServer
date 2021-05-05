@@ -57,26 +57,27 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            yield this.Dynamodb.put(queryParams).promise();
-            this.res.locals.coupons.push(queryParams.Item);
-            // let result = {
-            //     result: 'success',
-            //     message: {
-            //         'id': id
-            //     }
-            // }
-            // this.res.status(201).send(result)
+            try {
+                yield this.Dynamodb.put(queryParams).promise();
+                this.res.locals.coupons.push(queryParams.Item);
+                // let result = {
+                //     result: 'success',
+                //     message: {
+                //         'id': id
+                //     }
+                // }
+                // this.res.status(201).send(result)
+            }
+            catch (err) { //DB에러 발생
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Contect Manager',
+                    errcode: err
+                };
+                this.res.status(400).send(result);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) { //DB에러 발생
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(400).send(result);
-        }
+        run();
     }
     /**
      * 쿠폰 조회 로직
@@ -110,23 +111,24 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 return;
         }
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let queryResult = yield this.Dynamodb.query(queryParams).promise();
-            let result = {
-                result: 'success',
-                message: queryResult.Items
-            };
-            this.res.status(200).send(result);
+            try {
+                let queryResult = yield this.Dynamodb.query(queryParams).promise();
+                let result = {
+                    result: 'success',
+                    message: queryResult.Items
+                };
+                this.res.status(200).send(result);
+            }
+            catch (err) {
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Contect Manager',
+                    errcode: err
+                };
+                this.res.status(400).send(result);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                error: 'DB Error. Please Contect Manager'
-            };
-            this.res.status(400).send(result);
-        }
+        run();
     }
     /**
      * 쿠폰 수정 로직
@@ -164,8 +166,46 @@ class CouponManager extends FeatureManager_1.FeatureManager {
         updateExp += queryArray.pop();
         console.log(updateExp);
     }
+    /**
+     * 쿠폰 삭제 로직
+     * 1. id 입력 받기
+     * 2. db 삭제 요청
+     * 3. 결과에 따라 값 반환
+     */
     delete(params) {
-        throw new Error("Method not implemented.");
+        console.log(params);
+        var queryParams = {
+            TableName: 'Coupon',
+            Key: {
+                'id': params.id
+            },
+            ReturnValues: 'ALL_OLD'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let dbResult = yield this.Dynamodb.delete(queryParams).promise();
+                let result = {
+                    result: 'success',
+                    message: null
+                };
+                if (dbResult.Attributes == undefined) {
+                    result.message = [];
+                }
+                else {
+                    result.message = dbResult.Attributes;
+                }
+                this.res.status(200).send(result);
+            }
+            catch (err) {
+                let result = {
+                    result: 'failed',
+                    error: 'DB Error. Please Contect Manager',
+                    errcode: err
+                };
+                this.res.status(400).send(result);
+            }
+        });
+        run();
     }
 }
 exports.default = CouponManager;
