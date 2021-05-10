@@ -117,7 +117,7 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async () => {
             let queryResult = await this.Dynamodb.query(queryParams).promise()
-            console.log(queryResult)
+            console.log(queryResult.Items[0])
         }
         run()
      }
