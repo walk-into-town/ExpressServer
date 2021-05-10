@@ -28,19 +28,27 @@ router.post('/', isAuthenticated, upload.array('img'), function(req: express.Req
 })
 
 router.get('/', function(req: express.Request, res: express.Response){
-    
+    let query = req.query
+    let pinpointDB = new PinpointManager(req, res)
+    pinpointDB.readComment(query)
 })
 
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let query = req.body
+    let pinpointDB = new PinpointManager(req, res)
+    pinpointDB.deleteComment(query)
 })
 
 router.put('/', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let query = req.body
+    let pinpointDB = new PinpointManager(req, res)
+    pinpointDB.updateComment(query)
 })
 
 router.put('/rate', isAuthenticated, function(req: express.Request, res: express.Response){
-
+    let query = req.body
+    let pinpointDB = new PinpointManager(req, res)
+    pinpointDB.updateRate(query)
 })
 
 module.exports = router

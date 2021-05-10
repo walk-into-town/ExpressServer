@@ -35,18 +35,23 @@ router.post('/', isAuthenticated, upload.array('img'), function(req: express.Req
 
 router.get('/', function(req: express.Request, res: express.Response){
     let query = req.body
-    let read: Array<any> = []
-    if(typeof(query.id) == 'string'){
-        read.push({'id': query.id})
+    let pinpointDB = new PinpointManager(req, res)
+    if(query.type == 'single'){
+        let read: Array<any> = []
+        if(typeof(query.id) == 'string'){
+            read.push({'id': query.id})
+        }
+        else{
+            query.id.forEach(id => {
+                let obj = {'id': id}
+                read.push(obj)
+            });
+        }
+        pinpointDB.read(read)
     }
     else{
-        query.id.forEach(id => {
-            let obj = {'id': id}
-            read.push(obj)
-        });
+        pinpointDB.readList(query) 
     }
-    let pinpointDB = new PinpointManager(req, res)
-    pinpointDB.read(read)
 })
 
 // router.post('/inquiry', function(req: express.Request, res: express.Response){

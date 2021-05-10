@@ -30,6 +30,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
+const result_1 = require("../../static/result");
 class PinpointManager extends FeatureManager_1.FeatureManager {
     /**
      * 핀포인트 등록 로직
@@ -41,14 +42,14 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         let date = new Date();
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + date.toString()); //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64);
-        var checkCouponParams = {
+        let checkCouponParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {
                 ':id': params.coupons
             }
         };
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Item: {
                 id: params.id,
@@ -70,29 +71,22 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     let checkCoupon = yield this.Dynamodb.query(checkCouponParams).promise();
                     if (checkCoupon.Items[0] == undefined) { //data.Item == undefined -> 해당하는 ID가 없음
                         console.log(`핀포인트 쿠폰 체크\nDB 요청 Params\n${JSON.stringify(queryParams, null, 2)}`);
-                        let result = {
-                            result: 'failed',
-                            error: 'Invalid Coupon'
-                        };
-                        this.res.status(400).send(result);
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = "Coupon you send does not exist in DB";
+                        this.res.status(400).send(result_1.fail);
                         return;
                     }
                 }
                 this.res.locals.id = params.id;
                 let queryResult = yield this.Dynamodb.put(queryParams).promise();
-                let result = {
-                    'result': 'success',
-                    'message': params.id
-                };
-                this.res.status(201).send(result);
-                console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
+                result_1.success.result = params.id;
+                this.res.status(201).send(result_1.success);
+                console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: err
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();
@@ -105,14 +99,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      */
     read(params) {
         if (params[0].id == undefined) {
-            let result = {
-                result: 'failed',
-                error: 'Invalid Request Data'
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = 'Missing Required Values in Request. Please check API Document';
+            this.res.status(400).send(result_1.fail);
             return;
         }
-        var queryParams = {
+        let queryParams = {
             RequestItems: {
                 'Pinpoint': {
                     Keys: params
@@ -123,35 +115,40 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             try {
                 yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise(); // read를 수행할때 까지 대기
                 if (this.res.locals.UnprocessedKeys != undefined) { //오류 발생 처리
-                    let result = {
-                        "result": 'failed',
-                        "error": "DB Error. Please Contect Manager"
-                    };
-                    this.res.status(400).send(result);
+                    result_1.fail.error = result_1.error.dbError;
+                    result_1.fail.errdesc = 'None of Keys are processed';
+                    this.res.status(400).send(result_1.fail);
                 }
-                let result = {
-                    'result': 'success',
-                    'message': this.res.locals.result.Pinpoint
-                };
-                this.res.status(201).send(this.res.locals.result.Responses.Pinpoint);
+                result_1.success.data = this.res.locals.result.Pinpoint;
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error. please contect manager'
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
+        });
+        run();
+    }
+    readList(params) {
+        let id = params.id;
+        let queryParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'pinpoints',
+            ExpressionAttributeValues: { ':id': id }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let queryResult = yield this.Dynamodb.query(queryParams).promise();
+            console.log(queryResult);
         });
         run();
     }
     onRead(err, data) {
         if (err) {
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
         }
         else {
             this.res.locals.result = data;
@@ -163,7 +160,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 2. 성공 /실패 메시지 전달
      */
     update(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: { id: params.id },
             UpdateExpression: 'set imgs = :newimgs',
@@ -175,18 +172,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     }
     onUpdate(err, data) {
         if (err) {
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Attributes
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = data.Attributes;
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -196,7 +188,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     delete(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: {
                 'id': params.id
@@ -207,18 +199,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     }
     onDelete(err, data) {
         if (err) {
-            let result = {
-                'result': 'failed',
-                'error': err
-            };
-            this.res.status(401).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(401).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Attributes
-            };
-            this.res.status(200).send(result);
+            result_1.success.data = data.Attributes;
+            this.res.status(200).send(result_1.success);
         }
     }
     /**
@@ -231,7 +218,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readDetail(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: {
                 'id': params.id
@@ -241,19 +228,20 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         this.Dynamodb.get(queryParams, this.onReadDetail.bind(this));
     }
     onReadDetail(err, data) {
+        if (err) {
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
         if (data.Item == undefined) {
-            let result = {
-                'result': 'failed',
-                'error': 'Provided Key does not match'
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.invalKey;
+            result_1.fail.errdesc = 'Provided Pinopint Key does not match';
+            this.res.status(400).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Item
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = data.Item;
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -264,7 +252,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 결과 전달
      */
     updateDetail(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: { id: params.id },
             UpdateExpression: 'set description = :newdesc',
@@ -276,18 +264,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     }
     onUpdateDetail(err, data) {
         if (err) {
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Attributes
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = data.Attributes;
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -300,7 +283,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 결과 전달
      */
     insertQuiz(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: { id: params.id },
             UpdateExpression: 'set quiz = :quiz',
@@ -312,18 +295,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     }
     onInsertQuiz(err, data) {
         if (err) {
-            let result = {
-                'result': 'failed',
-                'error': err
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Attributes
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = data.Attributes;
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -333,7 +311,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readQuiz(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: {
                 'id': params.id
@@ -344,18 +322,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     }
     onReadQuiz(err, data) {
         if (err) {
-            let result = {
-                'result': 'failed',
-                'error': err
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Item
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = data.Item;
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -366,7 +339,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 4. 사용자에게 결과 전달
      */
     updateQuiz(params) {
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: { id: params.id },
             UpdateExpression: 'set quiz = :quiz',
@@ -378,18 +351,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     }
     onUpdateQuiz(err, data) {
         if (err) {
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            this.res.status(400).send(result_1.fail);
         }
         else {
-            let result = {
-                'result': 'success',
-                'message': data.Attributes
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = data.Attributes;
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -407,44 +375,200 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         let date = new Date();
         let hash = CryptoJS.SHA256(params.pid + date.toString()); //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64);
-        if (userid != params.comments.userId) {
-            let result = {
-                result: 'failed',
-                error: 'Invalid User ID'
-            };
-            this.res.status(400).send(result);
+        if (userid != params.comments.userId) { //세션의 id와 전송한 id가 다른 경우
+            result_1.fail.error = result_1.error.invalKey;
+            result_1.fail.errdesc = 'User Id does not match with session';
+            this.res.status(400).send(result_1.fail);
         }
         let comment = [{
                 id: params.id,
                 userId: userid,
-                test: params.comments.text,
+                text: params.comments.text,
                 rated: 0,
                 imgs: params.imgs
             }];
-        var queryParams = {
+        let queryParams = {
             TableName: 'Pinpoint',
             Key: { id: params.pid },
             UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
-            ExpressionAttributeValues: { ':newcomment': comment, 'emptylist': [] },
+            ExpressionAttributeValues: { ':newcomment': comment, ':emptylist': [] },
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let queryResult = yield this.Dynamodb.update(queryParams).promise();
-                let result = {
-                    result: 'success',
-                    message: queryResult.Attributes
-                };
-                this.res.status(200).send(result);
+                result_1.success.data = queryResult.Attributes;
+                this.res.status(200).send(result_1.success);
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error. Please Connect Manager',
-                    errcode: err
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    readComment(params) {
+        let id = params.id;
+        let queryParams = {
+            TableName: 'Pinpoint',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': id }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                result_1.success.data = result.Items[0].comments;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    /**
+     * 핀포인트 댓글 삭제 로직
+     * 1. 핀포인트 id를 이용해 댓글을 가져옴
+     * 2. for문을 돌며 댓글 id가 일치하는 항목을 삭제
+     * 3. 성공 메시지 출력
+     */
+    deleteComment(params) {
+        let pid = params.pid;
+        let findParams = {
+            TableName: 'Pinpoint',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': pid }
+        };
+        let updateParams = {
+            TableName: 'Pinpoint',
+            Key: { id: params.pid },
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: { ':newcomment': null },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let comments = yield this.Dynamodb.query(findParams).promise();
+                for (let i = 0; i < comments.Items[0].comments.length; i++) {
+                    let cid = comments.Items[0].comments[i].id;
+                    let uid = comments.Items[0].comments[i].userId;
+                    if (cid == params.cid && uid == params.uid) {
+                        comments.Items[0].comments.splice(i, 1);
+                        break;
+                    }
+                }
+                console.log('댓글 찾는중...');
+                console.log(comments.Items[0].comments);
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
+                let updateResult = yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = updateResult;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    updateComment(params) {
+        let pid = params.pid;
+        let findParams = {
+            TableName: 'Pinpoint',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': pid }
+        };
+        let updateParams = {
+            TableName: 'Pinpoint',
+            Key: { id: params.pid },
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: { ':newcomment': null },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let comments = yield this.Dynamodb.query(findParams).promise();
+                console.log('댓글 찾는중...');
+                for (let i = 0; i < comments.Items[0].comments.length; i++) {
+                    let cid = comments.Items[0].comments[i].id;
+                    let uid = comments.Items[0].comments[i].userId;
+                    if (cid == params.cid && uid == params.uid) {
+                        console.log('조건 만족');
+                        comments.Items[0].comments[i].text = params.text;
+                        break;
+                    }
+                }
+                console.log(comments.Items[0].comments);
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
+                console.log('댓글 수정중...');
+                let updateResult = yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = updateResult;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    updateRate(params) {
+        let pid = params.pid;
+        let findParams = {
+            TableName: 'Pinpoint',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': pid }
+        };
+        let updateParams = {
+            TableName: 'Pinpoint',
+            Key: { id: params.pid },
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: { ':newcomment': null },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let comments = yield this.Dynamodb.query(findParams).promise();
+                console.log('댓글 찾는중...');
+                for (let i = 0; i < comments.Items[0].comments.length; i++) {
+                    let cid = comments.Items[0].comments[i].id;
+                    let uid = comments.Items[0].comments[i].userId;
+                    if (cid == params.cid && uid == params.uid) {
+                        console.log('조건 만족');
+                        if (params.like == true) {
+                            comments.Items[0].comments[i].rated += 1;
+                            break;
+                        }
+                        else {
+                            comments.Items[0].comments[i].rated -= 1;
+                            break;
+                        }
+                    }
+                }
+                console.log(comments.Items[0].comments);
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
+                console.log('댓글 수정중...');
+                let updateResult = yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = updateResult;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();

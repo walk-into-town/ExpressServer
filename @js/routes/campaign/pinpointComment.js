@@ -46,11 +46,23 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     pinpointDB.insertComment(query);
 });
 router.get('/', function (req, res) {
+    let query = req.query;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.readComment(query);
 });
 router.delete('/', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.deleteComment(query);
 });
 router.put('/', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.updateComment(query);
 });
 router.put('/rate', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.updateRate(query);
 });
 module.exports = router;
