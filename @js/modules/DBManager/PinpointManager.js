@@ -32,6 +32,15 @@ const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 class PinpointManager extends FeatureManager_1.FeatureManager {
+    constructor() {
+        super(...arguments);
+        this.nbsb2plus = (query) => {
+            for (let i = 0; i < query.length; i++) {
+                query = query.replace(' ', '+');
+            }
+            return query;
+        };
+    }
     /**
      * 핀포인트 등록 로직
      * 1. 핀포인트 이름, 위/경도로 hash id 생성
@@ -104,6 +113,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result_1.fail);
             return;
         }
+        console.log(params);
         let queryParams = {
             RequestItems: {
                 'Pinpoint': {
@@ -113,7 +123,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise(); // read를 수행할때 까지 대기
+                let test = yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise(); // read를 수행할때 까지 대기
                 if (this.res.locals.UnprocessedKeys != undefined) { //오류 발생 처리
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = 'None of Keys are processed';
@@ -131,7 +141,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readList(params) {
-        let id = params.id;
+        let id = this.nbsb2plus(params.id);
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -139,8 +149,17 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':id': id }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
+            console.log('핀포인트 목록 가져오는중...');
             let queryResult = yield this.Dynamodb.query(queryParams).promise();
-            console.log(queryResult);
+            let pinpointList = [];
+            console.log(`핀포인트 id\n${JSON.stringify(queryResult.Items[0].pinpoints)}`);
+            queryResult.Items[0].pinpoints.forEach((id) => {
+                let obj = {
+                    'id': id
+                };
+                pinpointList.push(obj);
+            });
+            this.read(pinpointList);
         });
         run();
     }
@@ -151,7 +170,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result_1.fail);
         }
         else {
-            this.res.locals.result = data;
+            this.res.locals.result = data.Responses;
         }
     }
     /**
@@ -218,6 +237,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readDetail(params) {
+        params.id = this.nbsb2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -311,6 +331,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readQuiz(params) {
+        params.id = this.nbsb2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -410,7 +431,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readComment(params) {
-        let id = params.id;
+        let id = this.nbsb2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',

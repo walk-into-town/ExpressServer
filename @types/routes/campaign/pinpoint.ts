@@ -34,7 +34,8 @@ router.post('/', isAuthenticated, upload.array('img'), function(req: express.Req
 })
 
 router.get('/', function(req: express.Request, res: express.Response){
-    let query = req.body
+    let query: any = req.query
+    console.log(`요청 JSON\n${JSON.stringify(query)}`)
     let pinpointDB = new PinpointManager(req, res)
     if(query.type == 'single'){
         let read: Array<any> = []

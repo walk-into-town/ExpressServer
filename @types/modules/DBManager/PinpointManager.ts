@@ -80,6 +80,7 @@ export default class PinpointManager extends FeatureManager{
             this.res.status(400).send(fail)
             return;
         }
+        console.log(params)
         let queryParams = {
             RequestItems:{
                 'Pinpoint':{
@@ -87,9 +88,10 @@ export default class PinpointManager extends FeatureManager{
                 }
             }
         }
+
         const run = async () => {              //batch 조회를 수행하기 때문에 비동기 함수를 사용
             try{
-                await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기
+                let test = await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기
                 if(this.res.locals.UnprocessedKeys != undefined){              //오류 발생 처리
                     fail.error = error.dbError
                     fail.errdesc = 'None of Keys are processed'
@@ -108,7 +110,7 @@ export default class PinpointManager extends FeatureManager{
      }
 
      public readList(params: any): void{
-        let id = params.id
+        let id = this.nbsb2plus(params.id)
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -116,8 +118,17 @@ export default class PinpointManager extends FeatureManager{
             ExpressionAttributeValues: { ':id' : id}
         }
         const run = async () => {
+            console.log('핀포인트 목록 가져오는중...')
             let queryResult = await this.Dynamodb.query(queryParams).promise()
-            console.log(queryResult.Items[0])
+            let pinpointList:Array<object> = []
+            console.log(`핀포인트 id\n${JSON.stringify(queryResult.Items[0].pinpoints)}`)
+            queryResult.Items[0].pinpoints.forEach((id) => {
+                let obj = {
+                    'id': id
+                }
+                pinpointList.push(obj)
+            })
+            this.read(pinpointList)
         }
         run()
      }
@@ -129,7 +140,7 @@ export default class PinpointManager extends FeatureManager{
             this.res.status(400).send(fail)
         }
         else{
-            this.res.locals.result = data
+            this.res.locals.result = data.Responses
         }
     }
 
@@ -205,6 +216,7 @@ export default class PinpointManager extends FeatureManager{
      * 3. 사용자에게 전달
      */
     public readDetail(params: any): void{
+        params.id = this.nbsb2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -307,6 +319,7 @@ export default class PinpointManager extends FeatureManager{
      * 3. 사용자에게 전달
      */
     public readQuiz(params: any): void{
+        params.id = this.nbsb2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -412,7 +425,7 @@ export default class PinpointManager extends FeatureManager{
     }
 
     public readComment(params: any): void{
-        let id = params.id
+        let id = this.nbsb2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',
@@ -577,5 +590,11 @@ export default class PinpointManager extends FeatureManager{
             }
         }
         run();
+    }
+    private nbsb2plus = (query: string): string => {
+        for(let i =0; i < query.length; i++){
+            query = query.replace(' ', '+')
+        }
+        return query
     }
 }

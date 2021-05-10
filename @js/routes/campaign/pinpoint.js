@@ -49,7 +49,8 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     pinpointDB.insert(query);
 });
 router.get('/', function (req, res) {
-    let query = req.body;
+    let query = req.query;
+    console.log(`요청 JSON\n${JSON.stringify(query)}`);
     let pinpointDB = new PinpointManager_1.default(req, res);
     if (query.type == 'single') {
         let read = [];
