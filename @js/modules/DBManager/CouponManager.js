@@ -30,6 +30,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
+const result_1 = require("../../static/result");
 class CouponManager extends FeatureManager_1.FeatureManager {
     /**
      * 쿠폰 등록 로직
@@ -69,12 +70,9 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 // this.res.status(201).send(result)
             }
             catch (err) { //DB에러 발생
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error. Please Contect Manager',
-                    errcode: err
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();
@@ -103,29 +101,21 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 queryParams.ProjectionExpression = 'pinpoint';
                 break;
             default:
-                let result = {
-                    result: 'failed',
-                    error: 'Type Mismatch. Select Type between coupon and campaign'
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.typeMiss;
+                result_1.fail.errdesc = '잘못된 타입. coupon 또는 campaign으로 타입을 설정';
+                this.res.status(400).send(result_1.fail);
                 return;
         }
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let queryResult = yield this.Dynamodb.query(queryParams).promise();
-                let result = {
-                    result: 'success',
-                    message: queryResult.Items
-                };
-                this.res.status(200).send(result);
+                result_1.success.data = queryResult.Items;
+                this.res.status(200).send(result_1.success);
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error. Please Contect Manager',
-                    errcode: err
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();
@@ -184,25 +174,18 @@ class CouponManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let dbResult = yield this.Dynamodb.delete(queryParams).promise();
-                let result = {
-                    result: 'success',
-                    message: null
-                };
                 if (dbResult.Attributes == undefined) {
-                    result.message = [];
+                    result_1.success.data = [];
                 }
                 else {
-                    result.message = dbResult.Attributes;
+                    result_1.success.data = dbResult.Attributes;
                 }
-                this.res.status(200).send(result);
+                this.res.status(200).send(result_1.success);
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error. Please Contect Manager',
-                    errcode: err
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();

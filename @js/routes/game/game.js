@@ -34,6 +34,9 @@ const upload = uploader.testupload();
 router.post('/game/monster', function (req, res) {
 });
 router.get('/monster/img', function (req, res) {
+    let query = req.query;
+    let monsterDB = new MonsterManager_1.default(req, res);
+    monsterDB.read(query);
 });
 router.put('/monster/img', upload.array('img'), function (req, res) {
     let query = req.body;

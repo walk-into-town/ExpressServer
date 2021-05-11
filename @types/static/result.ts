@@ -11,6 +11,9 @@ export let fail = {
 
 export const error = {
     dbError: 'DB Error. Please Contect Manager',
-    invalKey: 'Invliad Coupon',
-    invalReq: 'Invalid Request Values'
+    invalKey: 'Invliad Key Values',
+    invalReq: 'Invalid Request Values',
+    dataNotFound: 'Can not find data from DB',
+    typeMiss: 'Type Mismatch',
+    invalAcc: 'Invalid Access'
 }

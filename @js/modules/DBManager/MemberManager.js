@@ -34,6 +34,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const SessionManager_1 = __importDefault(require("./SessionManager"));
 const bcrypt = __importStar(require("bcrypt"));
+const result_1 = require("../../static/result");
 class MemberManager extends FeatureManager_1.FeatureManager {
     /**
      * 회원가입 로직
@@ -55,11 +56,9 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let checkResult = yield this.Dynamodb.query(checkparams).promise();
                 console.log(checkResult.Items);
                 if (checkResult.Items.length != 0) {
-                    let result = {
-                        result: 'failed',
-                        error: '닉네임이 중복되었어요.'
-                    };
-                    this.res.status(400).send(result);
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '닉네임이 중복되었어요.';
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
@@ -79,29 +78,22 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 this.Dynamodb.put(queryParams, this.onInsert.bind(this));
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error! Please Contect Manager'
-                };
-                this.res.status(402).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(402).send(result_1.fail);
             }
         });
         run();
     }
     onInsert(err, data) {
         if (err) {
-            let result = {
-                result: 'failed',
-                error: 'ID가 중복되었어요'
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = 'ID가 중복되었어요.';
+            this.res.status(400).send(err);
         }
         else {
-            let result = {
-                result: 'success',
-                message: 'register success'
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = '회원가입 성공';
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -118,11 +110,9 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             try {
                 yield sessman.findBySId(this.req.session.id);
                 if (this.res.locals.result == undefined) {
-                    let result = {
-                        result: 'failed',
-                        error: 'Please Login First'
-                    };
-                    this.res.status(400).send(result);
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = '먼저 로그인 해주세요';
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 let json = JSON.parse(this.res.locals.result.sess);
@@ -131,28 +121,21 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     this.req.session.destroy(() => {
                         this.req.session;
                     });
-                    let result = {
-                        result: 'success',
-                        message: params.id
-                    };
+                    result_1.success.data = params.id;
                     console.log('로그아웃 성공');
-                    console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`);
-                    this.res.status(200).send(result);
+                    console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
+                    this.res.status(200).send(result_1.success);
                 }
                 else {
-                    let result = {
-                        result: 'failed',
-                        error: 'Invalid UserID'
-                    };
-                    this.res.status(400).send(result);
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '잘못된 ID입니다.';
+                    this.res.status(400).send(result_1.fail);
                 }
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    error: err
-                };
-                this.res.status(402).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(402).send(result_1.fail);
             }
         });
         run();
@@ -191,27 +174,21 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let queryResult = yield this.Dynamodb.query(params).promise();
-                let result = {
-                    result: 'success',
-                    message: ''
-                };
                 if (queryResult.Items.length == 0) {
-                    result.message = 'duplicated';
-                    this.res.status(201).send(result);
+                    result_1.success.data = '중복되었어요';
+                    this.res.status(201).send(result_1.success);
                     return;
                 }
                 else {
-                    result.message = 'clear';
-                    this.res.status(201).send(result);
+                    result_1.success.data = '가능해요';
+                    this.res.status(201).send(result_1.success);
                     return;
                 }
             }
             catch (err) {
-                let result = {
-                    result: 'failed',
-                    message: 'DB Error. Please Contect Manager'
-                };
-                this.res.status(400).send(result);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();

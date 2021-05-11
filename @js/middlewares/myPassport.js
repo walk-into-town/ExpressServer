@@ -42,9 +42,10 @@ AWS.config.update({
     endpoint: process.env.dynamoEndpoint
 });
 const bcrypt = require('bcrypt');
-var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-var GoogleStrategy = require('passport-google-oauth20').Strategy;
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const KakaoStrategy = require('passport-kakao').Strategy;
 module.exports = () => {
     // 전략에서 넘어온 User값을 세션에 저장하는 함수
     passport.serializeUser(function (user, done) {
@@ -144,5 +145,16 @@ module.exports = () => {
             }
         });
         run();
+    }));
+    passport.use('kakao', new KakaoStrategy({
+        clientID: process.env.kakaoID,
+        clientSecret: process.env.kakaoSecret,
+        callbackURL: process.env.kakaoAuthCallback
+    }, function (accessToekn, refreshtoken, profile, done) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log(accessToekn);
+            console.log(refreshtoken);
+            console.log(process);
+        });
     }));
 };

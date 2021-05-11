@@ -33,4 +33,9 @@ router.get('/google/callback', passport.authenticate('google', { failureRedirect
     console.log(`응답 JSON\n${JSON.stringify(req.user, null, 2)}`);
     res.send(req.user);
 });
+router.get('/kakao', passport.authenticate('kakao'));
+router.get('/kakao/callback', passport.authenticate('kakao', { failureRedirect: 'login/result/fail' }), function (req, res) {
+    console.log(`응답 JSON\n${JSON.stringify(req.user, null, 2)}`);
+    res.send(req.user);
+});
 module.exports = router;

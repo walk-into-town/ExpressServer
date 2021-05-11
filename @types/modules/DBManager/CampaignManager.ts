@@ -1,5 +1,6 @@
 import { FeatureManager, toRead } from "./FeatureManager"
 import * as CryptoJS from 'crypto-js'
+import { error, fail, success } from "../../static/result"
 
 
 export default class CampaignManager extends FeatureManager{
@@ -22,10 +23,6 @@ export default class CampaignManager extends FeatureManager{
                 let isIdValid: boolean            //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
                 let isPinpointValid: boolean
                 let isCouponValid: boolean
-                let result = {                    //사용자 id 검증 후 전달을 위한 id
-                    result: 'failed',
-                    error: []
-                }
                 
                 if(params.coupon != undefined){
                     if(params.coupon != undefined){
@@ -46,13 +43,15 @@ export default class CampaignManager extends FeatureManager{
                         }
                         if(err){
                             isCouponValid = false
-                            result.error.push('DB Error. Please Contect Manager')
+                            fail.error = error.dbError
+                            fail.errdesc = err
                             console.log('쿠폰 체크 DB 에러 발생')
                         }
                         else{
                             if(data.Items[0] == undefined){     //data.Item == undefined -> 해당하는 ID가 없음
                                 isCouponValid = false
-                                result.error.push('Invalid Coupon')
+                                fail.error = error.dataNotFound
+                                fail.errdesc = '일치하는 쿠폰 없음'
                                 console.log('일치하는 쿠폰 없음')
                                 return;
                             }
@@ -74,14 +73,16 @@ export default class CampaignManager extends FeatureManager{
                     }
                     if(err){                        //DB오류
                         isIdValid = false
-                        result.error.push('DB Error. Please Contect Manager')
+                        fail.error = error.dbError
+                        fail.errdesc = err
                         console.log('ID 체크 DB 에러 발생')
                         return;
                     }
                     else{
                         if(data.Items == undefined){     //data.Item == undefined -> 해당하는 ID가 없음
                             isIdValid = false
-                            result.error.push('Invalid User')
+                            fail.error = error.dataNotFound
+                            fail.errdesc = '일치하는 사용자 없음'
                             console.log('일치하는 사용자 없음')
                             return;
                         }
@@ -112,19 +113,22 @@ export default class CampaignManager extends FeatureManager{
                     }
                     if(err){                            //DB에러
                         isPinpointValid = false
-                        result.error.push('DB Error. Please Contect Manager')
+                        fail.error = error.dbError
+                        fail.errdesc = err
                         console.log('핀포인트 체크 DB 에러 발생')
                     }
                     else{
                         if(data == undefined){        //일치하는 핀포인트 ID가 하나도 없을 때
                             isPinpointValid = false
-                            result.error.push('Invalid Pinpoint')
+                            fail.error = error.dataNotFound
+                            fail.errdesc = '일치하는 핀포인트 없음'
                             console.log('일치하는 핀포인트 없음')
                             return;
                         }
                         if(data.length != pinpoints.length){  //DB가 준 핀포인트 수와 사용자 입력 핀포인트 수가 다름 = 잘못된 핀포인트 존재
                             isPinpointValid = false
-                            result.error.push('Invalid Pinpoint')
+                            fail.error = error.dataNotFound
+                            fail.errdesc = '핀포인트 일치하지 않음'
                             console.log('일부 핀포인트가 일치하지 않음')
                             return;
                         }
@@ -140,8 +144,8 @@ export default class CampaignManager extends FeatureManager{
                 await this.Dynamodb.batchGet(checkPinpointParams, onCheckPinoint.bind(this)).promise()
                 
                 if(isIdValid == false || isPinpointValid == false || isCouponValid == false){  //사용자 ID와 핀포인트 ID를 체크해서 1개라도 틀린경우 
-                    this.res.status(400).send(result)                //에러 메시지 전달
-                    console.log(`응답 jSON\n${JSON.stringify(result, null, 2)}`)
+                    this.res.status(400).send(fail)                //에러 메시지 전달
+                    console.log(`응답 jSON\n${JSON.stringify(fail, null, 2)}`)
                     return;
                 }
                 let date = new Date()
@@ -168,11 +172,9 @@ export default class CampaignManager extends FeatureManager{
                     this.Dynamodb.put(queryParams, this.onInsert.bind(this))
                 }
                 catch(err){
-                    let result = {
-                        result: 'failed',
-                        error: err
-                    }
-                    this.res.status(400).send(result);
+                    fail.error = error.dbError
+                    fail.errdesc = err
+                    this.res.status(400).send(fail);
                 }
             }
         run()
@@ -180,20 +182,15 @@ export default class CampaignManager extends FeatureManager{
 
     private onInsert(err: object, data: any){
         if(err){                                    //에러 발생
-            let result = {
-                result: 'failed',
-                error: err
-            }
-            this.res.status(400).send(result)
-            console.log(`DB에러\n응답 JSON\n${JSON.stringify(result, null, 2)}`)
+            fail.error = error.dbError
+            fail.errdesc = err
+            this.res.status(400).send(fail)
+            console.log(`DB에러\n응답 JSON\n${JSON.stringify(fail, null, 2)}`)
         }
         else{                                      //정상 처리
-            let result = {
-                "result" : "success",
-                "message": this.res.locals.id  // DynamoDB에서는 insert시 결과 X. 따라서 임의로 생성되는 id를 전달하기 위해 locals에 id 추가
-            }
-            this.res.status(201).send(result)
-            console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(result, null, 2)}`)
+            success.data = this.res.locals.id
+            this.res.status(201).send(success)
+            console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(success, null, 2)}`)
         }
     }
 
@@ -257,17 +254,13 @@ export default class CampaignManager extends FeatureManager{
         const run = async() => {
             try{
                 let queryResult = await this.Dynamodb.scan(queryParams).promise()
-                let result = {
-                    result: 'success',
-                    message: queryResult.Items
-                }
-                this.res.status(200).send(result)
+                success.data = queryResult.Items
+                this.res.status(200).send(success)
             }
             catch(err){
-                let result = {
-                    result: 'failed',
-                    error: err
-                }
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
             }
         }
         run()
@@ -275,25 +268,18 @@ export default class CampaignManager extends FeatureManager{
 
     private onRead(err: object, data: any){
         if(err){                                    //에러 발생
-            let result = {
-                result: 'failed',
-                error: err
-            }
-            this.res.status(400).send(result)
+            fail.error = error.dbError
+            fail.errdesc = err
+            this.res.status(400).send(fail)
         }
         else{
-            let result = {
-                result: 'success',
-                message: null
-            }
             if(data.Items[0] == undefined){
-                result.result = 'success',
-                result.message = []
+                success.data = []
             }
             else{
-                result.message = data.Items
+                success.data = data.Items
             }
-            this.res.status(201).send(result)
+            this.res.status(201).send(success)
         }
     }
 
@@ -314,11 +300,9 @@ export default class CampaignManager extends FeatureManager{
                 const result = await this.Dynamodb.query(queryParams).promise()
                 let originCampaign = result.Items[0]
                 if(originCampaign == undefined){        //일치하는 id 없음
-                    let result = {
-                        result: 'failed',
-                        error: 'Campaign id mismatch'
-                    }
-                    this.res.status(400).send(result)
+                    fail.error = error.dataNotFound
+                    fail.errdesc = '일치하는 캠페인 id 없음'
+                    this.res.status(400).send(fail)
                     return;
                 }
                 let pinpoints = []; let coupons = []
@@ -342,21 +326,16 @@ export default class CampaignManager extends FeatureManager{
                 let pinpointCheck = check.Responses.Pinpoint.length           
                 let couponCheck = check.Responses.Coupon.length
                 if(pinpointCheck != pinpoints.length || couponCheck != coupons.length){
-                    let result = {
-                        result: 'failed',
-                        error: 'One or more Pinpots or Coupons id are invalid'
-                    }
-                    this.res.status(400).send(result)
+                    fail.error = error.dataNotFound
+                    fail.errdesc = '일치하는 핀포인트 또는 쿠폰 id 없음'
+                    this.res.status(400).send(fail)
                     return;
                 }
             }
-            catch (error) {                             //DB 에러 발생
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error. Please Contect Manager',
-                    error2: error
-                }
-                this.res.status(400).send(result)
+            catch (err) {                             //DB 에러 발생
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
             }
         }
         run()

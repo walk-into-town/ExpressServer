@@ -1,6 +1,7 @@
 import { FeatureManager } from "./FeatureManager";
 import SessionManager from './SessionManager'
 import * as bcrypt from 'bcrypt'
+import { error, fail, success } from "../../static/result";
 
 
 export default class MemberManager extends FeatureManager{
@@ -23,11 +24,9 @@ export default class MemberManager extends FeatureManager{
                 let checkResult = await this.Dynamodb.query(checkparams).promise()
                 console.log(checkResult.Items)
                 if(checkResult.Items.length != 0){
-                    let result = {
-                        result: 'failed',
-                        error: '닉네임이 중복되었어요.'
-                    }
-                    this.res.status(400).send(result)
+                    fail.error = error.invalReq
+                    fail.errdesc = '닉네임이 중복되었어요.'
+                    this.res.status(400).send(fail)
                     return;
                 }
 
@@ -48,11 +47,9 @@ export default class MemberManager extends FeatureManager{
                 this.Dynamodb.put(queryParams, this.onInsert.bind(this))
             }
             catch(err){
-                let result = {
-                    result: 'failed',
-                    error: 'DB Error! Please Contect Manager'
-                }
-                this.res.status(402).send(result)
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(402).send(fail)
             }
         }
         run()
@@ -60,18 +57,13 @@ export default class MemberManager extends FeatureManager{
 
     private onInsert(err: object, data: any): void{
         if(err){
-            let result = {
-                result: 'failed',
-                error: 'ID가 중복되었어요'
-            }
-            this.res.status(400).send(result)
+            fail.error = error.invalReq
+            fail.errdesc = 'ID가 중복되었어요.'
+            this.res.status(400).send(err)
         }
         else{
-            let result = {
-                result: 'success',
-                message: 'register success'
-            }
-            this.res.status(201).send(result)
+            success.data = '회원가입 성공'
+            this.res.status(201).send(success)
         }
     }
 
@@ -89,11 +81,9 @@ export default class MemberManager extends FeatureManager{
             try{    
                 await sessman.findBySId(this.req.session.id)
                 if(this.res.locals.result == undefined){
-                    let result = {
-                        result: 'failed',
-                        error: 'Please Login First'
-                    }
-                    this.res.status(400).send(result)
+                    fail.error = error.invalAcc
+                    fail.errdesc = '먼저 로그인 해주세요'
+                    this.res.status(400).send(fail)
                     return;
                 }
                 let json = JSON.parse(this.res.locals.result.sess)
@@ -102,28 +92,21 @@ export default class MemberManager extends FeatureManager{
                     this.req.session.destroy(() => {
                         this.req.session
                     });
-                    let result = {
-                        result: 'success',
-                        message: params.id
-                    }
+                    success.data = params.id
                     console.log('로그아웃 성공')
-                    console.log(`응답 JSON\n${JSON.stringify(result, null, 2)}`)
-                    this.res.status(200).send(result)
+                    console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
+                    this.res.status(200).send(success)
                 }
                 else{
-                    let result = {
-                        result: 'failed',
-                        error: 'Invalid UserID'
-                    }
-                    this.res.status(400).send(result)
+                    fail.error = error.invalReq
+                    fail.errdesc = '잘못된 ID입니다.'
+                    this.res.status(400).send(fail)
                 }
             }        
             catch(err){
-                let result = {
-                    result: 'failed',
-                    error: err
-                }
-                this.res.status(402).send(result)
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(402).send(fail)
             }
         }
         run()
@@ -166,27 +149,21 @@ export default class MemberManager extends FeatureManager{
         const run = async() => {
             try{
                 let queryResult = await this.Dynamodb.query(params).promise()
-                let result = {
-                    result: 'success',
-                    message: ''
-                }
                 if(queryResult.Items.length == 0){
-                    result.message = 'duplicated'
-                    this.res.status(201).send(result)
+                    success.data = '중복되었어요'
+                    this.res.status(201).send(success)
                     return;
                 }
                 else{
-                    result.message = 'clear'
-                    this.res.status(201).send(result)
+                    success.data = '가능해요'
+                    this.res.status(201).send(success)
                     return;
                 }
             }
             catch(err){
-                let result = {
-                    result: 'failed',
-                    message: 'DB Error. Please Contect Manager'
-                }
-                this.res.status(400).send(result)
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
             }
         }
         run()

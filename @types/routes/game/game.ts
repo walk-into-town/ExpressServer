@@ -14,7 +14,9 @@ router.post('/game/monster', function(req: express.Request, res: express.Respons
 })
 
 router.get('/monster/img', function(req: express.Request, res: express.Response){
-    
+    let query = req.query
+    let monsterDB = new MonsterManager(req, res)
+    monsterDB.read(query)
 })
 
 router.put('/monster/img', upload.array('img'), function(req: express.Request, res: express.Response){

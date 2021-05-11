@@ -11,9 +11,10 @@ AWS.config.update({
 })
 const bcrypt = require('bcrypt')
 
-var passport = require('passport')
-var LocalStrategy = require('passport-local').Strategy
-var GoogleStrategy = require('passport-google-oauth20').Strategy
+const passport = require('passport')
+const LocalStrategy = require('passport-local').Strategy
+const GoogleStrategy = require('passport-google-oauth20').Strategy
+const KakaoStrategy = require('passport-kakao').Strategy
 
 module.exports = () => {
   // 전략에서 넘어온 User값을 세션에 저장하는 함수
@@ -120,4 +121,14 @@ module.exports = () => {
       run()
     }
   ));
+
+  passport.use('kakao', new KakaoStrategy({
+    clientID: process.env.kakaoID,
+    clientSecret: process.env.kakaoSecret,
+    callbackURL: process.env.kakaoAuthCallback
+  }, async function(accessToekn, refreshtoken, profile, done) {
+    console.log(accessToekn)
+    console.log(refreshtoken)
+    console.log(process)
+  }))
 }
