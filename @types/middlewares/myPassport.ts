@@ -126,9 +126,52 @@ module.exports = () => {
     clientID: process.env.kakaoID,
     clientSecret: process.env.kakaoSecret,
     callbackURL: process.env.kakaoAuthCallback
-  }, async function(accessToekn, refreshtoken, profile, done) {
-    console.log(accessToekn)
-    console.log(refreshtoken)
-    console.log(process)
+  }, async function(accessToken: string, refreshtoken: string, profile, cb: Function) {
+    let doclient = new AWS.DynamoDB.DocumentClient()
+      let username = `google${profile.id}`
+      let params = {
+        TableName: 'Member',
+        KeyConditionExpression: 'id = :id',
+        ExpressionAttributeValues: {':id' : username}
+      }
+      const run = async() => {
+        console.log('카카오 로그인')
+        console.log(profile._json.kakao_account.profile)
+        const getRandomNumber = () => {           //GUEST 계정을 위한 닉네임 번호 생성
+          return Math.floor(Math.random() * (999999 - 100000)) + 100000
+        }
+        let data = await doclient.query(params).promise()
+        let result = data.Items[0]
+        if(result == undefined){  //id 없는경우
+          console.log('새로운 카카오 ID')
+          let query = {
+            id: username,
+            pw: accessToken,
+            profileImg: '',
+            nickname: `손님 ${getRandomNumber()}`,
+            isManager: false
+          }
+          let social = new SocialReg()
+          await social.insert(query)
+          let user = {
+            id: username,
+            nickname: query.nickname,
+            profileImg: query.profileImg,
+            selfIntroduction: ''
+          }
+          return cb(null, user)
+        }
+        else{               // 기존에 로그인 했던 경우
+          console.log('기존에 사용한 카카오 ID')
+          let user = {
+            id: username,
+            nickname: result.nickname,
+            profileImg: result.profileImg,
+            selfIntroduction: result.selfIntroduction           
+          }
+          return cb(null, user)
+        }
+      }
+      run()
   }))
 }
