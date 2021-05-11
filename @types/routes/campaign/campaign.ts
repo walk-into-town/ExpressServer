@@ -13,6 +13,7 @@ import PinpointManager from '../../modules/DBManager/tempPinpoint'
 import * as dotenv from 'dotenv'
 import isAuthenticated from '../../middlewares/authentication'
 import { toRead } from '../../modules/DBManager/FeatureManager'
+import { error, fail } from '../../static/result'
 
 
 var router = express.Router()
@@ -45,11 +46,9 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     res.locals.pinpoints = []
 
     if(pinpoints == undefined){
-        let result = {
-            result: 'failed',
-            error: 'Missing Required Values: pinpoint'
-        }
-        res.status(400).send(result)
+        fail.error = error.invalKey
+        fail.errdesc = '핀포인트 없음'
+        res.status(400).send(fail)
         return;
     }
 

@@ -46,8 +46,13 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
 });
 router.get('/', function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
-    let query = req.body;
-    couponDB.read(query);
+    let query = req.query;
+    if (query.type == 'single') {
+        couponDB.read(query);
+    }
+    if (query.type == 'list') {
+        couponDB.readList(query);
+    }
 });
 router.delete('/', authentication_1.default, function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);

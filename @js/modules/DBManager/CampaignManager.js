@@ -34,7 +34,7 @@ const result_1 = require("../../static/result");
 class CampaignManager extends FeatureManager_1.FeatureManager {
     constructor() {
         super(...arguments);
-        this.nbsb2plus = (query) => {
+        this.nbsp2plus = (query) => {
             for (let i = 0; i < query.length; i++) {
                 query = query.replace(' ', '+');
             }
@@ -196,7 +196,17 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 };
                 console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`);
-                this.Dynamodb.put(queryParams, this.onInsert.bind(this));
+                yield this.Dynamodb.put(queryParams).promise();
+                let MemberParams = {
+                    TableName: 'Member',
+                    Key: { id: params.ownner },
+                    UpdateExpression: 'set myCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)',
+                    ExpressionAttributeValues: { ':newCampaign': [id], ':emptylist': [] },
+                    ReturnValues: 'UPDATED_NEW',
+                    ConditionExpression: "attribute_exists(id)"
+                };
+                yield this.Dynamodb.update(MemberParams).promise();
+                result_1.success.data = id;
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -206,19 +216,19 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    onInsert(err, data) {
-        if (err) { //에러 발생
-            result_1.fail.error = result_1.error.dbError;
-            result_1.fail.errdesc = err;
-            this.res.status(400).send(result_1.fail);
-            console.log(`DB에러\n응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
-        }
-        else { //정상 처리
-            result_1.success.data = this.res.locals.id;
-            this.res.status(201).send(result_1.success);
-            console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
-        }
-    }
+    // private onInsert(err: object, data: any){
+    //     if(err){                                    //에러 발생
+    //         fail.error = error.dbError
+    //         fail.errdesc = err
+    //         this.res.status(400).send(fail)
+    //         console.log(`DB에러\n응답 JSON\n${JSON.stringify(fail, null, 2)}`)
+    //     }
+    //     else{                                      //정상 처리
+    //         success.data = this.res.locals.id
+    //         this.res.status(201).send(success)
+    //         console.log(`캠페인 등록 성공\n응답 JSON\n${JSON.stringify(success, null, 2)}`)
+    //     }
+    // }
     /**
      * 캠페인 조회 로직
      * 1. readType에 따라 사용할 GSI를 선택한다.
@@ -236,7 +246,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 };
                 break;
             case FeatureManager_1.toRead.id:
-                params = this.nbsb2plus(params);
+                params = this.nbsp2plus(params);
                 expAttrVals = {
                     '#id': readType
                 };

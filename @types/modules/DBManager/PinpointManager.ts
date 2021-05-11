@@ -110,7 +110,7 @@ export default class PinpointManager extends FeatureManager{
      }
 
      public readList(params: any): void{
-        let id = this.nbsb2plus(params.id)
+        let id = this.nbsp2plus(params.id)
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -216,7 +216,7 @@ export default class PinpointManager extends FeatureManager{
      * 3. 사용자에게 전달
      */
     public readDetail(params: any): void{
-        params.id = this.nbsb2plus(params.id)
+        params.id = this.nbsp2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -319,7 +319,7 @@ export default class PinpointManager extends FeatureManager{
      * 3. 사용자에게 전달
      */
     public readQuiz(params: any): void{
-        params.id = this.nbsb2plus(params.id)
+        params.id = this.nbsp2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -425,7 +425,7 @@ export default class PinpointManager extends FeatureManager{
     }
 
     public readComment(params: any): void{
-        let id = this.nbsb2plus(params.id)
+        let id = this.nbsp2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',
@@ -591,7 +591,7 @@ export default class PinpointManager extends FeatureManager{
         }
         run();
     }
-    private nbsb2plus = (query: string): string => {
+    private nbsp2plus = (query: string): string => {
         for(let i =0; i < query.length; i++){
             query = query.replace(' ', '+')
         }

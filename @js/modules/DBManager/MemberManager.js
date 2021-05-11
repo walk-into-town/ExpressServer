@@ -71,7 +71,13 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                         pw: pw,
                         profileImg: process.env.domain + 'defaultProfileImg.jpg',
                         nickname: params.nickname,
-                        isManager: params.isManager
+                        isManager: params.isManager,
+                        primeBadge: null,
+                        badge: [],
+                        coupons: [],
+                        myCampaigns: [],
+                        playingCampaigns: [],
+                        selfIntroduction: '자기소개를 꾸며보세요.'
                     },
                     ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 };
@@ -143,7 +149,43 @@ class MemberManager extends FeatureManager_1.FeatureManager {
     findMember(id) {
     }
     read(params) {
-        throw new Error("Method not implemented.");
+        let id = this.req.session.passport.user.id;
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'myCampaigns, playingCampaigns'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                let myCampaign = result.Items[0].myCampaigns.length;
+                let playingCampaign = result.Items[0].playingCampaigns;
+                let participateCamp = [];
+                let clearCamp = [];
+                playingCampaign.forEach(campaign => {
+                    if (campaign.cleared == true) {
+                        clearCamp.push(campaign);
+                    }
+                    else {
+                        participateCamp.push(campaign);
+                    }
+                });
+                let data = {
+                    playingCampaign: participateCamp.length,
+                    myCampaign: myCampaign,
+                    clearCampaign: clearCamp.length
+                };
+                result_1.success.data = data;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
     }
     update(params) {
         throw new Error("Method not implemented.");

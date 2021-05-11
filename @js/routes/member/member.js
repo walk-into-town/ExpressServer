@@ -64,6 +64,11 @@ router.delete('/logout', authentication_1.default, function (req, res) {
 //회원정보 수정
 router.put('/', authentication_1.default, function (req, res) {
 });
+//회원정보 조회
+router.get('/', authentication_1.default, function (req, res) {
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.read('');
+});
 //회원탈퇴
 router.delete('/', authentication_1.default, function (req, res) {
 });

@@ -26,8 +26,13 @@ router.post('/', isAuthenticated, upload.array('img'), function(req: express.Req
 
 router.get('/', function(req: express.Request, res: express.Response){
     let couponDB = new CouponManager(req, res)
-    let query = req.body
-    couponDB.read(query)
+    let query = req.query
+    if(query.type == 'single'){
+        couponDB.read(query)
+    }
+    if(query.type == 'list'){
+        couponDB.readList(query)
+    }
 })
 
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){

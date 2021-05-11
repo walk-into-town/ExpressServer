@@ -32,6 +32,15 @@ const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 class CouponManager extends FeatureManager_1.FeatureManager {
+    constructor() {
+        super(...arguments);
+        this.nbsp2plus = (query) => {
+            for (let i = 0; i < query.length; i++) {
+                query = query.replace(' ', '+');
+            }
+            return query;
+        };
+    }
     /**
      * 쿠폰 등록 로직
      * 1. 상품의 수와 발급 제한 개수가 동일한지 확인
@@ -84,32 +93,59 @@ class CouponManager extends FeatureManager_1.FeatureManager {
      * 3. 쿼리 실행 후 결과 출력
      */
     read(params) {
-        let type = params.type;
+        params.id = this.nbsp2plus(params.id);
         let queryParams = {
-            TableName: 'None',
+            TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.id, },
-            ProjectionExpression: ''
+            ExpressionAttributeValues: { ':id': params.id, }
         };
-        switch (type) {
-            case "coupon":
-                queryParams.TableName = 'Coupon';
-                delete (queryParams.ProjectionExpression);
-                break;
-            case "campaign":
-                queryParams.TableName = 'Campaign';
-                queryParams.ProjectionExpression = 'pinpoint';
-                break;
-            default:
-                result_1.fail.error = result_1.error.typeMiss;
-                result_1.fail.errdesc = '잘못된 타입. coupon 또는 campaign으로 타입을 설정';
-                this.res.status(400).send(result_1.fail);
-                return;
-        }
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let queryResult = yield this.Dynamodb.query(queryParams).promise();
                 result_1.success.data = queryResult.Items;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    readList(params) {
+        params.id = this.nbsp2plus(params.id);
+        let checkParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': params.id },
+            ProjectionExpression: 'coupons, pcoupons'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(checkParams).promise();
+                let coupon = result.Items[0].coupons;
+                let pcoupons = result.Items[0].pcoupons;
+                let couponList = [];
+                pcoupons.push(coupon);
+                pcoupons.forEach(coupon => {
+                    let obj = {
+                        id: coupon
+                    };
+                    couponList.push(obj);
+                });
+                console.log(couponList);
+                let couponParams = {
+                    RequestItems: {
+                        'Coupon': {
+                            Keys: couponList
+                        }
+                    }
+                };
+                let queryResult = yield this.Dynamodb.batchGet(couponParams).promise();
+                let coupons = queryResult.Responses.Coupon;
+                console.log(coupons);
+                result_1.success.data = coupons;
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

@@ -56,27 +56,11 @@ export default class CouponManager extends FeatureManager{
      * 3. 쿼리 실행 후 결과 출력
      */
     public read(params: any): void {
-        let type = params.type
+        params.id = this.nbsp2plus(params.id)
         let queryParams = {
-            TableName: 'None',
+            TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: {':id': params.id,},
-            ProjectionExpression: ''
-        }
-        switch(type){
-            case "coupon":
-                queryParams.TableName = 'Coupon'
-                delete(queryParams.ProjectionExpression)
-                break;
-            case "campaign":
-                queryParams.TableName = 'Campaign'
-                queryParams.ProjectionExpression = 'pinpoint'
-                break;
-            default:
-                fail.error = error.typeMiss
-                fail.errdesc = '잘못된 타입. coupon 또는 campaign으로 타입을 설정'
-                this.res.status(400).send(fail)
-                return;
+            ExpressionAttributeValues: {':id': params.id,}
         }
         const run = async() => {
             try{ 
@@ -91,6 +75,50 @@ export default class CouponManager extends FeatureManager{
             }
         }
         run();
+    }
+
+    public readList(params: any): void{
+        params.id = this.nbsp2plus(params.id)
+        let checkParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': params.id},
+            ProjectionExpression: 'coupons, pcoupons'
+        }
+        const run = async() => {
+            try{
+                let result = await this.Dynamodb.query(checkParams).promise()
+                let coupon:string = result.Items[0].coupons
+                let pcoupons:Array<string> = result.Items[0].pcoupons
+                let couponList: Array<object> = []
+                pcoupons.push(coupon)
+                pcoupons.forEach(coupon => {
+                    let obj = {
+                        id: coupon
+                    }
+                    couponList.push(obj)
+                })
+                console.log(couponList)
+                let couponParams = {
+                    RequestItems:{
+                        'Coupon':{
+                            Keys: couponList
+                        }
+                    }
+                }
+                let queryResult = await this.Dynamodb.batchGet(couponParams).promise()
+                let coupons = queryResult.Responses.Coupon
+                console.log(coupons)
+                success.data = coupons
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
+            }
+        }
+        run()
     }
 
     /**
@@ -166,5 +194,10 @@ export default class CouponManager extends FeatureManager{
         }
         run()
     }
-    
+    private nbsp2plus = (query: string): string => {
+        for(let i =0; i < query.length; i++){
+            query = query.replace(' ', '+')
+        }
+        return query
+    }
 }

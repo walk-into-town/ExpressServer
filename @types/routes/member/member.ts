@@ -52,6 +52,12 @@ router.put('/', isAuthenticated, function(req: express.Request, res: express.Res
     
 })
 
+//회원정보 조회
+router.get('/', isAuthenticated, function(req: express.Request, res: express.Response){
+    let memberDB = new MemberManager(req, res)
+    memberDB.read('')
+})
+
 //회원탈퇴
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
     

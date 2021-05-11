@@ -34,7 +34,7 @@ const result_1 = require("../../static/result");
 class PinpointManager extends FeatureManager_1.FeatureManager {
     constructor() {
         super(...arguments);
-        this.nbsb2plus = (query) => {
+        this.nbsp2plus = (query) => {
             for (let i = 0; i < query.length; i++) {
                 query = query.replace(' ', '+');
             }
@@ -141,7 +141,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readList(params) {
-        let id = this.nbsb2plus(params.id);
+        let id = this.nbsp2plus(params.id);
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -237,7 +237,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readDetail(params) {
-        params.id = this.nbsb2plus(params.id);
+        params.id = this.nbsp2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -331,7 +331,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readQuiz(params) {
-        params.id = this.nbsb2plus(params.id);
+        params.id = this.nbsp2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -431,7 +431,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readComment(params) {
-        let id = this.nbsb2plus(params.id);
+        let id = this.nbsp2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',

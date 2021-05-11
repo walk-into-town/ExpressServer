@@ -44,6 +44,7 @@ const tempPinpoint_1 = __importDefault(require("../../modules/DBManager/tempPinp
 const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 const FeatureManager_1 = require("../../modules/DBManager/FeatureManager");
+const result_1 = require("../../static/result");
 var router = express.Router();
 dotenv.config();
 const pinpoint = require('./pinpoint');
@@ -67,11 +68,9 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     let pinpoints = req.body.pinpoints;
     res.locals.pinpoints = [];
     if (pinpoints == undefined) {
-        let result = {
-            result: 'failed',
-            error: 'Missing Required Values: pinpoint'
-        };
-        res.status(400).send(result);
+        result_1.fail.error = result_1.error.invalKey;
+        result_1.fail.errdesc = '핀포인트 없음';
+        res.status(400).send(result_1.fail);
         return;
     }
     // if(coupons == undefined){
