@@ -111,6 +111,10 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
 //캠페인 조회
 router.get('/', function(req: express.Request, res: express.Response){
     let query = req.query
+    if(query.value == ''){
+        res.redirect('campaign/scan')
+        return;
+    }
     console.log('요청 JSON')
     let campaignDB = new CampaignManager(req, res)
     let type = toRead.id

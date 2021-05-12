@@ -129,6 +129,10 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
 //캠페인 조회
 router.get('/', function (req, res) {
     let query = req.query;
+    if (query.value == '') {
+        res.redirect('campaign/scan');
+        return;
+    }
     console.log('요청 JSON');
     let campaignDB = new CampaignManager_1.default(req, res);
     let type = FeatureManager_1.toRead.id;
