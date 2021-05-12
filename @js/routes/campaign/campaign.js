@@ -111,7 +111,7 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
             }
             else {
                 query.pcoupons.push(res.locals.coupons[i].id);
-                pinpoints[res.locals.coupons[i].paymentCondition].coupon = coupons[i].id;
+                pinpoints[res.locals.coupons[i].paymentCondition].coupon = [coupons[i].id];
             }
         }
         console.log(`핀포인트 등록중...`);

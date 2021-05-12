@@ -91,7 +91,7 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
             }
             else{
                 query.pcoupons.push(res.locals.coupons[i].id)
-                pinpoints[res.locals.coupons[i].paymentCondition].coupon = coupons[i].id
+                pinpoints[res.locals.coupons[i].paymentCondition].coupon = [coupons[i].id]
             }
         }
 
