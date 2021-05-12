@@ -181,6 +181,7 @@ export default class CampaignManager extends FeatureManager{
                     }
                     await this.Dynamodb.update(MemberParams).promise()
                     success.data = id
+                    this.res.status(200).send(success)
                 }
                 catch(err){
                     fail.error = error.dbError

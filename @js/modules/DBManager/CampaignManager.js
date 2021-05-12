@@ -207,6 +207,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 };
                 yield this.Dynamodb.update(MemberParams).promise();
                 result_1.success.data = id;
+                this.res.status(200).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
