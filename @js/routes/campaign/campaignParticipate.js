@@ -27,8 +27,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const express = __importStar(require("express"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
 var router = express.Router();
-router.post('/campaign', authentication_1.default, function (req, res) {
+router.put('/campaign', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let campaignDB = new CampaignManager_1.default(req, res);
+    campaignDB.participate(query);
 });
 router.post('/quiz', authentication_1.default, function (req, res) {
 });

@@ -354,4 +354,83 @@ export default class CampaignManager extends FeatureManager{
     public delete(params: any): void {
         
     }
+
+    public participate(params: any): void{
+        if(this.req.session.passport.user.id != params.uid){   //세션 탈취 방지
+            fail.error = error.invalAcc
+            fail.errdesc = '잘못된 사용자 iD'
+            this.res.status(400).send(fail)
+            return;
+        }
+        let userId = params.uid
+        let cId = params.cid
+        let campaigncheck = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id' : cId}
+        }
+        let myCampCheck = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'myCampaigns, playingCampaigns',
+            ExpressionAttributeValues: {':id': userId}
+        }
+        let updateParams = {
+            TableName: 'Member',
+            Key: {id: userId},
+            UpdateExpression: 'set playingCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)',
+            ExpressionAttributeValues: {':newCampaign': [{id: cId, cleared: false}], ':emptylist': []},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        const run = async () => {
+            try{
+                console.log('캠페인 존재 여부 확인중...')
+                let campCheckResult = await this.Dynamodb.query(campaigncheck).promise()
+                if(campCheckResult.Items[0] == undefined){
+                    fail.error = error.invalKey
+                    fail.errdesc = '잘못된 캠페인 id'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+                console.log('캠페인 존재 여부 통과')
+                let MycheckResult = await this.Dynamodb.query(myCampCheck).promise()
+                let myCampaigns:Array<string> = MycheckResult.Items[0].myCampaigns
+                let playingCampaigns: Array<any> = MycheckResult.Items[0].playingCampaigns
+                console.log('캠페인 검사 시작')
+                console.log('본인 제작 여부 확인중...')
+                for(let i =0; i < myCampaigns.length; i++){
+                    if(myCampaigns[i] == cId){
+                        fail.error = error.invalReq
+                        fail.errdesc = '본인이 제작한 캠페인은 참여하실 수 없습니다.'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
+                }
+                console.log('본인 제작 여부 통과')
+                console.log('참여중 여부 확인중...')
+                for(let i =0; i < playingCampaigns.length; i++){
+                    if(playingCampaigns[i].id == cId){
+                        fail.error = error.invalReq
+                        fail.errdesc = '참여 중이거나 이미 참여한 캠페인입니다.'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
+                }
+                console.log('참여중 여부 통과')
+                console.log('캠페인 검사 통과')
+                console.log('DB 반영 시작')
+                let partiResult = await this.Dynamodb.update(updateParams).promise()
+                success.data = partiResult.Attributes
+                console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(success.data, null, 2)}`)
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
+            }
+        }
+        run()
+    }
 }
