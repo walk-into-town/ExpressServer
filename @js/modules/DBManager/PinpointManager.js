@@ -401,12 +401,20 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             result_1.fail.errdesc = 'User Id does not match with session';
             this.res.status(400).send(result_1.fail);
         }
+        let memberPparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': userid },
+            ProjectionExpression: 'profileImg, nickname'
+        };
         let comment = [{
                 id: params.id,
                 userId: userid,
                 text: params.comments.text,
                 rated: 0,
-                imgs: params.imgs
+                imgs: params.imgs,
+                nickname: null,
+                profileImg: null
             }];
         let queryParams = {
             TableName: 'Pinpoint',
@@ -418,6 +426,11 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
+                let userResult = yield this.Dynamodb.query(memberPparams).promise();
+                let user = userResult.Items[0];
+                comment[0].nickname = user.nickname;
+                comment[0].profileImg = user.profileImg;
+                console.log(comment[0]);
                 let queryResult = yield this.Dynamodb.update(queryParams).promise();
                 result_1.success.data = queryResult.Attributes;
                 this.res.status(200).send(result_1.success);
