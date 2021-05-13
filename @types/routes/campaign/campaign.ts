@@ -79,30 +79,73 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     // }
     let pinpointDB = new PinpointManager(req, res)
     const run = async() => {
-        console.log(`쿠폰 등록중...`)
-        for(let i = 0; i < coupons.length; i++){
-            console.log(`${i}번째 쿠폰 등록`)
-            await couponDB.insert(coupons[i])()
-        }
-        for(let i = 0; i < res.locals.coupons.length; i++){
-            if(res.locals.coupons[i].paymentCondition == -1){
-                query.coupons = res.locals.coupons[i].id
+        res.locals.pids = []
+        res.locals.cids = []
+        res.locals.campid = ''
+        try{
+            console.log(`쿠폰 등록중...`)
+            for(let i = 0; i < coupons.length; i++){
+                console.log(`${i}번째 쿠폰 등록`)
+                await couponDB.insert(coupons[i])()
             }
-            else{
-                query.pcoupons.push(res.locals.coupons[i].id)
-                pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id]
+            for(let i = 0; i < res.locals.coupons.length; i++){
+                if(res.locals.coupons[i].paymentCondition == -1){
+                    query.coupons = res.locals.coupons[i].id
+                }
+                else{
+                    query.pcoupons.push(res.locals.coupons[i].id)
+                    pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id]
+                }
             }
+    
+            console.log(`핀포인트 등록중...`)
+            for(let i = 0; i < pinpoints.length; i++){
+                console.log(`${i}번째 핀포인트 등록`)
+                await pinpointDB.insert(pinpoints[i])()
+            }
+            query.pinpoints = res.locals.pinpoints
+            console.log('캠페인 등록중...')
+            let campaignDB = new CampaignManager(req, res)
+            campaignDB.insert(query)
         }
-
-        console.log(`핀포인트 등록중...`)
-        for(let i = 0; i < pinpoints.length; i++){
-            console.log(`${i}번째 핀포인트 등록`)
-            await pinpointDB.insert(pinpoints[i])()
+        catch(err){
+            var aws = require('aws-sdk')
+            aws.config.update({
+            accessKeyId: process.env.aws_access_key_id,
+            secretAccessKey: process.env.aws_secret_access_key,
+                region: 'us-east-1',
+                endpoint: 'http://localhost:8000'
+            })
+            let doclient = new aws.DynamoDB.DocumentClient()
+            for (const id of res.locals.cids) {
+                let deleteParams = {
+                    TableName: 'Coupon',
+                    Key:{
+                        'id': id
+                    }
+                }
+                await doclient.delete(deleteParams).promise()
+            }
+            for (const id of res.locals.pids) {
+                let deleteParams = {
+                    TableName: 'Pinpoint',
+                    Key:{
+                        'id': id
+                    }
+                }
+                await doclient.delete(deleteParams).promise()
+            }
+            let campParam = {
+                TableName: 'Campaign',
+                Key: {
+                    'id': res.locals.campid
+                }
+            }
+            await doclient.delete(campParam)
+            fail.error = error.invalReq
+            fail.errdesc = err
+            res.status(400).send(fail)
         }
-        query.pinpoints = res.locals.pinpoints
-        console.log('캠페인 등록중...')
-        let campaignDB = new CampaignManager(req, res)
-        campaignDB.insert(query)
     }
     run()
 })

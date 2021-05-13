@@ -196,6 +196,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 };
                 console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`);
+                this.res.locals.campid = id;
                 yield this.Dynamodb.put(queryParams).promise();
                 let MemberParams = {
                     TableName: 'Member',
@@ -213,7 +214,32 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
-                result_1.fail.error = result_1.error.dbError;
+                for (const id of this.res.locals.cids) {
+                    let deleteParams = {
+                        TableName: 'Coupon',
+                        Key: {
+                            'id': id
+                        }
+                    };
+                    yield this.Dynamodb.delete(deleteParams).promise();
+                }
+                for (const id of this.res.locals.pids) {
+                    let deleteParams = {
+                        TableName: 'Pinpoint',
+                        Key: {
+                            'id': id
+                        }
+                    };
+                    yield this.Dynamodb.delete(deleteParams).promise();
+                }
+                let campParam = {
+                    TableName: 'Campaign',
+                    Key: {
+                        'id': this.res.locals.campid
+                    }
+                };
+                yield this.Dynamodb.delete(campParam).promise();
+                result_1.fail.error = result_1.error.invalReq;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
             }
