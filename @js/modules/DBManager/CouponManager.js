@@ -127,7 +127,9 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 let coupon = result.Items[0].coupons;
                 let pcoupons = result.Items[0].pcoupons;
                 let couponList = [];
-                pcoupons.push(coupon);
+                for (const id of coupon) {
+                    pcoupons.push(id);
+                }
                 pcoupons.forEach(coupon => {
                     let obj = {
                         id: coupon
@@ -144,7 +146,9 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 };
                 let queryResult = yield this.Dynamodb.batchGet(couponParams).promise();
                 let coupons = queryResult.Responses.Coupon;
-                console.log(coupons);
+                for (const coupon of coupons) {
+                    delete coupon.paymentCondition;
+                }
                 result_1.success.data = coupons;
                 this.res.status(200).send(result_1.success);
             }

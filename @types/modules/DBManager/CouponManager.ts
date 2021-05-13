@@ -88,10 +88,12 @@ export default class CouponManager extends FeatureManager{
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(checkParams).promise()
-                let coupon:string = result.Items[0].coupons
+                let coupon:Array<string> = result.Items[0].coupons
                 let pcoupons:Array<string> = result.Items[0].pcoupons
                 let couponList: Array<object> = []
-                pcoupons.push(coupon)
+                for (const id of coupon) {
+                    pcoupons.push(id)
+                }
                 pcoupons.forEach(coupon => {
                     let obj = {
                         id: coupon
@@ -108,7 +110,9 @@ export default class CouponManager extends FeatureManager{
                 }
                 let queryResult = await this.Dynamodb.batchGet(couponParams).promise()
                 let coupons = queryResult.Responses.Coupon
-                console.log(coupons)
+                for (const coupon of coupons) {
+                    delete coupon.paymentCondition
+                }
                 success.data = coupons
                 this.res.status(200).send(success)
             }
