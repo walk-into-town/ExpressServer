@@ -275,8 +275,64 @@ export default class CampaignManager extends FeatureManager{
             ExpressionAttributeNames : expAttrVals,
             ExpressionAttributeValues: {':value': params},
         }
-        console.log(params)
+        console.log(`DB 요청 params\n${JSON.stringify(params, null, 2)}`)
         this.Dynamodb.query(params, this.onRead.bind(this))
+    }
+
+    public readPart(params: any, readType: toRead): void{
+        let criterion = readType
+        let value = params
+        const quickSort = require('../Logics/Sorter')
+        const run = async(criterion, value) => {
+            try{
+                let FilterExp: string; let ExpAttrNames: any
+                switch (criterion) {
+                case 'name':
+                    FilterExp = `contains(#${criterion}, :value)`
+                    ExpAttrNames = {'#name': 'name'}
+                    break;
+                case 'ownner':
+                    FilterExp = `contains(#${criterion}, :value)`
+                    ExpAttrNames = {'#ownner': 'ownner'}
+                    break;
+                case 'region':
+                    FilterExp = `contains(#${criterion}, :value)`
+                    ExpAttrNames = {'#region': 'region'}
+                    break; 
+                default:
+                    break;
+                }
+                let queryParams = {
+                TableName: 'Campaign',
+                FilterExpression: FilterExp,
+                ExpressionAttributeNames: ExpAttrNames,
+                ExpressionAttributeValues: {':value': value}
+                }
+                let result = await this.Dynamodb.scan(queryParams).promise()
+                let toSort = []
+                let primearr = []
+                for (const object of result.Items) {
+                if(object.name.startsWith(value)){
+                    primearr.push(object)
+                }
+                else{
+                    toSort.push(object)
+                }
+                }
+                toSort = await quickSort(toSort)
+                primearr = await quickSort(primearr)
+                primearr.push(toSort)
+                console.log(`primearr\n${JSON.stringify(primearr, null, 2)}`)
+                success.data = primearr
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
+            }
+        }
+        run(criterion, value)
     }
 
     private nbsp2plus = (query: string): string => {
@@ -291,14 +347,17 @@ export default class CampaignManager extends FeatureManager{
             TableName: 'Campaign'
         }
         const run = async() => {
+            console.log('캠페인 전체 조회 시작')
             try{
                 let queryResult = await this.Dynamodb.scan(queryParams).promise()
                 success.data = queryResult.Items
+                console.log(`조회 성공. 응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
             }
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
+                console.log(`조회 실패. 응답 JSON\n${JSON.stringify(fail, null, 2)}`)
                 this.res.status(400).send(fail)
             }
         }
@@ -309,6 +368,7 @@ export default class CampaignManager extends FeatureManager{
         if(err){                                    //에러 발생
             fail.error = error.dbError
             fail.errdesc = err
+            console.log(`조회 실패. 응답 JSON\n${JSON.stringify(fail, null, 2)}`)
             this.res.status(400).send(fail)
         }
         else{
@@ -318,6 +378,7 @@ export default class CampaignManager extends FeatureManager{
             else{
                 success.data = data.Items
             }
+            console.log(`조회 성공. 응답 JSON\n${JSON.stringify(success, null, 2)}`)
             this.res.status(201).send(success)
         }
     }

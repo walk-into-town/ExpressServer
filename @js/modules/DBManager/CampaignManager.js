@@ -301,22 +301,81 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeNames: expAttrVals,
             ExpressionAttributeValues: { ':value': params },
         };
-        console.log(params);
+        console.log(`DB 요청 params\n${JSON.stringify(params, null, 2)}`);
         this.Dynamodb.query(params, this.onRead.bind(this));
+    }
+    readPart(params, readType) {
+        let criterion = readType;
+        let value = params;
+        const quickSort = require('../Logics/Sorter');
+        const run = (criterion, value) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let FilterExp;
+                let ExpAttrNames;
+                switch (criterion) {
+                    case 'name':
+                        FilterExp = `contains(#${criterion}, :value)`;
+                        ExpAttrNames = { '#name': 'name' };
+                        break;
+                    case 'ownner':
+                        FilterExp = `contains(#${criterion}, :value)`;
+                        ExpAttrNames = { '#ownner': 'ownner' };
+                        break;
+                    case 'region':
+                        FilterExp = `contains(#${criterion}, :value)`;
+                        ExpAttrNames = { '#region': 'region' };
+                        break;
+                    default:
+                        break;
+                }
+                let queryParams = {
+                    TableName: 'Campaign',
+                    FilterExpression: FilterExp,
+                    ExpressionAttributeNames: ExpAttrNames,
+                    ExpressionAttributeValues: { ':value': value }
+                };
+                let result = yield this.Dynamodb.scan(queryParams).promise();
+                let toSort = [];
+                let primearr = [];
+                for (const object of result.Items) {
+                    if (object.name.startsWith(value)) {
+                        primearr.push(object);
+                    }
+                    else {
+                        toSort.push(object);
+                    }
+                }
+                toSort = yield quickSort(toSort);
+                primearr = yield quickSort(primearr);
+                primearr.push(toSort);
+                console.log(`primearr\n${JSON.stringify(primearr, null, 2)}`);
+                result_1.success.data = primearr;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run(criterion, value);
     }
     scan() {
         let queryParams = {
             TableName: 'Campaign'
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
+            console.log('캠페인 전체 조회 시작');
             try {
                 let queryResult = yield this.Dynamodb.scan(queryParams).promise();
                 result_1.success.data = queryResult.Items;
+                console.log(`조회 성공. 응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
+                console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
                 this.res.status(400).send(result_1.fail);
             }
         });
@@ -326,6 +385,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         if (err) { //에러 발생
             result_1.fail.error = result_1.error.dbError;
             result_1.fail.errdesc = err;
+            console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
             this.res.status(400).send(result_1.fail);
         }
         else {
@@ -335,6 +395,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             else {
                 result_1.success.data = data.Items;
             }
+            console.log(`조회 성공. 응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
             this.res.status(201).send(result_1.success);
         }
     }

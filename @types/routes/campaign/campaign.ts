@@ -157,8 +157,7 @@ router.get('/', function(req: express.Request, res: express.Response){
         res.redirect('campaign/scan')
         return;
     }
-    console.log('요청 JSON')
-    let campaignDB = new CampaignManager(req, res)
+    console.log(`요청 JSON\n${JSON.stringify(query, null, 2)}`)
     let type = toRead.id
     if(query.type == 'name') {
         type = toRead.name
@@ -169,7 +168,30 @@ router.get('/', function(req: express.Request, res: express.Response){
     else if(query.type == 'region'){
         type = toRead.region
     }
-    campaignDB.read(query.value, type)
+    else{
+        fail.error = error.invalReq
+        fail.errdesc = 'type은 name | ownner | region | exact 중 하나여야 합니다.'
+        res.status(400).send(fail)
+        console.log(`조회 실패. 응답 JSON\n${JSON.stringify(fail,null, 2)}`)
+        return;
+    }
+    let campaignDB = new CampaignManager(req, res)
+    
+    if(query.condition == 'exact'){
+        console.log('일치 조회 시작')
+        campaignDB.read(query.value, type)
+    }
+    else if(query.condition == 'part'){
+        console.log('부분 일치 조회 시작')
+        campaignDB.readPart(query.value, type)
+    }
+    else{
+        fail.errdesc = error.invalReq
+        fail.errdesc = 'condition은 exact | part 중 하나여야 합니다.'
+        res.status(400).send(fail)
+        console.log(`조회 실패. 응답 JSON\n${JSON.stringify(fail,null, 2)}`)
+        return;
+    }
 })
 
 router.get('/scan', function(req: express.Request, res: express.Response){

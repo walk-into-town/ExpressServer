@@ -175,8 +175,7 @@ router.get('/', function (req, res) {
         res.redirect('campaign/scan');
         return;
     }
-    console.log('요청 JSON');
-    let campaignDB = new CampaignManager_1.default(req, res);
+    console.log(`요청 JSON\n${JSON.stringify(query, null, 2)}`);
     let type = FeatureManager_1.toRead.id;
     if (query.type == 'name') {
         type = FeatureManager_1.toRead.name;
@@ -187,7 +186,29 @@ router.get('/', function (req, res) {
     else if (query.type == 'region') {
         type = FeatureManager_1.toRead.region;
     }
-    campaignDB.read(query.value, type);
+    else {
+        result_1.fail.error = result_1.error.invalReq;
+        result_1.fail.errdesc = 'type은 name | ownner | region | exact 중 하나여야 합니다.';
+        res.status(400).send(result_1.fail);
+        console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
+        return;
+    }
+    let campaignDB = new CampaignManager_1.default(req, res);
+    if (query.condition == 'exact') {
+        console.log('일치 조회 시작');
+        campaignDB.read(query.value, type);
+    }
+    else if (query.condition == 'part') {
+        console.log('부분 일치 조회 시작');
+        campaignDB.readPart(query.value, type);
+    }
+    else {
+        result_1.fail.errdesc = result_1.error.invalReq;
+        result_1.fail.errdesc = 'condition은 exact | part 중 하나여야 합니다.';
+        res.status(400).send(result_1.fail);
+        console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
+        return;
+    }
 });
 router.get('/scan', function (req, res) {
     let campaignDB = new CampaignManager_1.default(req, res);
