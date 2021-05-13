@@ -310,6 +310,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         const quickSort = require('../Logics/Sorter');
         const run = (criterion, value) => __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log('DB 요청 params 설정중');
                 let FilterExp;
                 let ExpAttrNames;
                 switch (criterion) {
@@ -334,7 +335,16 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     ExpressionAttributeNames: ExpAttrNames,
                     ExpressionAttributeValues: { ':value': value }
                 };
+                console.log(`DB 요청 params 설정 완료. 설정 JSON${JSON.stringify(queryParams, null, 2)}`);
+                console.log('캠페인 스캔중');
                 let result = yield this.Dynamodb.scan(queryParams).promise();
+                console.log(`캠페인 스캔 완료. 결과 JSON${JSON.stringify(result, null, 2)}`);
+                if (result.Items.length == 1) {
+                    result_1.success.data = result.Items;
+                    console.log(result_1.success);
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
                 let toSort = [];
                 let primearr = [];
                 for (const object of result.Items) {
@@ -345,11 +355,13 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                         toSort.push(object);
                     }
                 }
+                console.log('정렬 시작');
                 toSort = yield quickSort(toSort);
                 primearr = yield quickSort(primearr);
                 primearr.push(toSort);
-                console.log(`primearr\n${JSON.stringify(primearr, null, 2)}`);
+                console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`);
                 result_1.success.data = primearr;
+                console.log(primearr);
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

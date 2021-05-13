@@ -285,6 +285,7 @@ export default class CampaignManager extends FeatureManager{
         const quickSort = require('../Logics/Sorter')
         const run = async(criterion, value) => {
             try{
+                console.log('DB 요청 params 설정중')
                 let FilterExp: string; let ExpAttrNames: any
                 switch (criterion) {
                 case 'name':
@@ -308,22 +309,33 @@ export default class CampaignManager extends FeatureManager{
                 ExpressionAttributeNames: ExpAttrNames,
                 ExpressionAttributeValues: {':value': value}
                 }
+                console.log(`DB 요청 params 설정 완료. 설정 JSON${JSON.stringify(queryParams, null, 2)}`)
+                console.log('캠페인 스캔중')
                 let result = await this.Dynamodb.scan(queryParams).promise()
+                console.log(`캠페인 스캔 완료. 결과 JSON${JSON.stringify(result, null, 2)}`)
+                if(result.Items.length == 1){
+                    success.data = result.Items
+                    console.log(success)
+                    this.res.status(200).send(success)
+                    return;
+                }
                 let toSort = []
                 let primearr = []
                 for (const object of result.Items) {
-                if(object.name.startsWith(value)){
-                    primearr.push(object)
+                    if(object.name.startsWith(value)){
+                        primearr.push(object)
+                    }
+                    else{
+                        toSort.push(object)
+                    }
                 }
-                else{
-                    toSort.push(object)
-                }
-                }
+                console.log('정렬 시작')
                 toSort = await quickSort(toSort)
                 primearr = await quickSort(primearr)
                 primearr.push(toSort)
-                console.log(`primearr\n${JSON.stringify(primearr, null, 2)}`)
+                console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
+                console.log(primearr)
                 this.res.status(200).send(success)
             }
             catch(err){
