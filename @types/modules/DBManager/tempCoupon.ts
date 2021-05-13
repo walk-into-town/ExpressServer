@@ -19,19 +19,19 @@ export default class CouponManager extends FeatureManager{
      * 4. 쿼리 결과에 따라 사용자에게 응답
      */
     public insert(params: any) {
-        let hash = CryptoJS.SHA256(Date().toString() + params.title)
-        let id = hash.toString(CryptoJS.enc.Base64)
+        let hash = CryptoJS.SHA256(Date().toString() + params.title + Math.random())
+        let id: string = hash.toString(CryptoJS.enc.Base64)
         var queryParams = {
             TableName: 'Coupon',
             Item: {
                 id: id,
-                title: params.title,
+                name: params.name,
                 description: params.description,
                 goods: params.goods,
                 endDate: params.endDate,
                 issued: 0,
                 limit: params.limit,
-                img: params.img,
+                imgs: params.img,
                 paymentCondition: params.paymentCondition
             },
             ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
