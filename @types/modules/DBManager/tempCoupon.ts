@@ -19,7 +19,7 @@ export default class CouponManager extends FeatureManager{
      * 4. 쿼리 결과에 따라 사용자에게 응답
      */
     public insert(params: any) {
-        let hash = CryptoJS.SHA256(Date().toString() + params.title + Math.random())
+        let hash = CryptoJS.SHA256(Date().toString() + params.name + Math.random())
         let id: string = hash.toString(CryptoJS.enc.Base64)
         var queryParams = {
             TableName: 'Coupon',

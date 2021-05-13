@@ -48,7 +48,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
      * 4. 쿼리 결과에 따라 사용자에게 응답
      */
     insert(params) {
-        let hash = CryptoJS.SHA256(Date().toString() + params.title + Math.random());
+        let hash = CryptoJS.SHA256(Date().toString() + params.name + Math.random());
         let id = hash.toString(CryptoJS.enc.Base64);
         var queryParams = {
             TableName: 'Coupon',
