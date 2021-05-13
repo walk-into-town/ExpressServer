@@ -341,7 +341,13 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log(`캠페인 스캔 완료. 결과 JSON${JSON.stringify(result, null, 2)}`);
                 if (result.Items.length == 1) {
                     result_1.success.data = result.Items;
-                    console.log(result_1.success);
+                    console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                if (result.Items.length == 0) {
+                    result_1.success.data = [];
+                    console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                     this.res.status(200).send(result_1.success);
                     return;
                 }
@@ -361,7 +367,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 primearr.push(toSort);
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`);
                 result_1.success.data = primearr;
-                console.log(primearr);
+                console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

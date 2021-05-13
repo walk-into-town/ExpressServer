@@ -315,10 +315,16 @@ export default class CampaignManager extends FeatureManager{
                 console.log(`캠페인 스캔 완료. 결과 JSON${JSON.stringify(result, null, 2)}`)
                 if(result.Items.length == 1){
                     success.data = result.Items
-                    console.log(success)
+                    console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                     this.res.status(200).send(success)
                     return;
                 }
+                if(result.Items.length == 0){
+                    success.data = []
+                    console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
+                    this.res.status(200).send(success)
+                    return;
+                } 
                 let toSort = []
                 let primearr = []
                 for (const object of result.Items) {
@@ -335,7 +341,7 @@ export default class CampaignManager extends FeatureManager{
                 primearr.push(toSort)
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
-                console.log(primearr)
+                console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
             }
             catch(err){
