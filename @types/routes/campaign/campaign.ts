@@ -80,7 +80,6 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
     let pinpointDB = new PinpointManager(req, res)
     const run = async() => {
         console.log(`쿠폰 등록중...`)
-        console.log(coupons.length)
         for(let i = 0; i < coupons.length; i++){
             console.log(`${i}번째 쿠폰 등록`)
             await couponDB.insert(coupons[i])()
@@ -91,7 +90,7 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
             }
             else{
                 query.pcoupons.push(res.locals.coupons[i].id)
-                pinpoints[res.locals.coupons[i].paymentCondition].coupon = [coupons[i].id]
+                pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id]
             }
         }
 

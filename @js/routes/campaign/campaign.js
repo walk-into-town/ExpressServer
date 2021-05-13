@@ -100,7 +100,6 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     let pinpointDB = new tempPinpoint_1.default(req, res);
     const run = () => __awaiter(this, void 0, void 0, function* () {
         console.log(`쿠폰 등록중...`);
-        console.log(coupons.length);
         for (let i = 0; i < coupons.length; i++) {
             console.log(`${i}번째 쿠폰 등록`);
             yield couponDB.insert(coupons[i])();
@@ -111,7 +110,7 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
             }
             else {
                 query.pcoupons.push(res.locals.coupons[i].id);
-                pinpoints[res.locals.coupons[i].paymentCondition].coupon = [coupons[i].id];
+                pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id];
             }
         }
         console.log(`핀포인트 등록중...`);
