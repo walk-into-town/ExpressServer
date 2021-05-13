@@ -50,10 +50,10 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
      */
     insert(params) {
         let date = new Date();
+        console.log(date.toString());
         let hash = CryptoJS.SHA256(params.ownner + params.name + params.region + date.toString());
         let id = hash.toString(CryptoJS.enc.Base64);
         this.res.locals.id = id;
-        params.pcoupons = [];
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let isIdValid; //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
@@ -189,7 +189,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                         updateTime: params.updateTime,
                         region: params.region,
                         pinpoints: params.pinpoints,
-                        coupons: params.coupons,
+                        coupons: [params.coupons],
                         pcoupons: params.pcoupons,
                         comments: []
                     },
@@ -205,8 +205,11 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     ReturnValues: 'UPDATED_NEW',
                     ConditionExpression: "attribute_exists(id)"
                 };
+                console.log('제작 캠페인 업데이트중...');
                 yield this.Dynamodb.update(MemberParams).promise();
                 result_1.success.data = id;
+                console.log('제작 캠페인 업데이트 완료');
+                console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

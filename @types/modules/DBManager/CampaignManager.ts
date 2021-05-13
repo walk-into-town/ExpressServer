@@ -13,11 +13,10 @@ export default class CampaignManager extends FeatureManager{
      */
     public insert(params: any): void {
         let date = new Date()
+        console.log(date.toString())
         let hash = CryptoJS.SHA256(params.ownner + params.name + params.region + date.toString())
         let id = hash.toString(CryptoJS.enc.Base64)
         this.res.locals.id = id
-        
-        params.pcoupons = []
         const run = async () => {
             try{
                 let isIdValid: boolean            //입력받은 사용자 id, 핀포인트 id가 존재하는지 검증
@@ -162,33 +161,35 @@ export default class CampaignManager extends FeatureManager{
                         updateTime: params.updateTime,
                         region: params.region,
                         pinpoints: params.pinpoints,
-                        coupons: params.coupons,
+                        coupons: [params.coupons],
                         pcoupons: params.pcoupons,
                         comments: []
                     },
                     ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
-                    }
-                    console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`)
-                    await this.Dynamodb.put(queryParams).promise()
-
-                    let MemberParams = {
-                        TableName: 'Member',
-                        Key: {id: params.ownner},
-                        UpdateExpression: 'set myCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)',
-                        ExpressionAttributeValues: {':newCampaign': [id], ':emptylist': []},
-                        ReturnValues: 'UPDATED_NEW',
-                        ConditionExpression: "attribute_exists(id)"
-                    }
-                    await this.Dynamodb.update(MemberParams).promise()
-                    success.data = id
-                    this.res.status(200).send(success)
                 }
-                catch(err){
-                    fail.error = error.dbError
-                    fail.errdesc = err
-                    this.res.status(400).send(fail);
+                console.log(`캠페인 등록 DB 요청 params\n${JSON.stringify(queryParams, null, 2)}`)
+                await this.Dynamodb.put(queryParams).promise()
+                let MemberParams = {
+                    TableName: 'Member',
+                    Key: {id: params.ownner},
+                    UpdateExpression: 'set myCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)',
+                    ExpressionAttributeValues: {':newCampaign': [id], ':emptylist': []},
+                    ReturnValues: 'UPDATED_NEW',
+                    ConditionExpression: "attribute_exists(id)"
                 }
+                console.log('제작 캠페인 업데이트중...')
+                await this.Dynamodb.update(MemberParams).promise()
+                success.data = id
+                console.log('제작 캠페인 업데이트 완료')
+                console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
+                this.res.status(200).send(success)
             }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail);
+            }
+        }
         run()
     }
 
