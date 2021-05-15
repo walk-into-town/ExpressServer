@@ -482,11 +482,12 @@ export default class CampaignManager extends FeatureManager{
             ProjectionExpression: 'myCampaigns, playingCampaigns',
             ExpressionAttributeValues: {':id': userId}
         }
+        let playingCamp = []
         let updateParams = {
             TableName: 'Member',
             Key: {id: userId},
             UpdateExpression: 'set playingCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)',
-            ExpressionAttributeValues: {':newCampaign': [{id: cId, cleared: false}], ':emptylist': []},
+            ExpressionAttributeValues: {':newCampaign': null, ':emptylist': []},
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         }
@@ -527,6 +528,21 @@ export default class CampaignManager extends FeatureManager{
                 console.log('참여중 여부 통과')
                 console.log('캠페인 검사 통과')
                 console.log('DB 반영 시작')
+                let pinpoint2add = []
+                for(const id of campCheckResult.Items[0].pinpoints){
+                    let obj = {
+                        'id': id,
+                        cleared: false
+                    }
+                }
+                let camp2add = {
+                    id: cId,
+                    cleared: false,
+                    pinpoints: pinpoint2add
+                }
+                playingCamp.push(camp2add)
+                updateParams.ExpressionAttributeValues[":newCampaign"] = playingCamp
+                console.log(updateParams)
                 let partiResult = await this.Dynamodb.update(updateParams).promise()
                 success.data = partiResult.Attributes
                 console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(success.data, null, 2)}`)
