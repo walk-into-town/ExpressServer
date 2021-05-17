@@ -25,6 +25,9 @@ export default class PinpointManager extends FeatureManager{
         params.id = hash.toString(CryptoJS.enc.Base64)
         let time = new Date()
         params.updateTime = time.toISOString()
+        if(params.coupons == undefined){
+            params.coupons = []
+        }
         var queryParams = {
             TableName: 'Pinpoint',
             Item: {
