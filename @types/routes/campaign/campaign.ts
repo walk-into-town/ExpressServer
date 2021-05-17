@@ -170,7 +170,7 @@ router.get('/', function(req: express.Request, res: express.Response){
     }
     else{
         fail.error = error.invalReq
-        fail.errdesc = 'type은 name | ownner | region | exact 중 하나여야 합니다.'
+        fail.errdesc = 'type은 name | ownner | region 중 하나여야 합니다.'
         res.status(400).send(fail)
         console.log(`조회 실패. 응답 JSON\n${JSON.stringify(fail,null, 2)}`)
         return;

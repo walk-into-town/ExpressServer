@@ -113,36 +113,21 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let id = params.id;
         let sessman = new SessionManager_1.default(this.req, this.res);
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield sessman.findBySId(this.req.session.id);
-                if (this.res.locals.result == undefined) {
-                    result_1.fail.error = result_1.error.invalAcc;
-                    result_1.fail.errdesc = '먼저 로그인 해주세요';
-                    this.res.status(400).send(result_1.fail);
-                    return;
-                }
-                let json = JSON.parse(this.res.locals.result.sess);
-                let findId = json.passport.user.id;
-                if (findId == id) {
-                    this.req.session.destroy(() => {
-                        this.req.session;
-                    });
-                    result_1.success.data = params.id;
-                    console.log('로그아웃 성공');
-                    console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
-                    this.res.status(200).send(result_1.success);
-                }
-                else {
-                    result_1.fail.error = result_1.error.invalReq;
-                    result_1.fail.errdesc = '잘못된 ID입니다.';
-                    this.res.status(400).send(result_1.fail);
-                }
+            console.log(this.req.session.passport.user.id);
+            let sessId = this.req.session.passport.user.id;
+            if (sessId == id) {
+                this.req.session.destroy(() => {
+                    this.req.session;
+                });
+                result_1.success.data = params.id;
+                console.log('로그아웃 성공');
+                console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
+                this.res.status(200).send(result_1.success);
+                return;
             }
-            catch (err) {
-                result_1.fail.error = result_1.error.dbError;
-                result_1.fail.errdesc = err;
-                this.res.status(402).send(result_1.fail);
-            }
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '세션 정보와 일치하지 않습니다.';
+            console.log(`ID와 세션 정보가 다릅니다.\n${JSON.stringify(result_1.fail, null, 2)}`);
         });
         run();
     }

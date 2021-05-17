@@ -44,6 +44,7 @@ router.post('/login', passport.authenticate('local', {
 router.delete('/logout', isAuthenticated, function(req: express.Request, res: express.Response){
     let memberDB = new MemberManager(req, res)
     let query = req.body
+    console.log(query)
     memberDB.logout(query)
 })
 

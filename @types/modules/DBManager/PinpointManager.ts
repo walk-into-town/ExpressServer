@@ -88,7 +88,7 @@ export default class PinpointManager extends FeatureManager{
                 }
             }
         }
-
+        params[0].id = this.nbsp2plus(params[0].id)
         const run = async () => {              //batch 조회를 수행하기 때문에 비동기 함수를 사용
             try{
                 let test = await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기

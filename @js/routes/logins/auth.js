@@ -38,4 +38,9 @@ router.get('/kakao/callback', passport.authenticate('kakao', { failureRedirect: 
     console.log(`응답 JSON\n${JSON.stringify(req.user, null, 2)}`);
     res.send(req.user);
 });
+router.get('/naver', passport.authenticate('naver', null));
+router.get('/naver/callback', passport.authenticate('naver', { failureRedirect: 'login/result/fail' }), function (req, res) {
+    console.log(`응답 JSON\n${JSON.stringify(req.user, null, 2)}`);
+    res.send(req.user);
+});
 module.exports = router;

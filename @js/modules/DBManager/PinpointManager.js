@@ -121,6 +121,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
             }
         };
+        params[0].id = this.nbsp2plus(params[0].id);
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let test = yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise(); // read를 수행할때 까지 대기

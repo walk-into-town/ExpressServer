@@ -59,6 +59,7 @@ router.post('/login', passport_1.default.authenticate('local', {
 router.delete('/logout', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     let query = req.body;
+    console.log(query);
     memberDB.logout(query);
 });
 //회원정보 수정

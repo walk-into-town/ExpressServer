@@ -324,7 +324,7 @@ export default class CampaignManager extends FeatureManager{
                     console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                     this.res.status(200).send(success)
                     return;
-                } 
+                }
                 let toSort = []
                 let primearr = []
                 for (const object of result.Items) {
@@ -338,7 +338,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log('정렬 시작')
                 toSort = await quickSort(toSort)
                 primearr = await quickSort(primearr)
-                primearr.push(toSort)
+                primearr.push(...toSort)
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)

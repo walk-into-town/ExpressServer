@@ -364,7 +364,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log('정렬 시작');
                 toSort = yield quickSort(toSort);
                 primearr = yield quickSort(primearr);
-                primearr.push(toSort);
+                primearr.push(...toSort);
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`);
                 result_1.success.data = primearr;
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);

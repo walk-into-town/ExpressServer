@@ -36,11 +36,13 @@ export default class MonsterManager extends FeatureManager{
             ProjectionExpression: 'imgs',
             ExpressionAttributeValues: {':number': Number(params.number)},
         }
+        console.log(`요청 JSON\n${JSON.stringify(queryParams, null, 2)}`)
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(queryParams).promise()
                 console.log(result.Items[0].imgs)
                 success.data = result.Items[0].imgs
+                this.res.status(200).send(success)
             }
             catch(err){
                 fail.error = error.dbError

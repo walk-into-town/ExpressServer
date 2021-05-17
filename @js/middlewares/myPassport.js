@@ -46,6 +46,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const KakaoStrategy = require('passport-kakao').Strategy;
+const NaverStrategy = require('passport-naver').Strategy;
 module.exports = () => {
     // 전략에서 넘어온 User값을 세션에 저장하는 함수
     passport.serializeUser(function (user, done) {
@@ -153,7 +154,7 @@ module.exports = () => {
     }, function (accessToken, refreshtoken, profile, cb) {
         return __awaiter(this, void 0, void 0, function* () {
             let doclient = new AWS.DynamoDB.DocumentClient();
-            let username = `google${profile.id}`;
+            let username = `kakao${profile.id}`;
             let params = {
                 TableName: 'Member',
                 KeyConditionExpression: 'id = :id',
@@ -199,5 +200,16 @@ module.exports = () => {
             });
             run();
         });
+    }));
+    passport.use('naver', new NaverStrategy({
+        clientID: process.env.naverID,
+        clientSecret: process.env.naverSecret,
+        callbackURL: process.env.naverAuthCallback
+    }, function (accessToken, refreshToken, profile, done) {
+        console.log(profile);
+        let user = {
+            id: 'test'
+        };
+        return done(profile);
     }));
 };

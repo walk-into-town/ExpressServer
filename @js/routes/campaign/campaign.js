@@ -188,7 +188,7 @@ router.get('/', function (req, res) {
     }
     else {
         result_1.fail.error = result_1.error.invalReq;
-        result_1.fail.errdesc = 'type은 name | ownner | region | exact 중 하나여야 합니다.';
+        result_1.fail.errdesc = 'type은 name | ownner | region 중 하나여야 합니다.';
         res.status(400).send(result_1.fail);
         console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
         return;

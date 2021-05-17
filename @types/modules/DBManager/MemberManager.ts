@@ -84,36 +84,21 @@ export default class MemberManager extends FeatureManager{
         let id = params.id
         let sessman = new SessionManager(this.req, this.res)
         const run = async() => {
-            try{    
-                await sessman.findBySId(this.req.session.id)
-                if(this.res.locals.result == undefined){
-                    fail.error = error.invalAcc
-                    fail.errdesc = '먼저 로그인 해주세요'
-                    this.res.status(400).send(fail)
-                    return;
-                }
-                let json = JSON.parse(this.res.locals.result.sess)
-                let findId = json.passport.user.id
-                if(findId == id){
-                    this.req.session.destroy(() => {
-                        this.req.session
-                    });
-                    success.data = params.id
-                    console.log('로그아웃 성공')
-                    console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
-                    this.res.status(200).send(success)
-                }
-                else{
-                    fail.error = error.invalReq
-                    fail.errdesc = '잘못된 ID입니다.'
-                    this.res.status(400).send(fail)
-                }
-            }        
-            catch(err){
-                fail.error = error.dbError
-                fail.errdesc = err
-                this.res.status(402).send(fail)
+            console.log(this.req.session.passport.user.id)
+            let sessId = this.req.session.passport.user.id
+            if(sessId == id){
+                this.req.session.destroy(() => {
+                    this.req.session
+                })
+                success.data = params.id
+                console.log('로그아웃 성공')
+                console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
+                this.res.status(200).send(success)
+                return;
             }
+            fail.error = error.invalAcc
+            fail.errdesc = '세션 정보와 일치하지 않습니다.'
+            console.log(`ID와 세션 정보가 다릅니다.\n${JSON.stringify(fail, null, 2)}`)
         }
         run()
     }
