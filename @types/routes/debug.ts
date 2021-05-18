@@ -1,6 +1,17 @@
 import * as express from 'express'
 var router = express.Router()
 import Scan from '../modules/Debug/scan'
+import UploadFile from '../modules/FileManager/UploadFile'     //파일 업로드 클래스 import
+let uploader = new UploadFile()
+let upload = uploader.testupload()
+
+router.post('/file', upload.array('img'), function(req: express.Request, res: express.Response){
+    let imgs: Array<string> = []
+    for(let i = 0; i < req.files.length; i++){
+        imgs.push(process.env.domain + req.files[i].filename)
+    }
+    res.status(200).send(imgs)
+})
 
 router.get('/', function(req: express.Request, res: express.Response, next: Function){
     res.render('index', {title: "Express"})

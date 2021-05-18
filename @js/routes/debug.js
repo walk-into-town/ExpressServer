@@ -25,6 +25,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 var router = express.Router();
 const scan_1 = __importDefault(require("../modules/Debug/scan"));
+const UploadFile_1 = __importDefault(require("../modules/FileManager/UploadFile")); //파일 업로드 클래스 import
+let uploader = new UploadFile_1.default();
+let upload = uploader.testupload();
+router.post('/file', upload.array('img'), function (req, res) {
+    let imgs = [];
+    for (let i = 0; i < req.files.length; i++) {
+        imgs.push(process.env.domain + req.files[i].filename);
+    }
+    res.status(200).send(imgs);
+});
 router.get('/', function (req, res, next) {
     res.render('index', { title: "Express" });
 });
