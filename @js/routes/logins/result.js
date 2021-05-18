@@ -71,9 +71,9 @@ router.get('/success', function (req, res) {
     res.status(200).send(result_1.success);
 });
 router.get('/fail', function (req, res) {
-    result_1.fail.error = req.flash().error[0];
-    result_1.fail.errdesc = '로그인 실패';
+    result_1.fail.error = '로그인 실패';
+    result_1.fail.errdesc = req.flash().error[0];
     console.log('로그인 실패');
-    res.status(402).send(result_1.fail);
+    res.status(400).send(result_1.fail);
 });
 module.exports = router;

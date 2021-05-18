@@ -41,10 +41,10 @@ router.get('/success', function(req, res){
 })
 
 router.get('/fail', function(req: express.Request, res: express.Response){
-      fail.error = req.flash().error[0]
-      fail.errdesc = '로그인 실패'
+      fail.error = '로그인 실패'
+      fail.errdesc = req.flash().error[0]
       console.log('로그인 실패')
-      res.status(402).send(fail)
+      res.status(400).send(fail)
 })
 
 module.exports = router
