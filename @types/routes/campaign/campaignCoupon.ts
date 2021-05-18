@@ -6,6 +6,7 @@ import CouponManager from '../../modules/DBManager/CouponManager'
 import uploader from '../../modules/FileManager/UploadFile'
 import * as dotenv from 'dotenv'
 import isAuthenticated from '../../middlewares/authentication'
+import { error, fail } from '../../static/result'
 
 let fileMan = new uploader();
 let upload = fileMan.testupload()
@@ -29,10 +30,15 @@ router.get('/', function(req: express.Request, res: express.Response){
     let query = req.query
     if(query.type == 'single'){
         couponDB.read(query)
+        return;
     }
     if(query.type == 'list'){
         couponDB.readList(query)
+        return;
     }
+    fail.error = error.invalReq
+    fail.errdesc = 'type은 single 또는 list중 하나여야합니다.'
+    res.status(400).send(fail)
 })
 
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){

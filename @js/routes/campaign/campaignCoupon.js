@@ -30,6 +30,7 @@ const CouponManager_1 = __importDefault(require("../../modules/DBManager/CouponM
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const result_1 = require("../../static/result");
 let fileMan = new UploadFile_1.default();
 let upload = fileMan.testupload();
 var router = express.Router();
@@ -49,10 +50,15 @@ router.get('/', function (req, res) {
     let query = req.query;
     if (query.type == 'single') {
         couponDB.read(query);
+        return;
     }
     if (query.type == 'list') {
         couponDB.readList(query);
+        return;
     }
+    result_1.fail.error = result_1.error.invalReq;
+    result_1.fail.errdesc = 'type은 single 또는 list중 하나여야합니다.';
+    res.status(400).send(result_1.fail);
 });
 router.delete('/', authentication_1.default, function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
