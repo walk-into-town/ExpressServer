@@ -61,6 +61,13 @@ router.use('/coupon', coupon);
 router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
     res.locals.coupons = [];
     let query = req.body;
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    query.imgs = imgs;
     query.pcoupons = [];
     console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`);
     let coupons = req.body.coupons;
@@ -218,6 +225,13 @@ router.get('/scan', function (req, res) {
 router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let campaignDB = new CampaignManager_1.default(req, res);
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    query.imgs = imgs;
     campaignDB.update(query);
 });
 module.exports = router;
