@@ -455,6 +455,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let result = yield this.Dynamodb.query(queryParams).promise();
+                if (result.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.invalKey;
+                    result_1.fail.errdesc = 'Pinpiont id does not found';
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
                 result_1.success.data = result.Items[0].comments;
                 this.res.status(200).send(result_1.success);
             }
@@ -473,6 +479,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 성공 메시지 출력
      */
     deleteComment(params) {
+        let uid = this.req.session.passport.user.id;
+        if (uid != params.uid) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = "Given id does not match with session info";
+            this.res.status(403).send(result_1.fail);
+            return;
+        }
         let pid = params.pid;
         let findParams = {
             TableName: 'Pinpoint',
@@ -491,12 +504,24 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let comments = yield this.Dynamodb.query(findParams).promise();
+                if (comments.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = "Cannot find given pinpoint";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
                     let cid = comments.Items[0].comments[i].id;
                     let uid = comments.Items[0].comments[i].userId;
                     if (cid == params.cid && uid == params.uid) {
                         comments.Items[0].comments.splice(i, 1);
                         break;
+                    }
+                    if (i == comments.Items[0].comments.length - 1) {
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = 'Cannot find comment';
+                        this.res.status(403).send(result_1.fail);
+                        return;
                     }
                 }
                 console.log('댓글 찾는중...');
@@ -532,7 +557,20 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
+                let id = this.req.session.passport.user.id;
+                if (params.uid != id) {
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = "Given id does not match with session info";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
                 let comments = yield this.Dynamodb.query(findParams).promise();
+                if (comments.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = "Cannot find Pinpoint";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
                 console.log('댓글 찾는중...');
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
                     let cid = comments.Items[0].comments[i].id;
@@ -540,14 +578,20 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     if (cid == params.cid && uid == params.uid) {
                         console.log('조건 만족');
                         comments.Items[0].comments[i].text = params.text;
+                        result_1.success.data = comments.Items[0].comments[i];
                         break;
+                    }
+                    if (i == comments.Items[0].comments.length - 1) {
+                        result_1.fail.error = result_1.error.dataNotFound;
+                        result_1.fail.errdesc = "Cannot find Comment";
+                        this.res.status(403).send(result_1.fail);
+                        return;
                     }
                 }
                 console.log(comments.Items[0].comments);
                 updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
                 console.log('댓글 수정중...');
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
-                result_1.success.data = updateResult;
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
@@ -577,27 +621,39 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let comments = yield this.Dynamodb.query(findParams).promise();
+                if (comments.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = "Cannot find pinpoint";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
                 console.log('댓글 찾는중...');
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
                     let cid = comments.Items[0].comments[i].id;
-                    let uid = comments.Items[0].comments[i].userId;
-                    if (cid == params.cid && uid == params.uid) {
+                    if (cid == params.cid) {
                         console.log('조건 만족');
                         if (params.like == true) {
                             comments.Items[0].comments[i].rated += 1;
+                            result_1.success.data = comments.Items[0].comments[i];
                             break;
                         }
                         else {
                             comments.Items[0].comments[i].rated -= 1;
+                            result_1.success.data = comments.Items[0].comments[i];
                             break;
                         }
+                    }
+                    if (i == comments.Items[0].comments.length - 1) {
+                        result_1.fail.error = result_1.error.dataNotFound;
+                        result_1.fail.errdesc = "Cannot find Comment";
+                        this.res.status(403).send(result_1.fail);
+                        return;
                     }
                 }
                 console.log(comments.Items[0].comments);
                 updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
                 console.log('댓글 수정중...');
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
-                result_1.success.data = updateResult;
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

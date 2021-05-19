@@ -448,6 +448,12 @@ export default class PinpointManager extends FeatureManager{
         const run = async() => {
             try{        
                 let result = await this.Dynamodb.query(queryParams).promise()
+                if(result.Items[0] == undefined){
+                    fail.error = error.invalKey
+                    fail.errdesc = 'Pinpiont id does not found'
+                    this.res.status(403).send(fail)
+                    return;
+                }
                 success.data = result.Items[0].comments
                 this.res.status(200).send(success)
             }
@@ -467,6 +473,13 @@ export default class PinpointManager extends FeatureManager{
      * 3. 성공 메시지 출력
      */
     public deleteComment(params: any): void{
+        let uid = this.req.session.passport.user.id
+        if(uid != params.uid){
+            fail.error = error.invalAcc
+            fail.errdesc = "Given id does not match with session info"
+            this.res.status(403).send(fail)
+            return;
+        }
         let pid = params.pid
         let findParams = {
             TableName: 'Pinpoint',
@@ -485,12 +498,24 @@ export default class PinpointManager extends FeatureManager{
         const run = async () => {
             try{
                 let comments = await this.Dynamodb.query(findParams).promise()
+                if(comments.Items[0] == undefined){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = "Cannot find given pinpoint"
+                    this.res.status(403).send(fail)
+                    return;
+                }
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
                     if(cid == params.cid && uid == params.uid){
                         comments.Items[0].comments.splice(i,1);
                         break;
+                    }
+                    if(i == comments.Items[0].comments.length -1){
+                        fail.error = error.invalKey
+                        fail.errdesc = 'Cannot find comment'
+                        this.res.status(403).send(fail)
+                        return;
                     }
                 }
                 console.log('댓글 찾는중...')
@@ -527,7 +552,20 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async () => {
             try{
+                let id = this.req.session.passport.user.id
+                if(params.uid != id){
+                    fail.error = error.invalAcc
+                    fail.errdesc = "Given id does not match with session info"
+                    this.res.status(403).send(fail)
+                    return;
+                }
                 let comments = await this.Dynamodb.query(findParams).promise()
+                if(comments.Items[0] == undefined){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = "Cannot find Pinpoint"
+                    this.res.status(403).send(fail)
+                    return;
+                }
                 console.log('댓글 찾는중...')
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
@@ -535,14 +573,20 @@ export default class PinpointManager extends FeatureManager{
                     if(cid == params.cid && uid == params.uid){
                         console.log('조건 만족')
                         comments.Items[0].comments[i].text = params.text;
+                        success.data = comments.Items[0].comments[i]
                         break;
+                    }
+                    if(i == comments.Items[0].comments.length -1){
+                        fail.error = error.dataNotFound
+                        fail.errdesc = "Cannot find Comment"
+                        this.res.status(403).send(fail)
+                        return;
                     }
                 }
                 console.log(comments.Items[0].comments)
                 updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments
                 console.log('댓글 수정중...')
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
-                success.data = updateResult
                 this.res.status(200).send(success)
             }
             catch(err){
@@ -573,27 +617,39 @@ export default class PinpointManager extends FeatureManager{
         const run = async () => {
             try{
                 let comments = await this.Dynamodb.query(findParams).promise()
+                if(comments.Items[0] == undefined){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = "Cannot find pinpoint"
+                    this.res.status(403).send(fail)
+                    return;
+                }
                 console.log('댓글 찾는중...')
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
-                    let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.cid && uid == params.uid){
+                    if(cid == params.cid){
                         console.log('조건 만족')
                         if(params.like == true){
                             comments.Items[0].comments[i].rated += 1;
+                            success.data = comments.Items[0].comments[i]
                             break;
                         }
                         else{
                             comments.Items[0].comments[i].rated -= 1;
+                            success.data = comments.Items[0].comments[i]
                             break;
                         }
+                    }
+                    if(i == comments.Items[0].comments.length - 1){
+                        fail.error = error.dataNotFound
+                        fail.errdesc = "Cannot find Comment"
+                        this.res.status(403).send(fail)
+                        return;
                     }
                 }
                 console.log(comments.Items[0].comments)
                 updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments
                 console.log('댓글 수정중...')
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
-                success.data = updateResult
                 this.res.status(200).send(success)
             }
             catch(err){
