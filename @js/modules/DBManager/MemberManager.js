@@ -47,18 +47,31 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let saltRounds = 10;
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                let checkparams = {
+                let nicknameCheckparams = {
                     TableName: 'Member',
                     IndexName: 'nicknameIndex',
                     KeyConditionExpression: 'nickname = :value',
                     ExpressionAttributeValues: { ':value': params.nickname },
                 };
-                let checkResult = yield this.Dynamodb.query(checkparams).promise();
-                console.log(checkResult.Items);
-                if (checkResult.Items.length != 0) {
+                let nicknameCheckResult = yield this.Dynamodb.query(nicknameCheckparams).promise();
+                console.log(nicknameCheckResult.Items);
+                if (nicknameCheckResult.Items.length != 0) {
                     result_1.fail.error = result_1.error.invalReq;
                     result_1.fail.errdesc = '닉네임이 중복되었어요.';
-                    this.res.status(400).send(result_1.fail);
+                    this.res.status(402).send(result_1.fail);
+                    return;
+                }
+                let idCheckParams = {
+                    TableName: 'Menber',
+                    KeyConditionExpression: 'id = :id',
+                    ExpressionAttributeVqalues: { ':id': params.id }
+                };
+                let idCheckResult = yield this.Dynamodb.query(idCheckParams).promise();
+                console.log(idCheckResult.Items);
+                if (idCheckResult.Items.length != 0) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '아이디가 중복되었어요.';
+                    this.res.status(402).send(result_1.fail);
                     return;
                 }
                 yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
@@ -175,7 +188,83 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         run();
     }
     update(params) {
-        throw new Error("Method not implemented.");
+        let uid = this.req.session.passport.user.id;
+        if (uid != params.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '잘못된 접근입니다.';
+            this.res.status(402).send(result_1.fail);
+            return;
+        }
+        let profileImg = params.imgs;
+        let nickname = params.nickname;
+        let selfIntroduction = params.selfIntroduction;
+        let updateExp = 'SET ';
+        let expAttrVal = {};
+        let updateParams = {
+            TableName: 'Member',
+            Key: { id: params.id },
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            RetrunValues: 'UPDATED_NEW',
+            ConditionExpression: 'attribute_exists(id)',
+            ReturnValues: 'UPDATED_NEW'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (profileImg != '') {
+                    updateExp += 'profileImg = :profileImg ';
+                    expAttrVal[":profileImg"] = profileImg;
+                }
+                if (nickname != '') {
+                    let checkParams = {
+                        TableName: 'Member',
+                        IndexName: 'nicknameIndex',
+                        KeyConditionExpression: `nickname = :value`,
+                        ExpressionAttributeValues: { ':value': params.nickname }
+                    };
+                    console.log('닉네임 중복 여부 확인중...');
+                    let queryResult = yield this.Dynamodb.query(checkParams).promise();
+                    if (queryResult.Items.length != 0) {
+                        result_1.success.data = '닉네임이 중복되었어요';
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                    console.log(`닉네임 중복 통과.\nUpdate 쿼리 작성중`);
+                    if (updateExp.length == 4) {
+                        updateExp += 'nickname = :nickname ';
+                        expAttrVal[':nickname'] = nickname;
+                    }
+                    else {
+                        updateExp += ', nickname = :nickname ';
+                        expAttrVal[':nickname'] = nickname;
+                    }
+                }
+                if (selfIntroduction != '') {
+                    if (updateExp.length == 4) {
+                        updateExp += 'selfIntroduction = :selfIntroduction';
+                        expAttrVal[':selfIntroduction'] = selfIntroduction;
+                    }
+                    else {
+                        updateExp += ', selfIntroduction = :selfIntroduction';
+                        expAttrVal[':selfIntroduction'] = selfIntroduction;
+                    }
+                }
+                updateParams.UpdateExpression = updateExp;
+                updateParams.ExpressionAttributeValues = expAttrVal;
+                console.log(`쿼리 작성 완료. 작성된 쿼리\n${JSON.stringify(updateParams, null, 2)}`);
+                console.log('회원정보 수정중');
+                let result = yield this.Dynamodb.update(updateParams).promise();
+                console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`);
+                result_1.success.data = result.Attributes;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(403).send(result_1.fail);
+            }
+        });
+        run();
     }
     delete(params) {
         throw new Error("Method not implemented.");
@@ -198,7 +287,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             TableName: 'Member',
             IndexName: index,
             KeyConditionExpression: `${type} = :value`,
-            ExpressionAttributeValues: { ':value': value },
+            ExpressionAttributeValues: { ':value': value }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
