@@ -29,8 +29,11 @@ const express = __importStar(require("express"));
 const passport_1 = __importDefault(require("passport"));
 const MemberManager_1 = __importDefault(require("../../modules/DBManager/MemberManager"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 var router = express.Router();
 const badge = require('./badge');
+const uploader = new UploadFile_1.default();
+const upload = uploader.testupload();
 router.use('/badge', badge);
 //회원가입
 router.post('/', function (req, res) {
@@ -73,7 +76,22 @@ router.delete('/logout', authentication_1.default, function (req, res) {
     memberDB.logout(query);
 });
 //회원정보 수정
-router.put('/', authentication_1.default, function (req, res) {
+router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
+    let memberDB = new MemberManager_1.default(req, res);
+    let query = req.body;
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    if (imgs.length == 0) {
+        query.imgs = '';
+    }
+    else {
+        query.imgs = imgs[0];
+    }
+    memberDB.update(query);
 });
 //회원정보 조회
 router.get('/', authentication_1.default, function (req, res) {
