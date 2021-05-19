@@ -27,13 +27,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const express = __importStar(require("express"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 var router = express.Router();
-router.post('/', authentication_1.default, function (req, res) {
+const uploader = new UploadFile_1.default();
+const upload = uploader.testupload();
+router.post('/comment', authentication_1.default, upload.array('img'), function (req, res) {
+    let query = req.body;
+    let campaignDB = new CampaignManager_1.default(req, res);
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    query.imgs = imgs;
+    campaignDB.insertComment(query);
 });
-router.get('/', function (req, res) {
+router.get('/comment', function (req, res) {
 });
-router.delete('/', authentication_1.default, function (req, res) {
+router.delete('/comment', authentication_1.default, function (req, res) {
 });
-router.put('/', authentication_1.default, function (req, res) {
+router.put('/comment', authentication_1.default, function (req, res) {
+});
+router.put('/rate', authentication_1.default, function (req, res) {
 });
 module.exports = router;
