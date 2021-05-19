@@ -96,6 +96,7 @@ export default class PinpointManager extends FeatureManager{
                     fail.error = error.dbError
                     fail.errdesc = 'None of Keys are processed'
                     this.res.status(400).send(fail)
+                    return;
                 }
                 success.data = this.res.locals.result.Pinpoint
                 this.res.status(201).send(success)
@@ -387,14 +388,15 @@ export default class PinpointManager extends FeatureManager{
     public insertComment(params: any): void{
         let userid = this.req.session.passport.user.id
         let date = new Date()
-        let hash = CryptoJS.SHA256(params.pid + date.toString())  //id 생성
+        let hash = CryptoJS.SHA256(params.id + date.toString())  //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){   //세션의 id와 전송한 id가 다른 경우
             fail.error = error.invalKey
             fail.errdesc = 'User Id does not match with session'
             this.res.status(400).send(fail)
+            return;
         }
-        let memberPparams = {
+        let memberParams = {
             TableName: 'Member',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {':id': userid},
@@ -411,7 +413,7 @@ export default class PinpointManager extends FeatureManager{
         }]
         let queryParams = {
             TableName: 'Pinpoint',
-            Key: {id: params.pid},
+            Key: {id: params.id},
             UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
             ExpressionAttributeValues: {':newcomment': comment, ':emptylist': []},
             ReturnValues: 'UPDATED_NEW',
@@ -419,13 +421,13 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async() => {
             try{
-                let userResult = await this.Dynamodb.query(memberPparams).promise()
+                let userResult = await this.Dynamodb.query(memberParams).promise()
                 let user = userResult.Items[0]
                 comment[0].nickname = user.nickname
                 comment[0].profileImg = user.profileImg
                 console.log(comment[0])
                 let queryResult = await this.Dynamodb.update(queryParams).promise()
-                success.data = queryResult.Attributes
+                success.data = comment[0]
                 this.res.status(200).send(success)
             }
             catch(err){

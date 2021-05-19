@@ -129,6 +129,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = 'None of Keys are processed';
                     this.res.status(400).send(result_1.fail);
+                    return;
                 }
                 result_1.success.data = this.res.locals.result.Pinpoint;
                 this.res.status(201).send(result_1.success);
@@ -395,14 +396,15 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     insertComment(params) {
         let userid = this.req.session.passport.user.id;
         let date = new Date();
-        let hash = CryptoJS.SHA256(params.pid + date.toString()); //id 생성
+        let hash = CryptoJS.SHA256(params.id + date.toString()); //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64);
         if (userid != params.comments.userId) { //세션의 id와 전송한 id가 다른 경우
             result_1.fail.error = result_1.error.invalKey;
             result_1.fail.errdesc = 'User Id does not match with session';
             this.res.status(400).send(result_1.fail);
+            return;
         }
-        let memberPparams = {
+        let memberParams = {
             TableName: 'Member',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: { ':id': userid },
@@ -419,7 +421,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             }];
         let queryParams = {
             TableName: 'Pinpoint',
-            Key: { id: params.pid },
+            Key: { id: params.id },
             UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
             ExpressionAttributeValues: { ':newcomment': comment, ':emptylist': [] },
             ReturnValues: 'UPDATED_NEW',
@@ -427,13 +429,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                let userResult = yield this.Dynamodb.query(memberPparams).promise();
+                let userResult = yield this.Dynamodb.query(memberParams).promise();
                 let user = userResult.Items[0];
                 comment[0].nickname = user.nickname;
                 comment[0].profileImg = user.profileImg;
                 console.log(comment[0]);
                 let queryResult = yield this.Dynamodb.update(queryParams).promise();
-                result_1.success.data = queryResult.Attributes;
+                result_1.success.data = comment[0];
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
