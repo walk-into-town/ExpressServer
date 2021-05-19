@@ -126,8 +126,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 return;
             }
             result_1.fail.error = result_1.error.invalAcc;
-            result_1.fail.errdesc = '세션 정보와 일치하지 않습니다.';
+            result_1.fail.errdesc = '잘못된 접근입니다.';
             console.log(`ID와 세션 정보가 다릅니다.\n${JSON.stringify(result_1.fail, null, 2)}`);
+            this.res.status(402).send(result_1.fail);
+            return;
         });
         run();
     }
@@ -216,6 +218,148 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    readPlaying(params) {
+        let id = params.id;
+        if (id != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = "잘못된 접근입니다.";
+            this.res.status(402).send(result_1.fail);
+            return;
+        }
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'playingCampaigns'
+        };
+        let campaignParams = {
+            RequestItems: {
+                'Campaign': {
+                    Keys: null,
+                    ProjectionExpression: 'id, #name, imgs, description',
+                    ExpressionAttributeNames: { '#name': 'name' }
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let uid = this.req.session.passport.user.id;
+                if (uid != params.id) {
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = "잘못된 접근입니다.";
+                    this.res.status(402).send(result_1.fail);
+                    return;
+                }
+                console.log(`DB 읽어오는중...`);
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                if (result.Items[0].playingCampaigns.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns)}`);
+                let keys = [];
+                for (const campaign of result.Items[0].playingCampaigns) {
+                    let obj = {
+                        'id': campaign.id
+                    };
+                    keys.push(obj);
+                }
+                campaignParams.RequestItems.Campaign.Keys = keys;
+                let data = result.Items[0].playingCampaigns;
+                let camp = yield this.Dynamodb.batchGet(campaignParams).promise();
+                let campaigns = camp.Responses.Campaign;
+                for (const campaign of campaigns) {
+                    for (let i = 0; i < data.length; i++) {
+                        if (data[i].id == campaign.id) {
+                            data[i].name = campaign.name;
+                            data[i].imgs = campaign.imgs;
+                            data[i].description = campaign.description;
+                        }
+                    }
+                }
+                result_1.success.data = data;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(401).send(err);
+            }
+        });
+        run();
+    }
+    readMyCamp(params) {
+        let id = params.id;
+        if (id != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = "잘못된 접근입니다.";
+            this.res.status(402).send(result_1.fail);
+            return;
+        }
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'myCampaigns'
+        };
+        let campaignParams = {
+            RequestItems: {
+                'Campaign': {
+                    Keys: null,
+                    ProjectionExpression: 'id, #name, imgs, description',
+                    ExpressionAttributeNames: { '#name': 'name' }
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let uid = this.req.session.passport.user.id;
+                if (uid != params.id) {
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = "잘못된 접근입니다.";
+                    this.res.status(402).send(result_1.fail);
+                    return;
+                }
+                console.log(`DB 읽어오는중...`);
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                if (result.Items[0].myCampaigns.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].myCampaigns)}`);
+                let keys = [];
+                for (const id of result.Items[0].myCampaigns) {
+                    let obj = {
+                        'id': id
+                    };
+                    keys.push(obj);
+                }
+                campaignParams.RequestItems.Campaign.Keys = keys;
+                let data = keys;
+                let camp = yield this.Dynamodb.batchGet(campaignParams).promise();
+                let campaigns = camp.Responses.Campaign;
+                for (const campaign of campaigns) {
+                    for (let i = 0; i < data.length; i++) {
+                        if (data[i].id == campaign.id) {
+                            data[i].name = campaign.name;
+                            data[i].imgs = campaign.imgs;
+                            data[i].description = campaign.description;
+                        }
+                    }
+                }
+                result_1.success.data = data;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(401).send(err);
             }
         });
         run();

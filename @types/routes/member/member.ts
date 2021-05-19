@@ -39,6 +39,17 @@ router.post('/login', passport.authenticate('local', {
   failureFlash: true
 }))
 
+router.get('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.query
+    let memberDB = new MemberManager(req, res)
+    memberDB.readPlaying(query)
+})
+
+router.get('/my', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.query
+    let memberDB = new MemberManager(req, res)
+    memberDB.readMyCamp(query)
+})
 
 //로그아웃
 router.delete('/logout', isAuthenticated, function(req: express.Request, res: express.Response){

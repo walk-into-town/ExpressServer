@@ -55,6 +55,16 @@ router.post('/login', passport_1.default.authenticate('local', {
     failureRedirect: '/login/result/fail',
     failureFlash: true
 }));
+router.get('/playing', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.readPlaying(query);
+});
+router.get('/my', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.readMyCamp(query);
+});
 //로그아웃
 router.delete('/logout', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
