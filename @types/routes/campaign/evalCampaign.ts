@@ -25,15 +25,28 @@ router.post('/comment', isAuthenticated, upload.array('img'), function(req: expr
 })
 
 router.get('/comment', function(req: express.Request, res: express.Response){
-    
+    let query = req.query
+    let campaignDB = new CampaignManager(req, res)
+    campaignDB.readComment(query)
 })
 
 router.delete('/comment', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let query = req.body
+    let camaignDB = new CampaignManager(req, res)
+    camaignDB.deleteComment(query)
 })
 
 router.put('/comment', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let query = req.body
+    let campaignDB = new CampaignManager(req, res)
+    let imgs: Array<string> = []
+    if(req.files != undefined){
+        for(let i = 0; i < req.files.length; i++){
+            imgs.push(process.env.domain + req.files[i].filename)
+        }
+    }
+    query.imgs = imgs
+    campaignDB.updateComment(query)
 })
 
 router.put('/rate', isAuthenticated, function(req: express.Request, res: express.Response){
