@@ -389,7 +389,7 @@ export default class PinpointManager extends FeatureManager{
         let userid = this.req.session.passport.user.id
         let date = new Date()
         let hash = CryptoJS.SHA256(params.id + date.toString())  //id 생성
-        params.id = hash.toString(CryptoJS.enc.Base64)
+        params.cid = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){   //세션의 id와 전송한 id가 다른 경우
             fail.error = error.invalKey
             fail.errdesc = 'User Id does not match with session'
@@ -403,7 +403,7 @@ export default class PinpointManager extends FeatureManager{
             ProjectionExpression: 'profileImg, nickname'
         }
         let comment = [{
-            id: params.id,
+            id: params.cid,
             userId: userid,
             text: params.comments.text,
             rated: 0,
