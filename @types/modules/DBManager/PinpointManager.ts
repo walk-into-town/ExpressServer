@@ -409,7 +409,8 @@ export default class PinpointManager extends FeatureManager{
             rated: 0,
             imgs: params.imgs,
             nickname: null,
-            profileImg: null
+            profileImg: null,
+            time: date.toISOString()
         }]
         let queryParams = {
             TableName: 'Pinpoint',
@@ -524,7 +525,7 @@ export default class PinpointManager extends FeatureManager{
                 console.log(comments.Items[0].comments)
                 updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
-                success.data = updateResult
+                success.data = updateResult.Attributes.comments
                 this.res.status(200).send(success)
             }
             catch(err){
@@ -575,6 +576,7 @@ export default class PinpointManager extends FeatureManager{
                     if(cid == params.cid && uid == params.uid){
                         console.log('조건 만족')
                         comments.Items[0].comments[i].text = params.text;
+                        comments.Items[0].comments[i].time = new Date().toISOString()
                         success.data = comments.Items[0].comments[i]
                         break;
                     }

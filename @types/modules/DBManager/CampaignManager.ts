@@ -581,7 +581,8 @@ export default class CampaignManager extends FeatureManager{
             rated: 0,
             imgs: params.imgs,
             nickname: null,
-            profileImg: null
+            profileImg: null,
+            time: date.toISOString()
         }]
         let queryParams = {
             TableName: 'Campaign',
@@ -606,6 +607,165 @@ export default class CampaignManager extends FeatureManager{
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(403).send(fail)
+            }
+        }
+        run();
+    }
+
+    public readComment(params: any){
+        if(params.id == undefined){
+            fail.error = error.invalReq
+            fail.errdesc = '요청의 id값이 없습니다.'
+            this.res.status(403).send(fail)
+            return;
+        }
+        params.id = this.nbsp2plus(params.id)
+        let queryParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: {':id': params.id}
+        }
+        const run = async () => {
+            try{
+                console.log('댓글 검색중')
+                let result = await this.Dynamodb.query(queryParams).promise()
+                console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`)
+                success.data = result.Items[0].comments
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(401).send(fail)
+                return;
+            }
+        }
+        run();
+    }
+
+    public updateComment(params: any){
+        let id = params.id
+        let findParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id' : id}
+        }
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: {id: params.id},
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: {':newcomment': null},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        const run = async () => {
+            try{
+                let id = this.req.session.passport.user.id
+                if(params.uid != id){
+                    fail.error = error.invalAcc
+                    fail.errdesc = "Given id does not match with session info"
+                    this.res.status(403).send(fail)
+                    return;
+                }
+                let comments = await this.Dynamodb.query(findParams).promise()
+                if(comments.Items[0] == undefined){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = "Cannot find Pinpoint"
+                    this.res.status(403).send(fail)
+                    return;
+                }
+                console.log('댓글 찾는중...')
+                for(let i =0; i < comments.Items[0].comments.length; i++){
+                    let cid = comments.Items[0].comments[i].id
+                    let uid = comments.Items[0].comments[i].userId
+                    if(cid == params.cid && uid == params.uid){
+                        console.log('조건 만족')
+                        comments.Items[0].comments[i].text = params.text;
+                        comments.Items[0].comments[i].time = new Date().toISOString()
+                        success.data = comments.Items[0].comments[i]
+                        break;
+                    }
+                    if(i == comments.Items[0].comments.length -1){
+                        fail.error = error.dataNotFound
+                        fail.errdesc = "Cannot find Comment"
+                        this.res.status(403).send(fail)
+                        return;
+                    }
+                }
+                console.log(comments.Items[0].comments)
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments
+                console.log('댓글 수정중...')
+                let updateResult = await this.Dynamodb.update(updateParams).promise()
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
+            }
+        }
+        run();
+    }
+
+    public deleteComment(params: any){
+        let uid = this.req.session.passport.user.id
+        if(uid != params.uid){
+            fail.error = error.invalAcc
+            fail.errdesc = "Given id does not match with session info"
+            this.res.status(403).send(fail)
+            return;
+        }
+        let id = params.id
+        let findParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id' : id}
+        }
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: {id: params.id},
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: {':newcomment': null},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        const run = async () => {
+            try{
+                let comments = await this.Dynamodb.query(findParams).promise()
+                if(comments.Items[0] == undefined){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = "Cannot find given pinpoint"
+                    this.res.status(403).send(fail)
+                    return;
+                }
+                for(let i =0; i < comments.Items[0].comments.length; i++){
+                    let cid = comments.Items[0].comments[i].id
+                    let uid = comments.Items[0].comments[i].userId
+                    if(cid == params.cid && uid == params.uid){
+                        comments.Items[0].comments.splice(i,1);
+                        break;
+                    }
+                    if(i == comments.Items[0].comments.length -1){
+                        fail.error = error.invalKey
+                        fail.errdesc = 'Cannot find comment'
+                        this.res.status(403).send(fail)
+                        return;
+                    }
+                }
+                console.log('댓글 찾는중...')
+                console.log(comments.Items[0].comments)
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments
+                let updateResult = await this.Dynamodb.update(updateParams).promise()
+                success.data = updateResult.Attributes.comments
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(400).send(fail)
             }
         }
         run();

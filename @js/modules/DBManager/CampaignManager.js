@@ -595,7 +595,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 rated: 0,
                 imgs: params.imgs,
                 nickname: null,
-                profileImg: null
+                profileImg: null,
+                time: date.toISOString()
             }];
         let queryParams = {
             TableName: 'Campaign',
@@ -620,6 +621,162 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(403).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    readComment(params) {
+        if (params.id == undefined) {
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = '요청의 id값이 없습니다.';
+            this.res.status(403).send(result_1.fail);
+            return;
+        }
+        params.id = this.nbsp2plus(params.id);
+        let queryParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': params.id }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('댓글 검색중');
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`);
+                result_1.success.data = result.Items[0].comments;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(401).send(result_1.fail);
+                return;
+            }
+        });
+        run();
+    }
+    updateComment(params) {
+        let id = params.id;
+        let findParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': id }
+        };
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: { id: params.id },
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: { ':newcomment': null },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let id = this.req.session.passport.user.id;
+                if (params.uid != id) {
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = "Given id does not match with session info";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
+                let comments = yield this.Dynamodb.query(findParams).promise();
+                if (comments.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = "Cannot find Pinpoint";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
+                console.log('댓글 찾는중...');
+                for (let i = 0; i < comments.Items[0].comments.length; i++) {
+                    let cid = comments.Items[0].comments[i].id;
+                    let uid = comments.Items[0].comments[i].userId;
+                    if (cid == params.cid && uid == params.uid) {
+                        console.log('조건 만족');
+                        comments.Items[0].comments[i].text = params.text;
+                        comments.Items[0].comments[i].time = new Date().toISOString();
+                        result_1.success.data = comments.Items[0].comments[i];
+                        break;
+                    }
+                    if (i == comments.Items[0].comments.length - 1) {
+                        result_1.fail.error = result_1.error.dataNotFound;
+                        result_1.fail.errdesc = "Cannot find Comment";
+                        this.res.status(403).send(result_1.fail);
+                        return;
+                    }
+                }
+                console.log(comments.Items[0].comments);
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
+                console.log('댓글 수정중...');
+                let updateResult = yield this.Dynamodb.update(updateParams).promise();
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    deleteComment(params) {
+        let uid = this.req.session.passport.user.id;
+        if (uid != params.uid) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = "Given id does not match with session info";
+            this.res.status(403).send(result_1.fail);
+            return;
+        }
+        let id = params.id;
+        let findParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: { ':id': id }
+        };
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: { id: params.id },
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: { ':newcomment': null },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let comments = yield this.Dynamodb.query(findParams).promise();
+                if (comments.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = "Cannot find given pinpoint";
+                    this.res.status(403).send(result_1.fail);
+                    return;
+                }
+                for (let i = 0; i < comments.Items[0].comments.length; i++) {
+                    let cid = comments.Items[0].comments[i].id;
+                    let uid = comments.Items[0].comments[i].userId;
+                    if (cid == params.cid && uid == params.uid) {
+                        comments.Items[0].comments.splice(i, 1);
+                        break;
+                    }
+                    if (i == comments.Items[0].comments.length - 1) {
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = 'Cannot find comment';
+                        this.res.status(403).send(result_1.fail);
+                        return;
+                    }
+                }
+                console.log('댓글 찾는중...');
+                console.log(comments.Items[0].comments);
+                updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments;
+                let updateResult = yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = updateResult.Attributes.comments;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(400).send(result_1.fail);
             }
         });
         run();
