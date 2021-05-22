@@ -27,12 +27,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
-const SessionManager_1 = __importDefault(require("./SessionManager"));
 const bcrypt = __importStar(require("bcrypt"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
@@ -59,7 +55,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (nicknameCheckResult.Items.length != 0) {
                     result_1.fail.error = result_1.error.invalReq;
                     result_1.fail.errdesc = '닉네임이 중복되었어요.';
-                    this.res.status(402).send(result_1.fail);
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 let idCheckParams = {
@@ -72,7 +68,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (idCheckResult.Items.length != 0) {
                     result_1.fail.error = result_1.error.invalReq;
                     result_1.fail.errdesc = '아이디가 중복되었어요.';
-                    this.res.status(402).send(result_1.fail);
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
@@ -100,7 +96,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(402).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -125,7 +121,6 @@ class MemberManager extends FeatureManager_1.FeatureManager {
      */
     logout(params) {
         let id = params.id;
-        let sessman = new SessionManager_1.default(this.req, this.res);
         const run = () => __awaiter(this, void 0, void 0, function* () {
             console.log(this.req.session.passport.user.id);
             let sessId = this.req.session.passport.user.id;
@@ -142,7 +137,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = '잘못된 접근입니다.';
             console.log(`ID와 세션 정보가 다릅니다.\n${JSON.stringify(result_1.fail, null, 2)}`);
-            this.res.status(402).send(result_1.fail);
+            this.res.status(400).send(result_1.fail);
             return;
         });
         run();
@@ -183,7 +178,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -193,7 +188,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         if (uid != params.id) {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = '잘못된 접근입니다.';
-            this.res.status(402).send(result_1.fail);
+            this.res.status(400).send(result_1.fail);
             return;
         }
         let profileImg = params.imgs;
@@ -262,7 +257,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(403).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -295,19 +290,19 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let queryResult = yield this.Dynamodb.query(params).promise();
                 if (queryResult.Items.length == 0) {
                     result_1.success.data = '중복되었어요';
-                    this.res.status(201).send(result_1.success);
+                    this.res.status(200).send(result_1.success);
                     return;
                 }
                 else {
                     result_1.success.data = '가능해요';
-                    this.res.status(201).send(result_1.success);
+                    this.res.status(200).send(result_1.success);
                     return;
                 }
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -317,7 +312,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         if (id != this.req.session.passport.user.id) {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = "잘못된 접근입니다.";
-            this.res.status(402).send(result_1.fail);
+            this.res.status(400).send(result_1.fail);
             return;
         }
         let queryParams = {
@@ -341,7 +336,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (uid != params.id) {
                     result_1.fail.error = result_1.error.invalAcc;
                     result_1.fail.errdesc = "잘못된 접근입니다.";
-                    this.res.status(402).send(result_1.fail);
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 console.log(`DB 읽어오는중...`);
@@ -378,7 +373,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(401).send(err);
+                this.res.status(521).send(err);
             }
         });
         run();
@@ -388,7 +383,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         if (id != this.req.session.passport.user.id) {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = "잘못된 접근입니다.";
-            this.res.status(402).send(result_1.fail);
+            this.res.status(400).send(result_1.fail);
             return;
         }
         let queryParams = {
@@ -412,7 +407,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (uid != params.id) {
                     result_1.fail.error = result_1.error.invalAcc;
                     result_1.fail.errdesc = "잘못된 접근입니다.";
-                    this.res.status(402).send(result_1.fail);
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 console.log(`DB 읽어오는중...`);
@@ -449,7 +444,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(401).send(err);
+                this.res.status(521).send(err);
             }
         });
         run();
@@ -479,7 +474,9 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
-                this.res.status(402).send(result_1.fail);
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();

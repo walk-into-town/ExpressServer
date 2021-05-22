@@ -27,12 +27,12 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
             try {
                 let data = yield this.Dynamodb.update(queryParams).promise();
                 result_1.success.data = data.Attributes.imgs;
-                this.res.status(200).send(result_1.success);
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -56,7 +56,7 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();

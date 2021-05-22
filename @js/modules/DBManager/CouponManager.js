@@ -81,7 +81,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             catch (err) { //DB에러 발생
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -108,7 +108,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -155,7 +155,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -225,7 +225,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();

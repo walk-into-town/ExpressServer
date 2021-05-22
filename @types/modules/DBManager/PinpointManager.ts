@@ -388,8 +388,8 @@ export default class PinpointManager extends FeatureManager{
     public insertComment(params: any): void{
         let userid = this.req.session.passport.user.id
         let date = new Date()
-        let hash = CryptoJS.SHA256(params.id + date.toString())  //id 생성
-        params.cid = hash.toString(CryptoJS.enc.Base64)
+        let hash = CryptoJS.SHA256(params.pid + date.toString())  //id 생성
+        params.coid = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){   //세션의 id와 전송한 id가 다른 경우
             fail.error = error.invalKey
             fail.errdesc = 'User Id does not match with session'
@@ -403,7 +403,7 @@ export default class PinpointManager extends FeatureManager{
             ProjectionExpression: 'profileImg, nickname'
         }
         let comment = [{
-            id: params.cid,
+            id: params.coid,
             userId: userid,
             text: params.comments.text,
             rated: 0,
@@ -453,8 +453,8 @@ export default class PinpointManager extends FeatureManager{
                 let result = await this.Dynamodb.query(queryParams).promise()
                 if(result.Items[0] == undefined){
                     fail.error = error.invalKey
-                    fail.errdesc = 'Pinpiont id does not found'
-                    this.res.status(403).send(fail)
+                    fail.errdesc = '핀포인트를 찾을 수 없습니다.'
+                    this.res.status(400).send(fail)
                     return;
                 }
                 success.data = result.Items[0].comments
@@ -503,14 +503,14 @@ export default class PinpointManager extends FeatureManager{
                 let comments = await this.Dynamodb.query(findParams).promise()
                 if(comments.Items[0] == undefined){
                     fail.error = error.dataNotFound
-                    fail.errdesc = "Cannot find given pinpoint"
-                    this.res.status(403).send(fail)
+                    fail.errdesc = "핀포인트를 찾을 수 없습니다."
+                    this.res.status(400).send(fail)
                     return;
                 }
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.cid && uid == params.uid){
+                    if(cid == params.coid && uid == params.uid){
                         comments.Items[0].comments.splice(i,1);
                         break;
                     }
@@ -573,7 +573,7 @@ export default class PinpointManager extends FeatureManager{
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.cid && uid == params.uid){
+                    if(cid == params.coid && uid == params.uid){
                         console.log('조건 만족')
                         comments.Items[0].comments[i].text = params.text;
                         comments.Items[0].comments[i].time = new Date().toISOString()

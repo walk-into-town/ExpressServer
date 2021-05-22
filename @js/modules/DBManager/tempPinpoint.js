@@ -102,7 +102,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.fail.error = result_1.error.invalReq;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         return run;

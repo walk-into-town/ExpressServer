@@ -629,7 +629,7 @@ export default class CampaignManager extends FeatureManager{
             this.res.status(400).send(fail)
             return;
         }
-        params.caid = nbsp2plus(params.cid)
+        params.caid = nbsp2plus(params.caid)
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -690,7 +690,7 @@ export default class CampaignManager extends FeatureManager{
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.cid && uid == params.uid){
+                    if(cid == params.coid && uid == params.uid){
                         console.log('조건 만족')
                         comments.Items[0].comments[i].text = params.text;
                         comments.Items[0].comments[i].time = new Date().toISOString()
@@ -754,7 +754,7 @@ export default class CampaignManager extends FeatureManager{
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let cid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.cid && uid == params.uid){
+                    if(cid == params.coid && uid == params.uid){
                         comments.Items[0].comments.splice(i,1);
                         break;
                     }
