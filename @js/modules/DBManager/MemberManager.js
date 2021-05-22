@@ -59,9 +59,9 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     return;
                 }
                 let idCheckParams = {
-                    TableName: 'Menber',
+                    TableName: 'Member',
                     KeyConditionExpression: 'id = :id',
-                    ExpressionAttributeVqalues: { ':id': params.id }
+                    ExpressionAttributeValues: { ':id': params.id }
                 };
                 let idCheckResult = yield this.Dynamodb.query(idCheckParams).promise();
                 console.log(idCheckResult.Items);

@@ -31,9 +31,9 @@ export default class MemberManager extends FeatureManager{
                 }
 
                 let idCheckParams = {
-                    TableName: 'Menber',
+                    TableName: 'Member',
                     KeyConditionExpression: 'id = :id',
-                    ExpressionAttributeVqalues: {':id': params.id}
+                    ExpressionAttributeValues: {':id': params.id}
                 }
                 let idCheckResult = await this.Dynamodb.query(idCheckParams).promise()
                 console.log(idCheckResult.Items)
