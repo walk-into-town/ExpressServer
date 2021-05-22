@@ -201,9 +201,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             Key: { id: params.id },
             UpdateExpression: null,
             ExpressionAttributeValues: null,
-            RetrunValues: 'UPDATED_NEW',
-            ConditionExpression: 'attribute_exists(id)',
-            ReturnValues: 'UPDATED_NEW'
+            RetrunValues: 'ALL_NEW',
+            ConditionExpression: 'attribute_exists(id)'
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -251,7 +250,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('회원정보 수정중');
                 let result = yield this.Dynamodb.update(updateParams).promise();
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`);
-                result_1.success.data = '회원정보 수정 성공';
+                result_1.success.data = { profileImg };
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

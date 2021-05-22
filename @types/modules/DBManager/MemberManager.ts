@@ -179,9 +179,8 @@ export default class MemberManager extends FeatureManager{
             Key: {id: params.id},
             UpdateExpression: null,
             ExpressionAttributeValues: null,
-            RetrunValues: 'UPDATED_NEW',
-            ConditionExpression: 'attribute_exists(id)',
-            ReturnValues: 'UPDATED_NEW'
+            RetrunValues: 'ALL_NEW',
+            ConditionExpression: 'attribute_exists(id)'
         }
         const run = async() => {
             try{
@@ -229,7 +228,7 @@ export default class MemberManager extends FeatureManager{
                 console.log('회원정보 수정중')
                 let result = await this.Dynamodb.update(updateParams).promise()
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`)
-                success.data = '회원정보 수정 성공'
+                success.data = {profileImg}
                 this.res.status(200).send(success)
             }
             catch(err){
