@@ -74,7 +74,7 @@ export default class PinpointManager extends FeatureManager{
                 }
                 fail.error = error.invalReq
                 fail.errdesc = err
-                this.res.status(400).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         return run;

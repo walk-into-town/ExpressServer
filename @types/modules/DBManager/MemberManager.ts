@@ -2,7 +2,7 @@ import { FeatureManager } from "./FeatureManager";
 import SessionManager from './SessionManager'
 import * as bcrypt from 'bcrypt'
 import { error, fail, success } from "../../static/result";
-
+import {nbsp2plus} from '../Logics/nbsp'
 
 export default class MemberManager extends FeatureManager{
     /**
@@ -26,7 +26,7 @@ export default class MemberManager extends FeatureManager{
                 if(nicknameCheckResult.Items.length != 0){
                     fail.error = error.invalReq
                     fail.errdesc = '닉네임이 중복되었어요.'
-                    this.res.status(402).send(fail)
+                    this.res.status(400).send(fail)
                     return;
                 }
 
@@ -40,7 +40,7 @@ export default class MemberManager extends FeatureManager{
                 if(idCheckResult.Items.length != 0){
                     fail.error = error.invalReq
                     fail.errdesc = '아이디가 중복되었어요.'
-                    this.res.status(402).send(fail)
+                    this.res.status(400).send(fail)
                     return;
                 }
 
@@ -69,7 +69,7 @@ export default class MemberManager extends FeatureManager{
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(402).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         run()
@@ -96,7 +96,6 @@ export default class MemberManager extends FeatureManager{
      */
     public logout(params: any){
         let id = params.id
-        let sessman = new SessionManager(this.req, this.res)
         const run = async() => {
             console.log(this.req.session.passport.user.id)
             let sessId = this.req.session.passport.user.id
@@ -113,7 +112,7 @@ export default class MemberManager extends FeatureManager{
             fail.error = error.invalAcc
             fail.errdesc = '잘못된 접근입니다.'
             console.log(`ID와 세션 정보가 다릅니다.\n${JSON.stringify(fail, null, 2)}`)
-            this.res.status(402).send(fail)
+            this.res.status(400).send(fail)
             return;
         }
         run()
@@ -156,7 +155,7 @@ export default class MemberManager extends FeatureManager{
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(400).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         run()
@@ -166,7 +165,7 @@ export default class MemberManager extends FeatureManager{
         if(uid != params.id){
             fail.error = error.invalAcc
             fail.errdesc = '잘못된 접근입니다.'
-            this.res.status(402).send(fail)
+            this.res.status(400).send(fail)
             return;
         }
         let profileImg = params.imgs
@@ -230,13 +229,13 @@ export default class MemberManager extends FeatureManager{
                 console.log('회원정보 수정중')
                 let result = await this.Dynamodb.update(updateParams).promise()
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`)
-                success.data = result.Attributes
+                success.data = '회원정보 수정 성공'
                 this.res.status(200).send(success)
             }
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(403).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         run()
@@ -271,19 +270,19 @@ export default class MemberManager extends FeatureManager{
                 let queryResult = await this.Dynamodb.query(params).promise()
                 if(queryResult.Items.length == 0){
                     success.data = '중복되었어요'
-                    this.res.status(201).send(success)
+                    this.res.status(200).send(success)
                     return;
                 }
                 else{
                     success.data = '가능해요'
-                    this.res.status(201).send(success)
+                    this.res.status(200).send(success)
                     return;
                 }
             }
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(400).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         run()
@@ -294,7 +293,7 @@ export default class MemberManager extends FeatureManager{
         if(id != this.req.session.passport.user.id){
             fail.error = error.invalAcc
             fail.errdesc = "잘못된 접근입니다."
-            this.res.status(402).send(fail)
+            this.res.status(400).send(fail)
             return;
         }
         let queryParams = {
@@ -318,7 +317,7 @@ export default class MemberManager extends FeatureManager{
                 if(uid != params.id){
                     fail.error = error.invalAcc
                     fail.errdesc = "잘못된 접근입니다."
-                    this.res.status(402).send(fail)
+                    this.res.status(400).send(fail)
                     return;
                 }
                 console.log(`DB 읽어오는중...`)
@@ -355,7 +354,7 @@ export default class MemberManager extends FeatureManager{
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(401).send(err)
+                this.res.status(521).send(err)
             }
         }
         run();
@@ -366,7 +365,7 @@ export default class MemberManager extends FeatureManager{
         if(id != this.req.session.passport.user.id){
             fail.error = error.invalAcc
             fail.errdesc = "잘못된 접근입니다."
-            this.res.status(402).send(fail)
+            this.res.status(400).send(fail)
             return;
         }
         let queryParams = {
@@ -390,7 +389,7 @@ export default class MemberManager extends FeatureManager{
                 if(uid != params.id){
                     fail.error = error.invalAcc
                     fail.errdesc = "잘못된 접근입니다."
-                    this.res.status(402).send(fail)
+                    this.res.status(400).send(fail)
                     return;
                 }
                 console.log(`DB 읽어오는중...`)
@@ -427,9 +426,42 @@ export default class MemberManager extends FeatureManager{
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(401).send(err)
+                this.res.status(521).send(err)
             }
         }
         run();
+    }
+
+    public checkPlaying(params: any){
+        params.uid = nbsp2plus(params.uid)
+        params.caid = nbsp2plus(params.caid)
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: {':id': params.uid}
+        }
+        const run = async() =>{
+            try{
+                let result = await this.Dynamodb.query(queryParams).promise()
+                let playing = result.Items[0].playingCampaigns
+                console.log(playing)
+                for(const camp of playing){
+                    if(camp.id == params.caid){
+                        success.data = '이미 참여중인 캠페인 입니다.'
+                        this.res.status(200).send(success)
+                        return;
+                    }
+                }
+                success.data = '참여 가능한 캠페인 입니다.'
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
 }

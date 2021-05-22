@@ -100,4 +100,10 @@ router.put('/coupon', isAuthenticated, function(req: express.Request, res: expre
     
 })
 
+router.get('/isplaying', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.query
+    let memberDB = new MemberManager(req, res)
+    memberDB.checkPlaying(query)
+})
+
 module.exports = router

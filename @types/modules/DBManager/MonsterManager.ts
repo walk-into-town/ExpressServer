@@ -18,12 +18,12 @@ export default class MonsterManager extends FeatureManager{
             try{
                 let data = await this.Dynamodb.update(queryParams).promise()
                 success.data = data.Attributes.imgs
-                this.res.status(200).send(success)
+                this.res.status(201).send(success)
             }
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(400).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         run()
@@ -47,7 +47,7 @@ export default class MonsterManager extends FeatureManager{
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
-                this.res.status(400).send(fail)
+                this.res.status(521).send(fail)
             }
         }
         run()

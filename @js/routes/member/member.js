@@ -105,4 +105,9 @@ router.get('/coupon', authentication_1.default, function (req, res) {
 });
 router.put('/coupon', authentication_1.default, function (req, res) {
 });
+router.get('/isplaying', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.checkPlaying(query);
+});
 module.exports = router;

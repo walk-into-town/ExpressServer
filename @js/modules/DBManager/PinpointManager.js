@@ -418,11 +418,11 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 imgs: params.imgs,
                 nickname: null,
                 profileImg: null,
-                time: date.toISOString()
+                updateTime: date.toISOString()
             }];
         let queryParams = {
             TableName: 'Pinpoint',
-            Key: { id: params.id },
+            Key: { id: params.pid },
             UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
             ExpressionAttributeValues: { ':newcomment': comment, ':emptylist': [] },
             ReturnValues: 'UPDATED_NEW',
@@ -448,7 +448,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readComment(params) {
-        let id = this.nbsp2plus(params.id);
+        let id = this.nbsp2plus(params.pid);
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',

@@ -31,16 +31,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
+const nbsp_1 = require("../Logics/nbsp");
 class CampaignManager extends FeatureManager_1.FeatureManager {
-    constructor() {
-        super(...arguments);
-        this.nbsp2plus = (query) => {
-            for (let i = 0; i < query.length; i++) {
-                query = query.replace(' ', '+');
-            }
-            return query;
-        };
-    }
     /**
      * 캠페인 생성 로직
      * 1. 제작자 + 이름 + 지역으로 id생성
@@ -211,7 +203,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.success.data = id;
                 console.log('제작 캠페인 업데이트 완료');
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
-                this.res.status(200).send(result_1.success);
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
                 for (const id of this.res.locals.cids) {
@@ -241,7 +233,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 yield this.Dynamodb.delete(campParam).promise();
                 result_1.fail.error = result_1.error.invalReq;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -276,7 +268,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 };
                 break;
             case FeatureManager_1.toRead.id:
-                params = this.nbsp2plus(params);
+                params = nbsp_1.nbsp2plus(params);
                 expAttrVals = {
                     '#id': readType
                 };
@@ -373,7 +365,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run(criterion, value);
@@ -394,7 +386,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -404,7 +396,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             result_1.fail.error = result_1.error.dbError;
             result_1.fail.errdesc = err;
             console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
-            this.res.status(400).send(result_1.fail);
+            this.res.status(521).send(result_1.fail);
         }
         else {
             if (data.Items[0] == undefined) {
@@ -414,7 +406,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.success.data = data.Items;
             }
             console.log(`조회 성공. 응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
-            this.res.status(201).send(result_1.success);
+            this.res.status(200).send(result_1.success);
         }
     }
     /**
@@ -427,7 +419,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.id }
+            ExpressionAttributeValues: { ':id': params.cid }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -470,7 +462,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             catch (err) { //DB 에러 발생
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -485,7 +477,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             return;
         }
         let userId = params.uid;
-        let cId = params.cid;
+        let cId = params.caid;
         let campaigncheck = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -561,12 +553,12 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 let partiResult = yield this.Dynamodb.update(updateParams).promise();
                 result_1.success.data = partiResult.Attributes;
                 console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(result_1.success.data, null, 2)}`);
-                this.res.status(200).send(result_1.success);
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -574,11 +566,11 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
     insertComment(params) {
         let userid = this.req.session.passport.user.id;
         let date = new Date();
-        let hash = CryptoJS.SHA256(params.id + date.toString()); //id 생성
-        params.cid = hash.toString(CryptoJS.enc.Base64);
+        let hash = CryptoJS.SHA256(params.caid + date.toString()); //id 생성
+        params.coid = hash.toString(CryptoJS.enc.Base64);
         if (userid != params.comments.userId) { //세션의 id와 전송한 id가 다른 경우
             result_1.fail.error = result_1.error.invalKey;
-            result_1.fail.errdesc = 'User Id does not match with session';
+            result_1.fail.errdesc = '세션 정보와 id가 일치하지 않습니다.';
             this.res.status(400).send(result_1.fail);
             return;
         }
@@ -588,19 +580,25 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':id': userid },
             ProjectionExpression: 'profileImg, nickname'
         };
+        let campaignParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': params.caid },
+            ProjectionExpression: 'comments'
+        };
         let comment = [{
-                id: params.cid,
+                id: params.coid,
                 userId: userid,
                 text: params.comments.text,
                 rated: 0,
                 imgs: params.imgs,
                 nickname: null,
                 profileImg: null,
-                time: date.toISOString()
+                updateTime: date.toISOString()
             }];
         let queryParams = {
             TableName: 'Campaign',
-            Key: { id: params.id },
+            Key: { id: params.caid },
             UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
             ExpressionAttributeValues: { ':newcomment': comment, ':emptylist': [] },
             ReturnValues: 'UPDATED_NEW',
@@ -608,6 +606,16 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
+                let campaignResult = yield this.Dynamodb.query(campaignParams).promise();
+                let comments = campaignResult.Items[0].comments;
+                for (const comm of comments) {
+                    if (comm.userId == userid) {
+                        result_1.fail.error = result_1.error.invalReq;
+                        result_1.fail.errdesc = '이미 리뷰를 등록한 캠페인 입니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                }
                 let userResult = yield this.Dynamodb.query(memberParams).promise();
                 let user = userResult.Items[0];
                 comment[0].nickname = user.nickname;
@@ -615,29 +623,29 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log(comment[0]);
                 let queryResult = yield this.Dynamodb.update(queryParams).promise();
                 result_1.success.data = comment[0];
-                this.res.status(200).send(result_1.success);
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(403).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
     }
     readComment(params) {
-        if (params.id == undefined) {
+        if (params.caid == undefined) {
             result_1.fail.error = result_1.error.invalReq;
             result_1.fail.errdesc = '요청의 id값이 없습니다.';
-            this.res.status(403).send(result_1.fail);
+            this.res.status(400).send(result_1.fail);
             return;
         }
-        params.id = this.nbsp2plus(params.id);
+        params.caid = nbsp_1.nbsp2plus(params.cid);
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
             ProjectionExpression: 'comments',
-            ExpressionAttributeValues: { ':id': params.id }
+            ExpressionAttributeValues: { ':id': params.caid }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -650,14 +658,14 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(401).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
                 return;
             }
         });
         run();
     }
     updateComment(params) {
-        let id = params.id;
+        let id = params.caid;
         let findParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -666,7 +674,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         };
         let updateParams = {
             TableName: 'Campaign',
-            Key: { id: params.id },
+            Key: { id: params.caid },
             UpdateExpression: 'set comments = :newcomment',
             ExpressionAttributeValues: { ':newcomment': null },
             ReturnValues: 'UPDATED_NEW',
@@ -677,15 +685,15 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 let id = this.req.session.passport.user.id;
                 if (params.uid != id) {
                     result_1.fail.error = result_1.error.invalAcc;
-                    result_1.fail.errdesc = "Given id does not match with session info";
-                    this.res.status(403).send(result_1.fail);
+                    result_1.fail.errdesc = "세션 정보와 id가 일치하지 않습니다.";
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 let comments = yield this.Dynamodb.query(findParams).promise();
                 if (comments.Items[0] == undefined) {
                     result_1.fail.error = result_1.error.dataNotFound;
-                    result_1.fail.errdesc = "Cannot find Pinpoint";
-                    this.res.status(403).send(result_1.fail);
+                    result_1.fail.errdesc = "핀포인트를 찾을 수 없습니다.";
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 console.log('댓글 찾는중...');
@@ -701,8 +709,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                     if (i == comments.Items[0].comments.length - 1) {
                         result_1.fail.error = result_1.error.dataNotFound;
-                        result_1.fail.errdesc = "Cannot find Comment";
-                        this.res.status(403).send(result_1.fail);
+                        result_1.fail.errdesc = "리뷰를 찾을 수 없습니다.";
+                        this.res.status(400).send(result_1.fail);
                         return;
                     }
                 }
@@ -715,7 +723,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();
@@ -724,11 +732,11 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         let uid = this.req.session.passport.user.id;
         if (uid != params.uid) {
             result_1.fail.error = result_1.error.invalAcc;
-            result_1.fail.errdesc = "Given id does not match with session info";
-            this.res.status(403).send(result_1.fail);
+            result_1.fail.errdesc = "세션정보와 id가 일치하지 않습니다.";
+            this.res.status(400).send(result_1.fail);
             return;
         }
-        let id = params.id;
+        let id = params.caid;
         let findParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -737,7 +745,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         };
         let updateParams = {
             TableName: 'Campaign',
-            Key: { id: params.id },
+            Key: { id: params.caid },
             UpdateExpression: 'set comments = :newcomment',
             ExpressionAttributeValues: { ':newcomment': null },
             ReturnValues: 'UPDATED_NEW',
@@ -748,8 +756,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 let comments = yield this.Dynamodb.query(findParams).promise();
                 if (comments.Items[0] == undefined) {
                     result_1.fail.error = result_1.error.dataNotFound;
-                    result_1.fail.errdesc = "Cannot find given pinpoint";
-                    this.res.status(403).send(result_1.fail);
+                    result_1.fail.errdesc = "핀포인트를 찾을 수 없습니다.";
+                    this.res.status(400).send(result_1.fail);
                     return;
                 }
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
@@ -761,8 +769,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                     if (i == comments.Items[0].comments.length - 1) {
                         result_1.fail.error = result_1.error.invalKey;
-                        result_1.fail.errdesc = 'Cannot find comment';
-                        this.res.status(403).send(result_1.fail);
+                        result_1.fail.errdesc = '리뷰를 찾을 수 없습니다.';
+                        this.res.status(400).send(result_1.fail);
                         return;
                     }
                 }
@@ -776,7 +784,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
-                this.res.status(400).send(result_1.fail);
+                this.res.status(521).send(result_1.fail);
             }
         });
         run();

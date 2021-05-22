@@ -35,6 +35,7 @@ const FeatureManager_1 = require("./FeatureManager");
 const SessionManager_1 = __importDefault(require("./SessionManager"));
 const bcrypt = __importStar(require("bcrypt"));
 const result_1 = require("../../static/result");
+const nbsp_1 = require("../Logics/nbsp");
 class MemberManager extends FeatureManager_1.FeatureManager {
     /**
      * 회원가입 로직
@@ -255,7 +256,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('회원정보 수정중');
                 let result = yield this.Dynamodb.update(updateParams).promise();
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`);
-                result_1.success.data = result.Attributes;
+                result_1.success.data = '회원정보 수정 성공';
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
@@ -449,6 +450,36 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(401).send(err);
+            }
+        });
+        run();
+    }
+    checkPlaying(params) {
+        params.uid = nbsp_1.nbsp2plus(params.uid);
+        params.caid = nbsp_1.nbsp2plus(params.caid);
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: { ':id': params.uid }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                let playing = result.Items[0].playingCampaigns;
+                console.log(playing);
+                for (const camp of playing) {
+                    if (camp.id == params.caid) {
+                        result_1.success.data = '이미 참여중인 캠페인 입니다.';
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                }
+                result_1.success.data = '참여 가능한 캠페인 입니다.';
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                this.res.status(402).send(result_1.fail);
             }
         });
         run();
