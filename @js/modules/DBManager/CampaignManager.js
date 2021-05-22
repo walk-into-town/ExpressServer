@@ -574,7 +574,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result_1.fail);
             return;
         }
-        if (params.rate > 5 || params.rate < 0) {
+        if (params.rated > 5 || params.rated < 0) {
             result_1.fail.error = result_1.error.invalReq;
             result_1.fail.errdesc = '평점은 5점 이하, 0점 이상이어야 합니다.';
             this.res.status(400).send(result_1.fail);
@@ -596,7 +596,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 id: params.coid,
                 userId: userid,
                 text: params.comments.text,
-                rated: Number(params.rate),
+                rated: Number(params.rated),
                 imgs: params.imgs,
                 nickname: null,
                 profileImg: null,
@@ -672,7 +672,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
     }
     updateComment(params) {
         let userid = this.req.session.passport.user.id;
-        if (params.text == undefined && params.rate == undefined) {
+        if (params.text == undefined && params.rated == undefined) {
             result_1.fail.error = result_1.error.invalReq;
             result_1.fail.errdesc = '평점 또는 리뷰 내용을 보내주세요.';
             this.res.status(400).send(result_1.fail);
@@ -684,7 +684,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result_1.fail);
             return;
         }
-        if (params.rate > 5 || params.rate < 0) {
+        if (params.rated > 5 || params.rated < 0) {
             result_1.fail.error = result_1.error.invalReq;
             result_1.fail.errdesc = '평점은 5점 이하, 0점 이상이어야 합니다.';
             this.res.status(400).send(result_1.fail);
@@ -728,19 +728,19 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     if (cid == params.coid && uid == params.uid) {
                         console.log('조건 만족');
                         if (params.text == undefined) {
-                            comments.Items[0].comments[i].rated = params.rate;
+                            comments.Items[0].comments[i].rated = params.rated;
                             comments.Items[0].comments[i].time = new Date().toISOString();
                             comments.Items[0].comments[i].imgs = params.imgs;
                             result_1.success.data = comments.Items[0].comments[i];
                         }
-                        else if (params.rate == undefined) {
+                        else if (params.rated == undefined) {
                             comments.Items[0].comments[i].text = params.text;
                             comments.Items[0].comments[i].time = new Date().toISOString();
                             comments.Items[0].comments[i].imgs = params.imgs;
                             result_1.success.data = comments.Items[0].comments[i];
                         }
                         else {
-                            comments.Items[0].comments[i].rated = params.rate;
+                            comments.Items[0].comments[i].rated = params.rated;
                             comments.Items[0].comments[i].text = params.text;
                             comments.Items[0].comments[i].time = new Date().toISOString();
                             comments.Items[0].comments[i].imgs = params.imgs;

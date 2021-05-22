@@ -54,7 +54,7 @@ router.delete('/comment', authentication_1.default, function (req, res) {
     let camaignDB = new CampaignManager_1.default(req, res);
     camaignDB.deleteComment(query);
 });
-router.put('/comment', authentication_1.default, upload.array('img'), function (req, res) {
+router.put('/comment', authentication_1.default, upload.array('imgs'), function (req, res) {
     let query = req.body;
     let campaignDB = new CampaignManager_1.default(req, res);
     let imgs = [];
