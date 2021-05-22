@@ -184,7 +184,16 @@ router.get('/', function (req, res) {
     }
     console.log(`요청 JSON\n${JSON.stringify(query, null, 2)}`);
     let type = FeatureManager_1.toRead.id;
-    if (query.type == 'name') {
+    if (query.type == 'id' && query.condition == 'exact') {
+        type = FeatureManager_1.toRead.id;
+    }
+    else if (query.type == 'id' && query.condition != 'exact') {
+        result_1.fail.error = result_1.error.invalReq;
+        result_1.fail.errdesc = 'id 조회는 exact만 가능합니다.';
+        res.status(400).send(result_1.fail);
+        return;
+    }
+    else if (query.type == 'name') {
         type = FeatureManager_1.toRead.name;
     }
     else if (query.type == 'ownner') {
@@ -195,7 +204,7 @@ router.get('/', function (req, res) {
     }
     else {
         result_1.fail.error = result_1.error.invalReq;
-        result_1.fail.errdesc = 'type은 name | ownner | region 중 하나여야 합니다.';
+        result_1.fail.errdesc = 'type은 name | ownner | region | id 중 하나여야 합니다.';
         res.status(400).send(result_1.fail);
         console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
         return;
