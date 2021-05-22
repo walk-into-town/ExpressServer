@@ -682,7 +682,7 @@ export default class CampaignManager extends FeatureManager{
                 let comments = await this.Dynamodb.query(findParams).promise()
                 if(comments.Items[0] == undefined){
                     fail.error = error.dataNotFound
-                    fail.errdesc = "핀포인트를 찾을 수 없습니다."
+                    fail.errdesc = "캠페인을 찾을 수 없습니다."
                     this.res.status(400).send(fail)
                     return;
                 }
