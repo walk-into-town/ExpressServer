@@ -730,17 +730,20 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                         if (params.text == undefined) {
                             comments.Items[0].comments[i].rated = params.rate;
                             comments.Items[0].comments[i].time = new Date().toISOString();
+                            comments.Items[0].comments[i].imgs = params.imgs;
                             result_1.success.data = comments.Items[0].comments[i];
                         }
                         else if (params.rate == undefined) {
                             comments.Items[0].comments[i].text = params.text;
                             comments.Items[0].comments[i].time = new Date().toISOString();
+                            comments.Items[0].comments[i].imgs = params.imgs;
                             result_1.success.data = comments.Items[0].comments[i];
                         }
                         else {
                             comments.Items[0].comments[i].rated = params.rate;
                             comments.Items[0].comments[i].text = params.text;
                             comments.Items[0].comments[i].time = new Date().toISOString();
+                            comments.Items[0].comments[i].imgs = params.imgs;
                             result_1.success.data = comments.Items[0].comments[i];
                         }
                         break;

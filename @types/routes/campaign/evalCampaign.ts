@@ -36,7 +36,7 @@ router.delete('/comment', isAuthenticated, function(req: express.Request, res: e
     camaignDB.deleteComment(query)
 })
 
-router.put('/comment', isAuthenticated, function(req: express.Request, res: express.Response){
+router.put('/comment', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let query = req.body
     let campaignDB = new CampaignManager(req, res)
     let imgs: Array<string> = []
