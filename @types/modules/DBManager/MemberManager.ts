@@ -498,6 +498,12 @@ export default class MemberManager extends FeatureManager{
                         playingCamps.splice(i, 1)
                         break;
                     }
+                    if(i == playingCamps.length -1){
+                        fail.error = error.invalKey
+                        fail.errdesc = '캠페인을 찾을 수 없습니다.'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
                 }
                 updateParams.UpdateExpression = 'SET playingCampaigns = :playingCamp'
                 updateParams.ExpressionAttributeValues = {':playingCamp': playingCamps}

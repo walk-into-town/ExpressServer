@@ -514,6 +514,12 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                         playingCamps.splice(i, 1);
                         break;
                     }
+                    if (i == playingCamps.length - 1) {
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
                 }
                 updateParams.UpdateExpression = 'SET playingCampaigns = :playingCamp';
                 updateParams.ExpressionAttributeValues = { ':playingCamp': playingCamps };
