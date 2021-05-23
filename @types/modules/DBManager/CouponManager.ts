@@ -1,6 +1,7 @@
 import { FeatureManager} from "./FeatureManager";
 import * as CryptoJS from 'crypto-js'
 import { error, fail, success } from "../../static/result";
+import {nbsp2plus} from '../Logics/nbsp'
 
 export default class CouponManager extends FeatureManager{
     /**
@@ -56,7 +57,7 @@ export default class CouponManager extends FeatureManager{
      * 3. 쿼리 실행 후 결과 출력
      */
     public read(params: any): void {
-        params.id = this.nbsp2plus(params.id)
+        params.id = nbsp2plus(params.id)
         let queryParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
@@ -78,36 +79,58 @@ export default class CouponManager extends FeatureManager{
     }
 
     public readList(params: any): void{
-        params.id = this.nbsp2plus(params.id)
+        params.value = nbsp2plus(params.value)
         let checkParams = {
-            TableName: 'Campaign',
+            TableName: '',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: {':id': params.id},
+            ExpressionAttributeValues: {':id': params.value},
             ProjectionExpression: 'coupons, pcoupons'
+        }
+        if(params.type == 'campaign'){
+            checkParams.TableName = 'Campaign'
+        }
+        else if(params.type == 'pinpoint'){
+            checkParams.TableName = 'Pinpoint'
         }
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(checkParams).promise()
-                let coupon:Array<string> = result.Items[0].coupons
-                let pcoupons:Array<string> = result.Items[0].pcoupons
-                let couponList: Array<object> = []
-                for (const id of coupon) {
-                    pcoupons.push(id)
-                }
-                pcoupons.forEach(coupon => {
-                    let obj = {
-                        id: coupon
-                    }
-                    couponList.push(obj)
-                })
-                console.log(couponList)
                 let couponParams = {
                     RequestItems:{
                         'Coupon':{
-                            Keys: couponList
+                            Keys: null
                         }
                     }
                 }
+                if(params.type == 'campaign'){
+                    let coupon:Array<string> = result.Items[0].coupons
+                    let pcoupons:Array<string> = result.Items[0].pcoupons
+                    let couponList: Array<object> = []
+                    for (const id of coupon) {
+                        pcoupons.push(id)
+                    }
+                    pcoupons.forEach(coupon => {
+                        let obj = {
+                            id: coupon
+                        }
+                        couponList.push(obj)
+                    })
+                    console.log(couponList)
+                    couponParams.RequestItems.Coupon.Keys = couponList
+                }
+                else{
+                    let coupon: Array<string> = result.Items[0].coupons
+                    let couponList: Array<object> = []
+                    for(const id of coupon){
+                        let obj = {
+                            id: id
+                        }
+                        couponList.push(obj)
+                    }
+                    console.log(couponList)
+                    couponParams.RequestItems.Coupon.Keys = couponList
+                }
+                
                 let queryResult = await this.Dynamodb.batchGet(couponParams).promise()
                 let coupons = queryResult.Responses.Coupon
                 for (const coupon of coupons) {
@@ -197,11 +220,5 @@ export default class CouponManager extends FeatureManager{
             }
         }
         run()
-    }
-    private nbsp2plus = (query: string): string => {
-        for(let i =0; i < query.length; i++){
-            query = query.replace(' ', '+')
-        }
-        return query
     }
 }

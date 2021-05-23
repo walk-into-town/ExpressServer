@@ -31,16 +31,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
+const nbsp_1 = require("../Logics/nbsp");
 class CouponManager extends FeatureManager_1.FeatureManager {
-    constructor() {
-        super(...arguments);
-        this.nbsp2plus = (query) => {
-            for (let i = 0; i < query.length; i++) {
-                query = query.replace(' ', '+');
-            }
-            return query;
-        };
-    }
     /**
      * 쿠폰 등록 로직
      * 1. 상품의 수와 발급 제한 개수가 동일한지 확인
@@ -93,7 +85,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
      * 3. 쿼리 실행 후 결과 출력
      */
     read(params) {
-        params.id = this.nbsp2plus(params.id);
+        params.id = nbsp_1.nbsp2plus(params.id);
         let queryParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
@@ -114,36 +106,57 @@ class CouponManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readList(params) {
-        params.id = this.nbsp2plus(params.id);
+        params.value = nbsp_1.nbsp2plus(params.value);
         let checkParams = {
-            TableName: 'Campaign',
+            TableName: '',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.id },
+            ExpressionAttributeValues: { ':id': params.value },
             ProjectionExpression: 'coupons, pcoupons'
         };
+        if (params.type == 'campaign') {
+            checkParams.TableName = 'Campaign';
+        }
+        else if (params.type == 'pinpoint') {
+            checkParams.TableName = 'Pinpoint';
+        }
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let result = yield this.Dynamodb.query(checkParams).promise();
-                let coupon = result.Items[0].coupons;
-                let pcoupons = result.Items[0].pcoupons;
-                let couponList = [];
-                for (const id of coupon) {
-                    pcoupons.push(id);
-                }
-                pcoupons.forEach(coupon => {
-                    let obj = {
-                        id: coupon
-                    };
-                    couponList.push(obj);
-                });
-                console.log(couponList);
                 let couponParams = {
                     RequestItems: {
                         'Coupon': {
-                            Keys: couponList
+                            Keys: null
                         }
                     }
                 };
+                if (params.type == 'campaign') {
+                    let coupon = result.Items[0].coupons;
+                    let pcoupons = result.Items[0].pcoupons;
+                    let couponList = [];
+                    for (const id of coupon) {
+                        pcoupons.push(id);
+                    }
+                    pcoupons.forEach(coupon => {
+                        let obj = {
+                            id: coupon
+                        };
+                        couponList.push(obj);
+                    });
+                    console.log(couponList);
+                    couponParams.RequestItems.Coupon.Keys = couponList;
+                }
+                else {
+                    let coupon = result.Items[0].coupons;
+                    let couponList = [];
+                    for (const id of coupon) {
+                        let obj = {
+                            id: id
+                        };
+                        couponList.push(obj);
+                    }
+                    console.log(couponList);
+                    couponParams.RequestItems.Coupon.Keys = couponList;
+                }
                 let queryResult = yield this.Dynamodb.batchGet(couponParams).promise();
                 let coupons = queryResult.Responses.Coupon;
                 for (const coupon of coupons) {

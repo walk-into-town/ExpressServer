@@ -32,12 +32,16 @@ router.get('/', function(req: express.Request, res: express.Response){
         couponDB.read(query)
         return;
     }
-    if(query.type == 'list'){
+    if(query.type == 'campaign'){
+        couponDB.readList(query)
+        return;
+    }
+    if(query.type == 'pinpoint'){
         couponDB.readList(query)
         return;
     }
     fail.error = error.invalReq
-    fail.errdesc = 'type은 single 또는 list중 하나여야합니다.'
+    fail.errdesc = 'type은 single | campaign | pinpoint 중 하나여야합니다.'
     res.status(400).send(fail)
 })
 

@@ -52,12 +52,16 @@ router.get('/', function (req, res) {
         couponDB.read(query);
         return;
     }
-    if (query.type == 'list') {
+    if (query.type == 'campaign') {
+        couponDB.readList(query);
+        return;
+    }
+    if (query.type == 'pinpoint') {
         couponDB.readList(query);
         return;
     }
     result_1.fail.error = result_1.error.invalReq;
-    result_1.fail.errdesc = 'type은 single 또는 list중 하나여야합니다.';
+    result_1.fail.errdesc = 'type은 single | campaign | pinpoint 중 하나여야합니다.';
     res.status(400).send(result_1.fail);
 });
 router.delete('/', authentication_1.default, function (req, res) {
