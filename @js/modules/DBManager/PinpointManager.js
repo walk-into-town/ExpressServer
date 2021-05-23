@@ -418,7 +418,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 imgs: params.imgs,
                 nickname: null,
                 profileImg: null,
-                updateTime: date.toISOString()
+                updateTime: date.toISOString(),
+                rateList: []
             }];
         let queryParams = {
             TableName: 'Pinpoint',
@@ -607,6 +608,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     updateRate(params) {
+        if (params.uid != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '세션 정보와 id가 일치하지 않습니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
         let pid = params.pid;
         let findParams = {
             TableName: 'Pinpoint',
@@ -633,11 +640,21 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 console.log('댓글 찾는중...');
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
-                    let cid = comments.Items[0].comments[i].id;
-                    if (cid == params.cid) {
+                    let coid = comments.Items[0].comments[i].id;
+                    if (coid == params.coid) {
                         console.log('조건 만족');
+                        for (const id of comments.Items[0].comments[i].rateList) {
+                            if (id == params.uid) {
+                                result_1.fail.error = result_1.error.invalReq;
+                                result_1.fail.errdesc = '이미 좋아요/싫어요를 누르셨습니다.';
+                                this.res.status(400).send(result_1.fail);
+                                return;
+                            }
+                        }
                         if (params.like == true) {
                             comments.Items[0].comments[i].rated += 1;
+                            console.log(comments.Items[0].comments[i]);
+                            comments.Items[0].comments[i].rateList.push(params.uid);
                             result_1.success.data = comments.Items[0].comments[i];
                             break;
                         }
