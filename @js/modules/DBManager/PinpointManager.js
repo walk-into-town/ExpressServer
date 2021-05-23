@@ -643,6 +643,9 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     let coid = comments.Items[0].comments[i].id;
                     if (coid == params.coid) {
                         console.log('조건 만족');
+                        if (comments.Items[0].comments[i].rateList == undefined) {
+                            comments.Items[0].comments[i].rateList = [];
+                        }
                         for (const id of comments.Items[0].comments[i].rateList) {
                             if (id == params.uid) {
                                 result_1.fail.error = result_1.error.invalReq;

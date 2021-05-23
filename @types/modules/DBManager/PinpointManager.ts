@@ -639,6 +639,9 @@ export default class PinpointManager extends FeatureManager{
                     let coid = comments.Items[0].comments[i].id
                     if(coid == params.coid){
                         console.log('조건 만족')
+                        if(comments.Items[0].comments[i].rateList == undefined){
+                            comments.Items[0].comments[i].rateList = []
+                        }
                         for(const id of comments.Items[0].comments[i].rateList){
                             if(id == params.uid){
                                 fail.error = error.invalReq
