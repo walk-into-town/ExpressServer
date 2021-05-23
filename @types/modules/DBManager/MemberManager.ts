@@ -244,7 +244,7 @@ export default class MemberManager extends FeatureManager{
         throw new Error("Method not implemented.");
     }
     
-    public check(type: string, params: any){
+    public check(type: string, params: any): void{
         let index = null
         let value = null
         switch(type){
@@ -287,7 +287,7 @@ export default class MemberManager extends FeatureManager{
         run()
     }
     
-    public readPlaying(params: any){
+    public readPlaying(params: any): void{
         let id = params.id
         if(id != this.req.session.passport.user.id){
             fail.error = error.invalAcc
@@ -359,7 +359,7 @@ export default class MemberManager extends FeatureManager{
         run();
     }
 
-    public readMyCamp(params: any){
+    public readMyCamp(params: any): void{
         let id = params.id
         if(id != this.req.session.passport.user.id){
             fail.error = error.invalAcc
@@ -431,7 +431,7 @@ export default class MemberManager extends FeatureManager{
         run();
     }
 
-    public checkPlaying(params: any){
+    public checkPlaying(params: any): void{
         params.uid = nbsp2plus(params.uid)
         params.caid = nbsp2plus(params.caid)
         let queryParams = {
@@ -453,6 +453,57 @@ export default class MemberManager extends FeatureManager{
                     }
                 }
                 success.data = '참여 가능한 캠페인 입니다.'
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
+    }
+
+    public deletePlaying(params: any): void{
+        let uid = params.uid
+        let caid = params.caid
+        if(uid != this.req.session.passport.user.id){
+            fail.error = error.invalAcc
+            fail.errdesc = '세션 정보와 id가 일치하지않습니다.'
+            this.res.status(400).send(fail)
+            return;
+        }
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: {':id': uid}
+        }
+        let updateParams = {
+            TableName: 'Member',
+            Key: {id: uid},
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            RetrunValues: 'ALL_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        }
+        const run = async() => {
+            try{
+                console.log('참여중 캠페인 검색중')
+                let campResult = await this.Dynamodb.query(queryParams).promise()
+                console.log(`참여중 캠페인\n${JSON.stringify(campResult.Items[0].playingCampaigns, null, 2)}`)
+                let playingCamps = campResult.Items[0].playingCampaigns
+                for(let i = 0; i < playingCamps.length; i++){
+                    if(playingCamps[i].id == caid){
+                        playingCamps.splice(i, 1)
+                        break;
+                    }
+                }
+                updateParams.UpdateExpression = 'SET playingCampaigns = :playingCamp'
+                updateParams.ExpressionAttributeValues = {':playingCamp': playingCamps}
+                console.log('참여중 캠페인 삭제중')
+                await this.Dynamodb.update(updateParams).promise()
+                success.data = '삭제 성공'
                 this.res.status(200).send(success)
             }
             catch(err){

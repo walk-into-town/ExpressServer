@@ -480,5 +480,55 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
+    deletePlaying(params) {
+        let uid = params.uid;
+        let caid = params.caid;
+        if (uid != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '세션 정보와 id가 일치하지않습니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: { ':id': uid }
+        };
+        let updateParams = {
+            TableName: 'Member',
+            Key: { id: uid },
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            RetrunValues: 'ALL_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('참여중 캠페인 검색중');
+                let campResult = yield this.Dynamodb.query(queryParams).promise();
+                console.log(`참여중 캠페인\n${JSON.stringify(campResult.Items[0].playingCampaigns, null, 2)}`);
+                let playingCamps = campResult.Items[0].playingCampaigns;
+                for (let i = 0; i < playingCamps.length; i++) {
+                    if (playingCamps[i].id == caid) {
+                        playingCamps.splice(i, 1);
+                        break;
+                    }
+                }
+                updateParams.UpdateExpression = 'SET playingCampaigns = :playingCamp';
+                updateParams.ExpressionAttributeValues = { ':playingCamp': playingCamps };
+                console.log('참여중 캠페인 삭제중');
+                yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = '삭제 성공';
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
 }
 exports.default = MemberManager;

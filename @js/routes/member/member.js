@@ -63,6 +63,11 @@ router.get('/playing', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.readPlaying(query);
 });
+router.delete('/playing', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.deletePlaying(query);
+});
 router.get('/my', authentication_1.default, function (req, res) {
     let query = req.query;
     let memberDB = new MemberManager_1.default(req, res);

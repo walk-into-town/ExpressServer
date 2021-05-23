@@ -48,11 +48,18 @@ router.get('/playing', isAuthenticated, function(req: express.Request, res: expr
     memberDB.readPlaying(query)
 })
 
+router.delete('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.body
+    let memberDB = new MemberManager(req, res)
+    memberDB.deletePlaying(query)
+})
+
 router.get('/my', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.query
     let memberDB = new MemberManager(req, res)
     memberDB.readMyCamp(query)
 })
+
 
 //로그아웃
 router.delete('/logout', isAuthenticated, function(req: express.Request, res: express.Response){
