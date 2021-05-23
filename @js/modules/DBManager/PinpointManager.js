@@ -143,7 +143,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readList(params) {
-        let id = this.nbsp2plus(params.id);
+        let id = params.value;
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',

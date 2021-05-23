@@ -30,6 +30,8 @@ const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFi
 const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
 const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const result_1 = require("../../static/result");
+const nbsp_1 = require("../../modules/Logics/nbsp");
 const detail = require('./pinpointDetail');
 const quiz = require('./PinpointQuiz');
 var router = express.Router();
@@ -54,20 +56,28 @@ router.get('/', function (req, res) {
     let pinpointDB = new PinpointManager_1.default(req, res);
     if (query.type == 'single') {
         let read = [];
-        if (typeof (query.id) == 'string') {
-            read.push({ 'id': query.id });
+        if (typeof (query.value) == 'string') {
+            query.value = nbsp_1.nbsp2plus(query.value);
+            read.push({ 'id': query.value });
         }
         else {
-            query.id.forEach(id => {
+            query.value.forEach(id => {
+                id = nbsp_1.nbsp2plus(id);
                 let obj = { 'id': id };
                 read.push(obj);
             });
         }
         pinpointDB.read(read);
+        return;
     }
-    else {
+    if (query.type == 'list') {
+        query.value = nbsp_1.nbsp2plus(query.value);
         pinpointDB.readList(query);
+        return;
     }
+    result_1.fail.error = result_1.error.invalReq;
+    result_1.fail.errdesc = 'type은 list | single중 하나여야 합니다.';
+    res.status(400).send(result_1.fail);
 });
 // router.post('/inquiry', function(req: express.Request, res: express.Response){
 //     let query = req.body

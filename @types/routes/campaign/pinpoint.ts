@@ -7,6 +7,8 @@ import UploadFile from '../../modules/FileManager/UploadFile'     //파일 업�
 import PinpointManager from '../../modules/DBManager/PinpointManager'
 import * as dotenv from 'dotenv'
 import isAuthenticated from '../../middlewares/authentication'
+import { error, fail } from '../../static/result'
+import { nbsp2plus } from '../../modules/Logics/nbsp'
 
 
 const detail = require('./pinpointDetail')
@@ -39,20 +41,28 @@ router.get('/', function(req: express.Request, res: express.Response){
     let pinpointDB = new PinpointManager(req, res)
     if(query.type == 'single'){
         let read: Array<any> = []
-        if(typeof(query.id) == 'string'){
-            read.push({'id': query.id})
+        if(typeof(query.value) == 'string'){
+            query.value = nbsp2plus(query.value)
+            read.push({'id': query.value})
         }
         else{
-            query.id.forEach(id => {
+            query.value.forEach(id => {
+                id = nbsp2plus(id)
                 let obj = {'id': id}
                 read.push(obj)
             });
         }
         pinpointDB.read(read)
+        return
     }
-    else{
-        pinpointDB.readList(query) 
+    if(query.type == 'list'){
+        query.value = nbsp2plus(query.value)
+        pinpointDB.readList(query)
+        return; 
     }
+    fail.error = error.invalReq
+    fail.errdesc = 'type은 list | single중 하나여야 합니다.'
+    res.status(400).send(fail)
 })
 
 // router.post('/inquiry', function(req: express.Request, res: express.Response){

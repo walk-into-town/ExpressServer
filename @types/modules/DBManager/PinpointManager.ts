@@ -111,7 +111,7 @@ export default class PinpointManager extends FeatureManager{
      }
 
      public readList(params: any): void{
-        let id = this.nbsp2plus(params.id)
+        let id = params.value
         let queryParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
