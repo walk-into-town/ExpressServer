@@ -630,7 +630,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             }];
         let memberParam = {
             TableName: 'Member',
-            Key: { id: params.uid },
+            Key: { id: this.req.session.passport.user.id },
             UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
             ExpressionAttributeValues: { ':newcomment': memberComment, ':emptylist': [] },
             ReturnValues: 'UPDATED_NEW',
