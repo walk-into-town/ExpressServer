@@ -611,6 +611,19 @@ export default class CampaignManager extends FeatureManager{
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         }
+        let memberComment = [{
+            type: 'campaign',
+            id: params.caid,
+            coid: params.rid
+        }]
+       let memberParam = {
+            TableName: 'Member',
+            Key: { id: params.uid },
+            UpdateExpression: 'set comments = list_append(if_not_exists(comments, :emptylist), :newcomment)',
+            ExpressionAttributeValues: { ':newcomment': memberComment, ':emptylist': [] },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        };
         const run = async() => {
             try{
                 let campaignResult = await this.Dynamodb.query(campaignParams).promise()
@@ -629,6 +642,7 @@ export default class CampaignManager extends FeatureManager{
                 comment[0].profileImg = user.profileImg
                 console.log(comment[0])
                 let queryResult = await this.Dynamodb.update(queryParams).promise()
+                let updateMember = await this.Dynamodb.update(memberParam).promise()
                 success.data = comment[0]
                 this.res.status(201).send(success)
             }
@@ -797,15 +811,30 @@ export default class CampaignManager extends FeatureManager{
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         }
+        let memberParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'comments',
+            ExpressionAttributeValues: {':id': params.uid}
+        }
+        let memberUpdateParams = {
+            TableName: 'Member',
+            Key: {id: params.uid},
+            UpdateExpression: 'set comments = :newcomment',
+            ExpressionAttributeValues: {':newcomment': null},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        }
         const run = async () => {
             try{
                 let comments = await this.Dynamodb.query(findParams).promise()
                 if(comments.Items[0] == undefined){
                     fail.error = error.dataNotFound
-                    fail.errdesc = "핀포인트를 찾을 수 없습니다."
+                    fail.errdesc = "캠페인을 찾을 수 없습니다."
                     this.res.status(400).send(fail)
                     return;
                 }
+                console.log('리뷰 찾는중...')
                 for(let i =0; i < comments.Items[0].comments.length; i++){
                     let rid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
@@ -820,8 +849,17 @@ export default class CampaignManager extends FeatureManager{
                         return;
                     }
                 }
-                console.log('댓글 찾는중...')
                 console.log(comments.Items[0].comments)
+                let findMember = await this.Dynamodb.query(memberParams).promise()
+                let mycomments = findMember.Items[0].comments
+                for(let i = 0; i < mycomments.length; i++){
+                    if(mycomments[i].id == params.caid){
+                        mycomments.splice(i,1)
+                        break;
+                    }
+                }
+                memberUpdateParams.ExpressionAttributeValues[":newcomment"] = mycomments
+                await this.Dynamodb.update(memberUpdateParams).promise()
                 updateParams.ExpressionAttributeValues[":newcomment"] = comments.Items[0].comments
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 success.data = updateResult.Attributes.comments
