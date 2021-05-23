@@ -154,6 +154,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             console.log('핀포인트 목록 가져오는중...');
             let queryResult = yield this.Dynamodb.query(queryParams).promise();
             let pinpointList = [];
+            if (queryResult.Items[0] == undefined) {
+                result_1.fail.error = result_1.error.invalKey;
+                result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                this.res.status(400).send(result_1.fail);
+                return;
+            }
             console.log(`핀포인트 id\n${JSON.stringify(queryResult.Items[0].pinpoints)}`);
             queryResult.Items[0].pinpoints.forEach((id) => {
                 let obj = {
