@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * /campaign/pinpoint
+ * /pinpoint
  */
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile")); //파일 업로드 클래스 import
@@ -32,12 +32,17 @@ const dotenv = __importStar(require("dotenv"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../../modules/Logics/nbsp");
+const comment = require('./pinpointComment');
 const detail = require('./pinpointDetail');
 const quiz = require('./PinpointQuiz');
 var router = express.Router();
 dotenv.config();
 let uploader = new UploadFile_1.default();
 let upload = uploader.testupload();
+router.use('/detail', detail);
+router.use('/quiz', quiz);
+router.use('/comment', comment);
+//핀포인트 등록
 router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let imgs = [];
@@ -50,6 +55,7 @@ router.post('/', authentication_1.default, upload.array('img'), function (req, r
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.insert(query);
 });
+//핀포인트 조회
 router.get('/', function (req, res) {
     let query = req.query;
     console.log(`요청 JSON\n${JSON.stringify(query)}`);
@@ -84,11 +90,13 @@ router.get('/', function (req, res) {
 //     let pinpointDB = new PinpointManager(req, res)
 //     pinpointDB.read([query])
 // })
+//핀포인트 삭제
 router.delete('/', authentication_1.default, function (req, res) {
     let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.delete(query);
 });
+//핀포인트 수정
 router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let imgs = [];
@@ -99,6 +107,4 @@ router.put('/', authentication_1.default, upload.array('img'), function (req, re
     let pinpointDB = new PinpointManager_1.default(req, res);
     pinpointDB.update(query);
 });
-router.use('/detail', detail);
-router.use('/quiz', quiz);
 module.exports = router;

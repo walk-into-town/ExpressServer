@@ -541,6 +541,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                         'id': id,
                         cleared: false
                     };
+                    pinpoint2add.push(obj);
                 }
                 let camp2add = {
                     id: cId,
@@ -563,11 +564,11 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    insertComment(params) {
+    insertrReview(params) {
         let userid = this.req.session.passport.user.id;
         let date = new Date();
         let hash = CryptoJS.SHA256(params.caid + date.toString()); //id 생성
-        params.coid = hash.toString(CryptoJS.enc.Base64);
+        params.rid = hash.toString(CryptoJS.enc.Base64);
         if (userid != params.comments.userId) { //세션의 id와 전송한 id가 다른 경우
             result_1.fail.error = result_1.error.invalKey;
             result_1.fail.errdesc = '세션 정보와 id가 일치하지 않습니다.';
@@ -593,7 +594,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ProjectionExpression: 'comments'
         };
         let comment = [{
-                id: params.coid,
+                id: params.rid,
                 userId: userid,
                 text: params.comments.text,
                 rated: Number(params.rated),
@@ -639,7 +640,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    readComment(params) {
+    readReview(params) {
         if (params.caid == undefined) {
             result_1.fail.error = result_1.error.invalReq;
             result_1.fail.errdesc = '요청의 id값이 없습니다.';
@@ -655,7 +656,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log('댓글 검색중');
+                console.log('리뷰 검색중');
                 let result = yield this.Dynamodb.query(queryParams).promise();
                 console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`);
                 result_1.success.data = result.Items[0].comments;
@@ -670,7 +671,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    updateComment(params) {
+    updateReview(params) {
         let userid = this.req.session.passport.user.id;
         if (params.text == undefined && params.rated == undefined) {
             result_1.fail.error = result_1.error.invalReq;
@@ -723,9 +724,9 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 }
                 console.log('댓글 찾는중...');
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
-                    let cid = comments.Items[0].comments[i].id;
+                    let rid = comments.Items[0].comments[i].id;
                     let uid = comments.Items[0].comments[i].userId;
-                    if (cid == params.coid && uid == params.uid) {
+                    if (rid == params.rid && uid == params.uid) {
                         console.log('조건 만족');
                         if (params.text == undefined) {
                             comments.Items[0].comments[i].rated = params.rated;
@@ -769,7 +770,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    deleteComment(params) {
+    deleteReview(params) {
         let uid = this.req.session.passport.user.id;
         if (uid != params.uid) {
             result_1.fail.error = result_1.error.invalAcc;
@@ -802,9 +803,9 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     return;
                 }
                 for (let i = 0; i < comments.Items[0].comments.length; i++) {
-                    let cid = comments.Items[0].comments[i].id;
+                    let rid = comments.Items[0].comments[i].id;
                     let uid = comments.Items[0].comments[i].userId;
-                    if (cid == params.coid && uid == params.uid) {
+                    if (rid == params.rid && uid == params.uid) {
                         comments.Items[0].comments.splice(i, 1);
                         break;
                     }

@@ -27,27 +27,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
-const MonsterManager_1 = __importDefault(require("../../modules/DBManager/MonsterManager"));
 var router = express.Router();
 const uploader = new UploadFile_1.default();
 const upload = uploader.testupload();
-router.post('/game/monster', function (req, res) {
-});
-router.get('/monster/img', function (req, res) {
-    let query = req.query;
-    let monsterDB = new MonsterManager_1.default(req, res);
-    monsterDB.read(query);
-});
-router.put('/monster/img', upload.array('img'), function (req, res) {
-    let query = req.body;
-    let imgs = [];
-    for (let i = 0; i < req.files.length; i++) {
-        imgs.push(process.env.domain + req.files[i].filename);
-    }
-    query.imgs = imgs;
-    let monsterDB = new MonsterManager_1.default(req, res);
-    monsterDB.insert(query);
-});
 router.put('/clear', function (req, res) {
 });
 router.get('/ranking', function (req, res) {

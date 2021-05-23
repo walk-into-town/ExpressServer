@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * /campaign/pinpoint/detail
+ * /pinpoint/detail
  */
 const express = __importStar(require("express"));
 const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));

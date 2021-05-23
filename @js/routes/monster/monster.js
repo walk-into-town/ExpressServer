@@ -18,12 +18,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * /campaign/evaluate/pinpoint
+ * /monster
  */
 const express = __importStar(require("express"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
+const MonsterManager_1 = __importDefault(require("../../modules/DBManager/MonsterManager"));
 var router = express.Router();
-const comment = require('./pinpointComment');
-router.use('/comment', comment);
+const uploader = new UploadFile_1.default();
+const upload = uploader.testupload();
+router.post('/monster', function (req, res) {
+});
+router.get('/img', function (req, res) {
+    let query = req.query;
+    let monsterDB = new MonsterManager_1.default(req, res);
+    monsterDB.read(query);
+});
+router.post('/img', upload.array('img'), function (req, res) {
+    let query = req.body;
+    let imgs = [];
+    for (let i = 0; i < req.files.length; i++) {
+        imgs.push(process.env.domain + req.files[i].filename);
+    }
+    query.imgs = imgs;
+    let monsterDB = new MonsterManager_1.default(req, res);
+    monsterDB.insert(query);
+});
 module.exports = router;

@@ -162,7 +162,7 @@ export default class MemberManager extends FeatureManager{
     }
     public update(params: any): void {
         let uid = this.req.session.passport.user.id
-        if(uid != params.id){
+        if(uid != params.uid){
             fail.error = error.invalAcc
             fail.errdesc = '잘못된 접근입니다.'
             this.res.status(400).send(fail)
@@ -176,7 +176,7 @@ export default class MemberManager extends FeatureManager{
 
         let updateParams = {
             TableName: 'Member',
-            Key: {id: params.id},
+            Key: {id: params.uid},
             UpdateExpression: null,
             ExpressionAttributeValues: null,
             RetrunValues: 'ALL_NEW',
@@ -288,7 +288,7 @@ export default class MemberManager extends FeatureManager{
     }
     
     public readPlaying(params: any): void{
-        let id = params.id
+        let id = params.uid
         if(id != this.req.session.passport.user.id){
             fail.error = error.invalAcc
             fail.errdesc = "잘못된 접근입니다."
@@ -313,7 +313,7 @@ export default class MemberManager extends FeatureManager{
         const run = async() => {
             try{
                 let uid = this.req.session.passport.user.id
-                if(uid != params.id){
+                if(uid != params.uid){
                     fail.error = error.invalAcc
                     fail.errdesc = "잘못된 접근입니다."
                     this.res.status(400).send(fail)
@@ -360,7 +360,7 @@ export default class MemberManager extends FeatureManager{
     }
 
     public readMyCamp(params: any): void{
-        let id = params.id
+        let id = params.uid
         if(id != this.req.session.passport.user.id){
             fail.error = error.invalAcc
             fail.errdesc = "잘못된 접근입니다."
@@ -385,7 +385,7 @@ export default class MemberManager extends FeatureManager{
         const run = async() => {
             try{
                 let uid = this.req.session.passport.user.id
-                if(uid != params.id){
+                if(uid != params.uid){
                     fail.error = error.invalAcc
                     fail.errdesc = "잘못된 접근입니다."
                     this.res.status(400).send(fail)

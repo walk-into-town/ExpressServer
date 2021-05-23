@@ -1,5 +1,5 @@
 /**
- * /campaign/coupon
+ * /coupon
  */
 import * as express from 'express'
 import CouponManager from '../../modules/DBManager/CouponManager'

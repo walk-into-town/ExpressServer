@@ -6,6 +6,7 @@ import passport from 'passport'
 import MemberManager from '../../modules/DBManager/MemberManager'
 import isAuthenticated from '../../middlewares/authentication'
 import UploadFile from '../../modules/FileManager/UploadFile'
+import CampaignManager from '../../modules/DBManager/CampaignManager'
 
 var router = express.Router()
 
@@ -36,25 +37,36 @@ router.get('/checknickname', function(req: express.Request, res: express.Respons
     memberDB.check('nickname', query)
 })
 
+//로그인
 router.post('/login', passport.authenticate('local', {
   successRedirect: '/login/result/success',
   failureRedirect: '/login/result/fail',
   failureFlash: true
 }))
 
+//참여중 캠페인 조회
 router.get('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.query
     let memberDB = new MemberManager(req, res)
     memberDB.readPlaying(query)
 })
 
+//참여중 캠페인 탈퇴
 router.delete('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let memberDB = new MemberManager(req, res)
     memberDB.deletePlaying(query)
 })
 
-router.get('/my', isAuthenticated, function(req: express.Request, res: express.Response){
+//캠페인 참여
+router.post('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.body
+    let campaingDB = new CampaignManager(req, res)
+    campaingDB.participate(query)
+})
+
+//제작한 캠페인 조회
+router.get('/mycampaign', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.query
     let memberDB = new MemberManager(req, res)
     memberDB.readMyCamp(query)
@@ -107,7 +119,7 @@ router.put('/coupon', isAuthenticated, function(req: express.Request, res: expre
     
 })
 
-router.get('/isplaying', isAuthenticated, function(req: express.Request, res: express.Response){
+router.get('/checkplaying', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.query
     let memberDB = new MemberManager(req, res)
     memberDB.checkPlaying(query)

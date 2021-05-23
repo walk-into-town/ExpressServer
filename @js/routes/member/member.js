@@ -30,6 +30,7 @@ const passport_1 = __importDefault(require("passport"));
 const MemberManager_1 = __importDefault(require("../../modules/DBManager/MemberManager"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
+const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
 var router = express.Router();
 const badge = require('./badge');
 const uploader = new UploadFile_1.default();
@@ -53,22 +54,32 @@ router.get('/checknickname', function (req, res) {
     let query = req.body;
     memberDB.check('nickname', query);
 });
+//로그인
 router.post('/login', passport_1.default.authenticate('local', {
     successRedirect: '/login/result/success',
     failureRedirect: '/login/result/fail',
     failureFlash: true
 }));
+//참여중 캠페인 조회
 router.get('/playing', authentication_1.default, function (req, res) {
     let query = req.query;
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.readPlaying(query);
 });
+//참여중 캠페인 탈퇴
 router.delete('/playing', authentication_1.default, function (req, res) {
     let query = req.body;
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.deletePlaying(query);
 });
-router.get('/my', authentication_1.default, function (req, res) {
+//캠페인 참여
+router.post('/playing', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let campaingDB = new CampaignManager_1.default(req, res);
+    campaingDB.participate(query);
+});
+//제작한 캠페인 조회
+router.get('/mycampaign', authentication_1.default, function (req, res) {
     let query = req.query;
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.readMyCamp(query);
@@ -110,7 +121,7 @@ router.get('/coupon', authentication_1.default, function (req, res) {
 });
 router.put('/coupon', authentication_1.default, function (req, res) {
 });
-router.get('/isplaying', authentication_1.default, function (req, res) {
+router.get('/checkplaying', authentication_1.default, function (req, res) {
     let query = req.query;
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.checkPlaying(query);

@@ -528,6 +528,7 @@ export default class CampaignManager extends FeatureManager{
                         'id': id,
                         cleared: false
                     }
+                    pinpoint2add.push(obj)
                 }
                 let camp2add = {
                     id: cId,
@@ -551,11 +552,11 @@ export default class CampaignManager extends FeatureManager{
         run()
     }
 
-    public insertComment(params: any){
+    public insertrReview(params: any){
         let userid = this.req.session.passport.user.id
         let date = new Date()
         let hash = CryptoJS.SHA256(params.caid + date.toString())  //id 생성
-        params.coid = hash.toString(CryptoJS.enc.Base64)
+        params.rid = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){   //세션의 id와 전송한 id가 다른 경우
             fail.error = error.invalKey
             fail.errdesc = '세션 정보와 id가 일치하지 않습니다.'
@@ -581,7 +582,7 @@ export default class CampaignManager extends FeatureManager{
             ProjectionExpression: 'comments'
         }
         let comment = [{
-            id: params.coid,
+            id: params.rid,
             userId: userid,
             text: params.comments.text,
             rated: Number(params.rated),
@@ -628,7 +629,7 @@ export default class CampaignManager extends FeatureManager{
         run();
     }
 
-    public readComment(params: any){
+    public readReview(params: any){
         if(params.caid == undefined){
             fail.error = error.invalReq
             fail.errdesc = '요청의 id값이 없습니다.'
@@ -644,7 +645,7 @@ export default class CampaignManager extends FeatureManager{
         }
         const run = async () => {
             try{
-                console.log('댓글 검색중')
+                console.log('리뷰 검색중')
                 let result = await this.Dynamodb.query(queryParams).promise()
                 console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`)
                 success.data = result.Items[0].comments
@@ -660,7 +661,7 @@ export default class CampaignManager extends FeatureManager{
         run();
     }
 
-    public updateComment(params: any){
+    public updateReview(params: any){
         let userid = this.req.session.passport.user.id
         if(params.text == undefined && params.rated == undefined){
             fail.error = error.invalReq
@@ -713,9 +714,9 @@ export default class CampaignManager extends FeatureManager{
                 }
                 console.log('댓글 찾는중...')
                 for(let i =0; i < comments.Items[0].comments.length; i++){
-                    let cid = comments.Items[0].comments[i].id
+                    let rid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.coid && uid == params.uid){
+                    if(rid == params.rid && uid == params.uid){
                         console.log('조건 만족')
                         if(params.text == undefined){
                             comments.Items[0].comments[i].rated = params.rated
@@ -761,7 +762,7 @@ export default class CampaignManager extends FeatureManager{
         run();
     }
 
-    public deleteComment(params: any){
+    public deleteReview(params: any){
         let uid = this.req.session.passport.user.id
         if(uid != params.uid){
             fail.error = error.invalAcc
@@ -794,9 +795,9 @@ export default class CampaignManager extends FeatureManager{
                     return;
                 }
                 for(let i =0; i < comments.Items[0].comments.length; i++){
-                    let cid = comments.Items[0].comments[i].id
+                    let rid = comments.Items[0].comments[i].id
                     let uid = comments.Items[0].comments[i].userId
-                    if(cid == params.coid && uid == params.uid){
+                    if(rid == params.rid && uid == params.uid){
                         comments.Items[0].comments.splice(i,1);
                         break;
                     }

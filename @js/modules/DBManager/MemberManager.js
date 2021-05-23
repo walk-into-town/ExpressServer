@@ -185,7 +185,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
     }
     update(params) {
         let uid = this.req.session.passport.user.id;
-        if (uid != params.id) {
+        if (uid != params.uid) {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = '잘못된 접근입니다.';
             this.res.status(400).send(result_1.fail);
@@ -198,7 +198,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let expAttrVal = {};
         let updateParams = {
             TableName: 'Member',
-            Key: { id: params.id },
+            Key: { id: params.uid },
             UpdateExpression: null,
             ExpressionAttributeValues: null,
             RetrunValues: 'ALL_NEW',
@@ -307,7 +307,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readPlaying(params) {
-        let id = params.id;
+        let id = params.uid;
         if (id != this.req.session.passport.user.id) {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = "잘못된 접근입니다.";
@@ -332,7 +332,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let uid = this.req.session.passport.user.id;
-                if (uid != params.id) {
+                if (uid != params.uid) {
                     result_1.fail.error = result_1.error.invalAcc;
                     result_1.fail.errdesc = "잘못된 접근입니다.";
                     this.res.status(400).send(result_1.fail);
@@ -378,7 +378,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readMyCamp(params) {
-        let id = params.id;
+        let id = params.uid;
         if (id != this.req.session.passport.user.id) {
             result_1.fail.error = result_1.error.invalAcc;
             result_1.fail.errdesc = "잘못된 접근입니다.";
@@ -403,7 +403,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let uid = this.req.session.passport.user.id;
-                if (uid != params.id) {
+                if (uid != params.uid) {
                     result_1.fail.error = result_1.error.invalAcc;
                     result_1.fail.errdesc = "잘못된 접근입니다.";
                     this.res.status(400).send(result_1.fail);

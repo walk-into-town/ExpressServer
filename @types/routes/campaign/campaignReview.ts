@@ -1,5 +1,5 @@
 /**
- * /campaign/evaluate/campaign
+ * /campaign/review
  */
 import * as express from 'express'
 import isAuthenticated from '../../middlewares/authentication'
@@ -11,7 +11,7 @@ const uploader = new UploadFile()
 const upload = uploader.testupload()
 
 
-router.post('/comment', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
+router.post('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let query = req.body
     let campaignDB = new CampaignManager(req, res)
     let imgs: Array<string> = []
@@ -21,22 +21,22 @@ router.post('/comment', isAuthenticated, upload.array('img'), function(req: expr
         }
     }
     query.imgs = imgs
-    campaignDB.insertComment(query)
+    campaignDB.insertrReview(query)
 })
 
-router.get('/comment', function(req: express.Request, res: express.Response){
+router.get('/', function(req: express.Request, res: express.Response){
     let query = req.query
     let campaignDB = new CampaignManager(req, res)
-    campaignDB.readComment(query)
+    campaignDB.readReview(query)
 })
 
-router.delete('/comment', isAuthenticated, function(req: express.Request, res: express.Response){
+router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let camaignDB = new CampaignManager(req, res)
-    camaignDB.deleteComment(query)
+    camaignDB.deleteReview(query)
 })
 
-router.put('/comment', isAuthenticated, upload.array('imgs'), function(req: express.Request, res: express.Response){
+router.put('/', isAuthenticated, upload.array('imgs'), function(req: express.Request, res: express.Response){
     let query = req.body
     let campaignDB = new CampaignManager(req, res)
     let imgs: Array<string> = []
@@ -46,10 +46,7 @@ router.put('/comment', isAuthenticated, upload.array('imgs'), function(req: expr
         }
     }
     query.imgs = imgs
-    campaignDB.updateComment(query)
+    campaignDB.updateReview(query)
 })
 
-router.put('/rate', isAuthenticated, function(req: express.Request, res: express.Response){
-
-})
 module.exports = router

@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * /campaign/evaluate/pinpoint/comment
+ * /pinpoint/comment
  */
 const express = __importStar(require("express"));
 const authentication_1 = __importDefault(require("../../middlewares/authentication"));

@@ -1,5 +1,5 @@
 /**
- * /campaign/evaluate/pinpoint/comment
+ * /pinpoint/comment
  */
 import * as express from 'express'
 import isAuthenticated from '../../middlewares/authentication'

@@ -19,20 +19,11 @@ import { error, fail } from '../../static/result'
 var router = express.Router()
 dotenv.config()
 
-const pinpoint = require('./pinpoint')
-const participate = require('./campaignParticipate')
-const evaluate = require('./campaignEvaluate')
-const coupon = require('./campaignCoupon')
+const review = require('./campaignReview')
 const uploader = new UploadFile()
 const upload = uploader.testupload()
 
-
-
-router.use('/pinpoint', pinpoint)
-router.use('/participate', participate)
-router.use('/evaluate', evaluate)
-router.use('/coupon', coupon)
-
+router.use('/review', review)
 
 //캠페인 등록
 router.post('/',isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){

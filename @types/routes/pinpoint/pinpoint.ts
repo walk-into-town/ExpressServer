@@ -1,5 +1,5 @@
 /**
- * /campaign/pinpoint
+ * /pinpoint
  */
 import * as express from 'express'
 
@@ -10,7 +10,7 @@ import isAuthenticated from '../../middlewares/authentication'
 import { error, fail } from '../../static/result'
 import { nbsp2plus } from '../../modules/Logics/nbsp'
 
-
+const comment = require('./pinpointComment')
 const detail = require('./pinpointDetail')
 const quiz = require('./PinpointQuiz')
 
@@ -20,7 +20,11 @@ dotenv.config()
 let uploader = new UploadFile()
 let upload = uploader.testupload()
 
+router.use('/detail', detail)
+router.use('/quiz', quiz)
+router.use('/comment', comment)
 
+//핀포인트 등록
 router.post('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
@@ -35,6 +39,7 @@ router.post('/', isAuthenticated, upload.array('img'), function(req: express.Req
 
 })
 
+//핀포인트 조회
 router.get('/', function(req: express.Request, res: express.Response){
     let query: any = req.query
     console.log(`요청 JSON\n${JSON.stringify(query)}`)
@@ -71,12 +76,14 @@ router.get('/', function(req: express.Request, res: express.Response){
 //     pinpointDB.read([query])
 // })
 
+//핀포인트 삭제
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.delete(query)
 })
 
+//핀포인트 수정
 router.put('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let query = JSON.parse(req.body.json)
     let imgs: Array<string> = []
@@ -87,10 +94,6 @@ router.put('/', isAuthenticated, upload.array('img'), function(req: express.Requ
     let pinpointDB = new PinpointManager(req, res)
     pinpointDB.update(query)
 })
-
-router.use('/detail', detail)
-router.use('/quiz', quiz)
-
 
 
 module.exports = router
