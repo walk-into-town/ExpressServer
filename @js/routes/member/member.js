@@ -84,6 +84,12 @@ router.get('/mycampaign', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.readMyCamp(query);
 });
+//제작한 캠페인 삭제
+router.delete('/mycampaign', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.deleteMyCamp(query);
+});
 //로그아웃
 router.delete('/logout', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);

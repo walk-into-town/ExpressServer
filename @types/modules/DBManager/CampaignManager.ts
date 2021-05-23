@@ -164,7 +164,8 @@ export default class CampaignManager extends FeatureManager{
                         pinpoints: params.pinpoints,
                         coupons: [params.coupons],
                         pcoupons: params.pcoupons,
-                        comments: []
+                        comments: [],
+                        users: []
                     },
                     ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 }
@@ -485,6 +486,15 @@ export default class CampaignManager extends FeatureManager{
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         }
+        let campUpdateParams = {
+            TableName: 'Campaign',
+            Key: {id: params.caid},
+            UpdateExpression: 'set #users = list_append(if_not_exists(#users, :emptylist), :newUser)',
+            ExpressionAttributeValues: {':newUser': null, ':emptylist': []},
+            ExpressionAttributeNames: {'#users': 'users'},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        }
         const run = async () => {
             try{
                 console.log('캠페인 존재 여부 확인중...')
@@ -539,6 +549,8 @@ export default class CampaignManager extends FeatureManager{
                 updateParams.ExpressionAttributeValues[":newCampaign"] = playingCamp
                 console.log(updateParams)
                 let partiResult = await this.Dynamodb.update(updateParams).promise()
+                campUpdateParams.ExpressionAttributeValues[":newUser"] = [params.uid]
+                let updatecamp = await this.Dynamodb.update(campUpdateParams).promise()
                 success.data = partiResult.Attributes
                 console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(success.data, null, 2)}`)
                 this.res.status(201).send(success)

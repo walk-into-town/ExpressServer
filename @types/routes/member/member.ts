@@ -72,6 +72,12 @@ router.get('/mycampaign', isAuthenticated, function(req: express.Request, res: e
     memberDB.readMyCamp(query)
 })
 
+//제작한 캠페인 삭제
+router.delete('/mycampaign', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.body
+    let memberDB = new MemberManager(req, res)
+    memberDB.deleteMyCamp(query)
+})
 
 //로그아웃
 router.delete('/logout', isAuthenticated, function(req: express.Request, res: express.Response){

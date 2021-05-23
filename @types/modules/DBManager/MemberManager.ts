@@ -431,6 +431,137 @@ export default class MemberManager extends FeatureManager{
         run();
     }
 
+    public deleteMyCamp(params: any){
+        if(this.req.session.passport.user.id != params.uid){
+            fail.error = error.invalAcc
+            fail.errdesc = '세션 정보와 id가 일치하지 않습니다.'
+            this.res.status(400).send(fail)
+            return;
+        }
+        let mycampParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'myCampaigns, playingCampaigns',
+            ExpressionAttributeValues: {':id': params.uid}
+        }
+        let campParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': params.caid}
+        }
+        let deleteparam = {
+            TableName: '',
+            Key:{
+              'id': null
+            }
+        }
+        let updateParams = {
+            TableName: 'Member',
+            Key: null,
+            UpdateExpression: null,
+            ExpressionAttributeValues: {':newCampaign': null, ':emptylist': []},
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        }
+        let getParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: {':id': null}
+        }
+        const run = async() => {
+            try{
+                const myResult = await this.Dynamodb.query(mycampParams).promise()
+                const mycamps = myResult.Items[0].myCampaigns
+                console.log('일치하는 캠페인 검색중')
+                for(let i = 0; mycamps.length; i++){
+                    if(mycamps[i] == params.caid){
+                        console.log('일치함')
+                        break;
+                    }
+                    if(i == mycamps.length -1){
+                        fail.error = error.invalKey
+                        fail.errdesc = '일치하는 캠페인을 찾을 수 없습니다.'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
+                }
+                let delcmapResult = await this.Dynamodb.query(campParams).promise()
+                let deleteItems = delcmapResult.Items[0]
+                console.log(`삭제할 항목 목록\n${JSON.stringify(deleteItems, null, 2)}`)
+                let delCoupon = deleteItems.coupons
+                let delPcoupon = deleteItems.pcoupons
+                let delPinpoints = deleteItems.pinpoints
+                let delCampaign = deleteItems.id
+                let delMember = deleteItems.users
+                if(delCoupon.length != 0){
+                    console.log('캠페인 쿠폰 삭제중')
+                    deleteparam.TableName = 'Coupon'
+                    for(let i =0; i < delCoupon.length; i++){
+                        deleteparam.Key.id = delCoupon[i]
+                        console.log(`${i}번째 캠페인 쿠폰 삭제중`)
+                        await this.Dynamodb.delete(deleteparam).promise()
+                        console.log('캠페인 쿠폰 삭제 성공')
+                    }
+                    console.log('전체 캠페인 쿠폰 삭제 성공')
+                }
+                if(delPcoupon.length != 0){
+                    deleteparam.TableName = 'Coupon'
+                    for(let i =0; i < delPcoupon.length; i++){
+                        deleteparam.Key.id = delPcoupon[i]
+                        console.log(`${i}번째 핀포인트 쿠폰 삭제중`)
+                        await this.Dynamodb.delete(deleteparam).promise()
+                        console.log('핀포인트 쿠폰 삭제 성공')
+                    }
+                    console.log('전체 핀포인트 쿠폰 삭제 성공')
+                }
+                deleteparam.TableName = 'Pinpoint'
+                for(let i =0; i < delPinpoints.length; i++){
+                    deleteparam.Key.id = delPinpoints[i]
+                    console.log(`${i}번째 핀포인트 삭제중`)
+                    await this.Dynamodb.delete(deleteparam).promise()
+                    console.log('핀포인트 삭제 성공')
+                }
+                console.log('전체 핀포인트 삭제 성공')
+                console.log('참여자 목록 갱신중')
+                for(const id of delMember){
+                    getParams.ExpressionAttributeValues[":id"] = id
+                    let queryResult = await this.Dynamodb.query(getParams).promise()
+                    let playingCamps = queryResult.Items[0].playingCampaigns
+                    for (let i = 0; i < playingCamps.length; i++) {
+                        if (playingCamps[i].id == params.caid) {
+                            playingCamps.splice(i, 1);
+                            break;
+                        }
+                        if (i == playingCamps.length - 1) {
+                            fail.error = error.invalKey;
+                            fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                            this.res.status(400).send(fail);
+                            return;
+                        }
+                    }
+                    updateParams.ExpressionAttributeValues[":newCampaign"] = playingCamps
+                    updateParams.UpdateExpression = 'set playingCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)'
+                    updateParams.Key = {'id': id}
+                    await this.Dynamodb.update(updateParams).promise()
+                }
+                console.log('참여자 목록 갱신 완료')
+                deleteparam.TableName = 'Campaign'
+                deleteparam.Key.id = delCampaign
+                await this.Dynamodb.delete(deleteparam).promise()
+                console.log('캠페인 삭제 성공')
+                success.data = '제작한 캠페인 삭제 성공'
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
+    }
+
     public checkPlaying(params: any): void{
         params.uid = nbsp2plus(params.uid)
         params.caid = nbsp2plus(params.caid)
