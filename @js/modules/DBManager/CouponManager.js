@@ -133,6 +133,11 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                     let coupon = result.Items[0].coupons;
                     let pcoupons = result.Items[0].pcoupons;
                     let couponList = [];
+                    if (coupon.length == 0 && pcoupons.length == 0) {
+                        result_1.success.data = [];
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
                     for (const id of coupon) {
                         pcoupons.push(id);
                     }
@@ -148,6 +153,11 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 else {
                     let coupon = result.Items[0].coupons;
                     let couponList = [];
+                    if (coupon.length == 0) {
+                        result_1.success.data = [];
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
                     for (const id of coupon) {
                         let obj = {
                             id: id

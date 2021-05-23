@@ -106,6 +106,11 @@ export default class CouponManager extends FeatureManager{
                     let coupon:Array<string> = result.Items[0].coupons
                     let pcoupons:Array<string> = result.Items[0].pcoupons
                     let couponList: Array<object> = []
+                    if(coupon.length == 0 && pcoupons.length == 0){
+                        success.data = []
+                        this.res.status(200).send(success)
+                        return;
+                    }
                     for (const id of coupon) {
                         pcoupons.push(id)
                     }
@@ -121,6 +126,11 @@ export default class CouponManager extends FeatureManager{
                 else{
                     let coupon: Array<string> = result.Items[0].coupons
                     let couponList: Array<object> = []
+                    if(coupon.length == 0){
+                        success.data = []
+                        this.res.status(200).send(success)
+                        return;
+                    }
                     for(const id of coupon){
                         let obj = {
                             id: id
