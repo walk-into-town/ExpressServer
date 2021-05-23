@@ -60,7 +60,8 @@ export default class MemberManager extends FeatureManager{
                         coupons: [],
                         myCampaigns: [],
                         playingCampaigns: [],
-                        selfIntroduction: '자기소개를 꾸며보세요.'
+                        selfIntroduction: '자기소개를 꾸며보세요.',
+                        comments: []
                     },
                     ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
                 }
