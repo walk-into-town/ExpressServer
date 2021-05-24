@@ -199,8 +199,9 @@ export default class MemberManager extends FeatureManager{
                     console.log('닉네임 중복 여부 확인중...')
                     let queryResult = await this.Dynamodb.query(checkParams).promise()
                     if(queryResult.Items.length != 0){
-                        success.data = '닉네임이 중복되었어요'
-                        this.res.status(200).send(success)
+                        fail.error = error.invalKey
+                        fail.errdesc = '닉네임이 중복되었어요'
+                        this.res.status(400).send(fail)
                         return;
                     }
                     console.log(`닉네임 중복 통과.\nUpdate 쿼리 작성중`)
@@ -269,8 +270,9 @@ export default class MemberManager extends FeatureManager{
             try{
                 let queryResult = await this.Dynamodb.query(params).promise()
                 if(queryResult.Items.length == 0){
-                    success.data = '중복되었어요'
-                    this.res.status(200).send(success)
+                    fail.error = error.invalKey
+                    fail.errdesc = '중복되었어요'
+                    this.res.status(400).send(fail)
                     return;
                 }
                 else{

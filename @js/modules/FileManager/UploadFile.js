@@ -36,6 +36,7 @@ class UploadFile extends FileUpload_1.default {
             },
             filename: function (req, file, cb) {
                 let ext = `.${mime_types_1.default.extension(file.mimetype)}`;
+                console.log(file.mimetype);
                 if (ext == '.mpga') {
                     ext = '.mp3';
                 }
