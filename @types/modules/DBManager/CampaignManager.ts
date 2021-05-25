@@ -481,7 +481,7 @@ export default class CampaignManager extends FeatureManager{
         let updateParams = {
             TableName: 'Member',
             Key: {id: userId},
-            UpdateExpression: 'set playingCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)',
+            UpdateExpression: 'set playingCampaigns = list_append(if_not_exists(playingCampaigns, :emptylist), :newCampaign)',
             ExpressionAttributeValues: {':newCampaign': null, ':emptylist': []},
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
@@ -533,13 +533,6 @@ export default class CampaignManager extends FeatureManager{
                 console.log('캠페인 검사 통과')
                 console.log('DB 반영 시작')
                 let pinpoint2add = []
-                for(const id of campCheckResult.Items[0].pinpoints){
-                    let obj = {
-                        'id': id,
-                        cleared: false
-                    }
-                    pinpoint2add.push(obj)
-                }
                 let camp2add = {
                     id: cId,
                     cleared: false,
