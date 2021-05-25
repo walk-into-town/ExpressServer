@@ -11,7 +11,7 @@ const uploader = new UploadFile()
 const upload = uploader.testupload()
 
 
-router.post('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
+router.post('/', isAuthenticated, upload.array('imgs'), function(req: express.Request, res: express.Response){
     let query = req.body
     let campaignDB = new CampaignManager(req, res)
     let imgs: Array<string> = []
