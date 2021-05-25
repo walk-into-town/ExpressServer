@@ -18,13 +18,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /member/badge
+ */
 const express = __importStar(require("express"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
-router.post('/inquiry', function (req, res) {
+router.get('/', function (req, res) {
 });
-router.post('/representbadge/inquiry', function (req, res) {
+router.get('/representbadge', function (req, res) {
 });
-router.post('/representbadge/modify', function (req, res) {
+router.put('/representbadge', authentication_1.default, function (req, res) {
 });
 module.exports = router;

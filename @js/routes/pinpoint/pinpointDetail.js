@@ -18,16 +18,31 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /pinpoint/detail
+ */
 const express = __importStar(require("express"));
+const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
 var router = express.Router();
-router.post('/campaign', function (req, res) {
+router.get('/', function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.readDetail(query);
 });
-router.post('/quiz', function (req, res) {
+router.delete('/', authentication_1.default, function (req, res) {
+    let query = req.body;
+    query.description = '';
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.updateDetail(query);
 });
-router.post('/inquiry/campaign', function (req, res) {
-    res.send('testest');
-});
-router.post('/inquiry/user', function (req, res) {
+router.put('/', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.updateDetail(query);
 });
 module.exports = router;

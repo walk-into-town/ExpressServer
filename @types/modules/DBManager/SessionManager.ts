@@ -106,14 +106,14 @@ export default class SessionManager {
                 }
             }
             const run = async () => {
-                await this.Dynamodb.delete(queryParams, this.onDeleteSession.bind(this)).promise()
+                try{
+                    await this.Dynamodb.delete(queryParams).promise()
+                }
+                catch(err){
+                    console.log(err)
+                }
             }
             run()
-        }
-    }
-    private onDeleteSession(err: object, data: any){
-        if(err){
-            console.log(err)
         }
     }
 }

@@ -1,5 +1,6 @@
 import { FeatureManager } from "./FeatureManager";
 import {Monster} from '../../models/Monster'
+import { error, fail, success } from "../../static/result";
 
 export default class MonsterManager extends FeatureManager{
     public insert(params: any): void {
@@ -14,22 +15,42 @@ export default class MonsterManager extends FeatureManager{
             ConditionExpression: "attribute_exists(#number)"
         }
         const run = async() => {
-            let data = await this.Dynamodb.update(queryParams).promise()
-            let result = {
-                result: 'success',
-                message: data.Attributes.imgs
+            try{
+                let data = await this.Dynamodb.update(queryParams).promise()
+                success.data = data.Attributes.imgs
+                this.res.status(201).send(success)
             }
-            this.res.status(200).send(result)
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
         }
-        try{
-            run()
-        }
-        catch(err){
-            this.res.status(400).send('DB Error. Please Connect Manager')
-        }
+        run()
     }
     public read(params: any): void {
-        throw new Error("Method not implemented.");
+        let queryParams = {
+            TableName: 'Monster',
+            KeyConditionExpression: '#number = :number',
+            ExpressionAttributeNames: {'#number': 'number'},
+            ProjectionExpression: 'imgs',
+            ExpressionAttributeValues: {':number': Number(params.number)},
+        }
+        console.log(`요청 JSON\n${JSON.stringify(queryParams, null, 2)}`)
+        const run = async() => {
+            try{
+                let result = await this.Dynamodb.query(queryParams).promise()
+                console.log(result.Items[0].imgs)
+                success.data = result.Items[0].imgs
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
     public update(params: any): void {
         throw new Error("Method not implemented.");

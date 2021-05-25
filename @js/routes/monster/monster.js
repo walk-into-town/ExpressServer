@@ -22,28 +22,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /monster
+ */
 const express = __importStar(require("express"));
-const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
+const MonsterManager_1 = __importDefault(require("../../modules/DBManager/MonsterManager"));
 var router = express.Router();
-router.post('/register', function (req, res) {
-    let query = req.body;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.insertQuiz(query);
+const uploader = new UploadFile_1.default();
+const upload = uploader.testupload();
+router.post('/monster', function (req, res) {
 });
-router.post('/inquiry', function (req, res) {
-    let query = req.body;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.readQuiz(query);
+router.get('/img', function (req, res) {
+    let query = req.query;
+    let monsterDB = new MonsterManager_1.default(req, res);
+    monsterDB.read(query);
 });
-router.post('/delete', function (req, res) {
+router.post('/img', upload.array('img'), function (req, res) {
     let query = req.body;
-    query.quiz = null;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.updateQuiz(query);
-});
-router.post('/modify', function (req, res) {
-    let query = req.body;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.updateQuiz(query);
+    let imgs = [];
+    for (let i = 0; i < req.files.length; i++) {
+        imgs.push(process.env.domain + req.files[i].filename);
+    }
+    query.imgs = imgs;
+    let monsterDB = new MonsterManager_1.default(req, res);
+    monsterDB.insert(query);
 });
 module.exports = router;

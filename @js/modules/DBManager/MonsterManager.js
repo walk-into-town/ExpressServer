@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
+const result_1 = require("../../static/result");
 class MonsterManager extends FeatureManager_1.FeatureManager {
     insert(params) {
         params.number = parseInt(params.number);
@@ -23,22 +24,42 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
             ConditionExpression: "attribute_exists(#number)"
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let data = yield this.Dynamodb.update(queryParams).promise();
-            let result = {
-                result: 'success',
-                message: data.Attributes.imgs
-            };
-            this.res.status(200).send(result);
+            try {
+                let data = yield this.Dynamodb.update(queryParams).promise();
+                result_1.success.data = data.Attributes.imgs;
+                this.res.status(201).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            this.res.status(400).send('DB Error. Please Connect Manager');
-        }
+        run();
     }
     read(params) {
-        throw new Error("Method not implemented.");
+        let queryParams = {
+            TableName: 'Monster',
+            KeyConditionExpression: '#number = :number',
+            ExpressionAttributeNames: { '#number': 'number' },
+            ProjectionExpression: 'imgs',
+            ExpressionAttributeValues: { ':number': Number(params.number) },
+        };
+        console.log(`요청 JSON\n${JSON.stringify(queryParams, null, 2)}`);
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                console.log(result.Items[0].imgs);
+                result_1.success.data = result.Items[0].imgs;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     update(params) {
         throw new Error("Method not implemented.");

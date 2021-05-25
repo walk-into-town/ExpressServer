@@ -1,5 +1,7 @@
 import { FeatureManager} from "./FeatureManager";
 import * as CryptoJS from 'crypto-js'
+import { error, fail, success } from "../../static/result";
+import {nbsp2plus} from '../Logics/nbsp'
 
 export default class CouponManager extends FeatureManager{
     /**
@@ -22,31 +24,30 @@ export default class CouponManager extends FeatureManager{
                 endDate: params.endDate,
                 issued: 0,
                 limit: params.limit,
-                img: params.img
+                img: params.img,
+                paymentCondition: params.paymentCondition
             },
             ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         }
         const run = async() => {
-            await this.Dynamodb.put(queryParams).promise()
-            let result = {
-                result: 'success',
-                message: {
-                    'id': id
-                }
+            try{
+                await this.Dynamodb.put(queryParams).promise()
+                this.res.locals.coupons.push(queryParams.Item)
+                // let result = {
+                //     result: 'success',
+                //     message: {
+                //         'id': id
+                //     }
+                // }
+                // this.res.status(201).send(result)
             }
-            this.res.status(201).send(result)
-        }
-        try{
-            run();
-        }
-        catch(err){                 //DB에러 발생
-            let result = {
-                result: 'failed',
-                error: err
+            catch(err){                 //DB에러 발생
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
             }
-            this.res.status(400).send(result)
         }
-        
+        run()
     }
 
     /**
@@ -56,48 +57,105 @@ export default class CouponManager extends FeatureManager{
      * 3. 쿼리 실행 후 결과 출력
      */
     public read(params: any): void {
-        let type = params.type
+        params.id = nbsp2plus(params.id)
         let queryParams = {
-            TableName: 'None',
+            TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: {':id': params.id,},
-            ProjectionExpression: ''
-        }
-        switch(type){
-            case "coupon":
-                queryParams.TableName = 'Coupon'
-                delete(queryParams.ProjectionExpression)
-                break;
-            case "campaign":
-                queryParams.TableName = 'Campaign'
-                queryParams.ProjectionExpression = 'pinpoint'
-                break;
-            default:
-                let result = {
-                    result: 'failed',
-                    error:  'Type Mismatch. Select Type between coupon and campaign'
-                }
-                this.res.status(400).send(result)
-                return;
+            ExpressionAttributeValues: {':id': params.id,}
         }
         const run = async() => {
-            let queryResult = await this.Dynamodb.query(queryParams).promise()
-            let result = {
-                result: 'success',
-                message: queryResult.Items
+            try{ 
+                let queryResult = await this.Dynamodb.query(queryParams).promise()
+                success.data = queryResult.Items
+                this.res.status(200).send(success)
             }
-            this.res.status(200).send(result)
-        }
-        try{
-            run();
-        }
-        catch(err){
-            let result = {
-                result: 'failed',
-                error: 'DB Error. Please Contect Manager'
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
             }
-            this.res.status(400).send(result)
         }
+        run();
+    }
+
+    public readList(params: any): void{
+        params.value = nbsp2plus(params.value)
+        let checkParams = {
+            TableName: '',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': params.value},
+            ProjectionExpression: 'coupons, pcoupons'
+        }
+        if(params.type == 'campaign'){
+            checkParams.TableName = 'Campaign'
+        }
+        else if(params.type == 'pinpoint'){
+            checkParams.TableName = 'Pinpoint'
+        }
+        const run = async() => {
+            try{
+                let result = await this.Dynamodb.query(checkParams).promise()
+                let couponParams = {
+                    RequestItems:{
+                        'Coupon':{
+                            Keys: null
+                        }
+                    }
+                }
+                if(params.type == 'campaign'){
+                    let coupon:Array<string> = result.Items[0].coupons
+                    let pcoupons:Array<string> = result.Items[0].pcoupons
+                    let couponList: Array<object> = []
+                    if(coupon.length == 0 && pcoupons.length == 0){
+                        success.data = []
+                        this.res.status(200).send(success)
+                        return;
+                    }
+                    for (const id of coupon) {
+                        pcoupons.push(id)
+                    }
+                    pcoupons.forEach(coupon => {
+                        let obj = {
+                            id: coupon
+                        }
+                        couponList.push(obj)
+                    })
+                    console.log(couponList)
+                    couponParams.RequestItems.Coupon.Keys = couponList
+                }
+                else{
+                    let coupon: Array<string> = result.Items[0].coupons
+                    let couponList: Array<object> = []
+                    if(coupon.length == 0){
+                        success.data = []
+                        this.res.status(200).send(success)
+                        return;
+                    }
+                    for(const id of coupon){
+                        let obj = {
+                            id: id
+                        }
+                        couponList.push(obj)
+                    }
+                    console.log(couponList)
+                    couponParams.RequestItems.Coupon.Keys = couponList
+                }
+                
+                let queryResult = await this.Dynamodb.batchGet(couponParams).promise()
+                let coupons = queryResult.Responses.Coupon
+                for (const coupon of coupons) {
+                    delete coupon.paymentCondition
+                }
+                success.data = coupons
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
 
     /**
@@ -139,8 +197,38 @@ export default class CouponManager extends FeatureManager{
         console.log(updateExp)
     }
 
+    /**
+     * 쿠폰 삭제 로직
+     * 1. id 입력 받기
+     * 2. db 삭제 요청
+     * 3. 결과에 따라 값 반환
+     */
     public delete(params: any): void {
-        throw new Error("Method not implemented.");
+        console.log(params)
+        var queryParams = {
+            TableName: 'Coupon',
+            Key: {
+                'id': params.id
+            },
+            ReturnValues: 'ALL_OLD'
+        }
+        const run = async () => {
+            try{
+            let dbResult = await this.Dynamodb.delete(queryParams).promise()
+            if(dbResult.Attributes == undefined){
+                success.data = []
+            }
+            else{
+                success.data = dbResult.Attributes
+            }
+            this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
-    
 }

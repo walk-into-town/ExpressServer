@@ -1,6 +1,7 @@
 "use strict";
 /**
  * campaign 라우팅 테이블
+ * /campaign
  * pinpoint, register, inquiry, participate, evaluate, coupon
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -22,6 +23,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -29,43 +39,202 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const CampaignManager_1 = __importDefault(require("../../modules/DBManager/CampaignManager"));
+const tempCoupon_1 = __importDefault(require("../../modules/DBManager/tempCoupon"));
+const tempPinpoint_1 = __importDefault(require("../../modules/DBManager/tempPinpoint"));
 const dotenv = __importStar(require("dotenv"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const FeatureManager_1 = require("../../modules/DBManager/FeatureManager");
+const result_1 = require("../../static/result");
 var router = express.Router();
 dotenv.config();
-const pinpoint = require('./pinpoint');
-const participate = require('./campaignParticipate');
-const evaluate = require('./campaignEvaluate');
-const coupon = require('./campaignCoupon');
+const review = require('./campaignReview');
 const uploader = new UploadFile_1.default();
 const upload = uploader.testupload();
-router.use('/pinpoint', pinpoint);
-router.use('participate', participate);
-router.use('/evaluate', evaluate);
-router.use('/coupon', coupon);
-router.get('/', function (req, res) {
-    res.send('success');
-});
+router.use('/review', review);
 //캠페인 등록
-router.post('/register', upload.array('img'), function (req, res) {
+router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
+    res.locals.coupons = [];
     let query = req.body;
     let imgs = [];
-    for (let i = 0; i < req.files.length; i++) {
-        imgs.push(process.env.domain + req.files[i].filename);
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
     }
     query.imgs = imgs;
-    let campaignDB = new CampaignManager_1.default(req, res);
-    campaignDB.insert(query);
+    query.pcoupons = [];
+    console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`);
+    let coupons = req.body.coupons;
+    let couponDB = new tempCoupon_1.default(req, res);
+    let pinpoints = req.body.pinpoints;
+    res.locals.pinpoints = [];
+    if (pinpoints == undefined) {
+        result_1.fail.error = result_1.error.invalKey;
+        result_1.fail.errdesc = '핀포인트 없음';
+        res.status(400).send(result_1.fail);
+        return;
+    }
+    // if(coupons == undefined){
+    //     let result = {
+    //         result: 'failed',
+    //         error: 'Missing Requried Value: Coupon'
+    //     }
+    //     res.status(400).send(result)
+    //     return;
+    // }
+    // if(coupons != undefined){
+    //     for (const coupon of coupons) {
+    //         console.log(coupon)
+    //         console.log(`\n\n`)
+    //         couponDB.insert(coupon)
+    //     }
+    //     for (const coupon of res.locals.coupons){
+    //         if(coupon.id == -1){
+    //             query.coupons = coupon
+    //         }
+    //         else{
+    //             query.pcoupons.push(coupon)
+    //             pinpoints[coupon.paymentCondition].coupon = coupon.id
+    //         }
+    //     }
+    // }
+    let pinpointDB = new tempPinpoint_1.default(req, res);
+    const run = () => __awaiter(this, void 0, void 0, function* () {
+        res.locals.pids = [];
+        res.locals.cids = [];
+        res.locals.campid = '';
+        try {
+            console.log(`쿠폰 등록중...`);
+            for (let i = 0; i < coupons.length; i++) {
+                console.log(`${i}번째 쿠폰 등록`);
+                yield couponDB.insert(coupons[i])();
+            }
+            for (let i = 0; i < res.locals.coupons.length; i++) {
+                if (res.locals.coupons[i].paymentCondition == -1) {
+                    query.coupons = res.locals.coupons[i].id;
+                }
+                else {
+                    query.pcoupons.push(res.locals.coupons[i].id);
+                    pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id];
+                }
+            }
+            console.log(`핀포인트 등록중...`);
+            for (let i = 0; i < pinpoints.length; i++) {
+                console.log(`${i}번째 핀포인트 등록`);
+                yield pinpointDB.insert(pinpoints[i])();
+            }
+            query.pinpoints = res.locals.pinpoints;
+            console.log('캠페인 등록중...');
+            let campaignDB = new CampaignManager_1.default(req, res);
+            campaignDB.insert(query);
+        }
+        catch (err) {
+            var aws = require('aws-sdk');
+            aws.config.update({
+                accessKeyId: process.env.aws_access_key_id,
+                secretAccessKey: process.env.aws_secret_access_key,
+                region: 'us-east-1',
+                endpoint: 'http://localhost:8000'
+            });
+            let doclient = new aws.DynamoDB.DocumentClient();
+            for (const id of res.locals.cids) {
+                let deleteParams = {
+                    TableName: 'Coupon',
+                    Key: {
+                        'id': id
+                    }
+                };
+                yield doclient.delete(deleteParams).promise();
+            }
+            for (const id of res.locals.pids) {
+                let deleteParams = {
+                    TableName: 'Pinpoint',
+                    Key: {
+                        'id': id
+                    }
+                };
+                yield doclient.delete(deleteParams).promise();
+            }
+            let campParam = {
+                TableName: 'Campaign',
+                Key: {
+                    'id': res.locals.campid
+                }
+            };
+            yield doclient.delete(campParam);
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = err;
+            res.status(400).send(result_1.fail);
+        }
+    });
+    run();
 });
 //캠페인 조회
-router.post('/inquiry', function (req, res) {
-    let query = req.body;
+router.get('/', function (req, res) {
+    let query = req.query;
+    if (query.value == '') {
+        res.redirect('campaign/scan');
+        return;
+    }
+    console.log(`요청 JSON\n${JSON.stringify(query, null, 2)}`);
+    let type = FeatureManager_1.toRead.id;
+    if (query.type == 'id' && query.condition == 'exact') {
+        type = FeatureManager_1.toRead.id;
+    }
+    else if (query.type == 'id' && query.condition != 'exact') {
+        result_1.fail.error = result_1.error.invalReq;
+        result_1.fail.errdesc = 'id 조회는 exact만 가능합니다.';
+        res.status(400).send(result_1.fail);
+        return;
+    }
+    else if (query.type == 'name') {
+        type = FeatureManager_1.toRead.name;
+    }
+    else if (query.type == 'ownner') {
+        type = FeatureManager_1.toRead.ownner;
+    }
+    else if (query.type == 'region') {
+        type = FeatureManager_1.toRead.region;
+    }
+    else {
+        result_1.fail.error = result_1.error.invalReq;
+        result_1.fail.errdesc = 'type은 name | ownner | region | id 중 하나여야 합니다.';
+        res.status(400).send(result_1.fail);
+        console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
+        return;
+    }
     let campaignDB = new CampaignManager_1.default(req, res);
-    campaignDB.read(query.value, query.type);
+    if (query.condition == 'exact') {
+        console.log('일치 조회 시작');
+        campaignDB.read(query.value, type);
+    }
+    else if (query.condition == 'part') {
+        console.log('부분 일치 조회 시작');
+        campaignDB.readPart(query.value, type);
+    }
+    else {
+        result_1.fail.errdesc = result_1.error.invalReq;
+        result_1.fail.errdesc = 'condition은 exact | part 중 하나여야 합니다.';
+        res.status(400).send(result_1.fail);
+        console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
+        return;
+    }
+});
+router.get('/scan', function (req, res) {
+    let campaignDB = new CampaignManager_1.default(req, res);
+    campaignDB.scan();
 });
 //캠페인 수정
-router.post('/modify', upload.array('img'), function (req, res) {
+router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = JSON.parse(req.body.json);
     let campaignDB = new CampaignManager_1.default(req, res);
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    query.imgs = imgs;
     campaignDB.update(query);
 });
 module.exports = router;

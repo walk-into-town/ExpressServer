@@ -22,23 +22,47 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /pinpoint/comment
+ */
 const express = __importStar(require("express"));
+const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
 const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
+let uploader = new UploadFile_1.default();
+let upload = uploader.testupload();
 var router = express.Router();
-router.post('/inquiry', function (req, res) {
+router.post('/', authentication_1.default, upload.array('img'), function (req, res) {
     let query = req.body;
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    query.imgs = imgs;
     let pinpointDB = new PinpointManager_1.default(req, res);
-    pinpointDB.readDetail(query);
+    console.log(query);
+    pinpointDB.insertComment(query);
 });
-router.post('/delete', function (req, res) {
-    let query = req.body;
-    query.description = '';
+router.get('/', function (req, res) {
+    let query = req.query;
     let pinpointDB = new PinpointManager_1.default(req, res);
-    pinpointDB.updateDetail(query);
+    pinpointDB.readComment(query);
 });
-router.post('/modify', function (req, res) {
+router.delete('/', authentication_1.default, function (req, res) {
     let query = req.body;
     let pinpointDB = new PinpointManager_1.default(req, res);
-    pinpointDB.updateDetail(query);
+    pinpointDB.deleteComment(query);
+});
+router.put('/', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.updateComment(query);
+});
+router.put('/rate', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let pinpointDB = new PinpointManager_1.default(req, res);
+    pinpointDB.updateRate(query);
 });
 module.exports = router;

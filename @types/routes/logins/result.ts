@@ -1,5 +1,9 @@
+/**
+ * /login/result
+ */
 import * as express from 'express'
 import SessionManager from '../../modules/DBManager/SessionManager'
+import { error, fail, success } from '../../static/result'
 var router = express.Router()
 
 /**
@@ -31,22 +35,16 @@ router.get('/success', function(req, res){
         sessman.deleteSession(toDelete)
         console.log('로그인 성공!')
     })
-
-    let result = {
-        result: 'success',
-        message: req.user,
-        session: req.sessionID
-    }
-    res.status(200).send(result)
+    success.data = req.user
+    console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
+    res.status(200).send(success)
 })
 
 router.get('/fail', function(req: express.Request, res: express.Response){
-    let result = {
-        result : 'failed',
-        error: req.flash().error[0]
-      }
+      fail.error = '로그인 실패'
+      fail.errdesc = req.flash().error[0]
       console.log('로그인 실패')
-      res.status(402).send(result)
+      res.status(400).send(fail)
 })
 
 module.exports = router

@@ -110,14 +110,14 @@ class SessionManager {
                 }
             };
             const run = () => __awaiter(this, void 0, void 0, function* () {
-                yield this.Dynamodb.delete(queryParams, this.onDeleteSession.bind(this)).promise();
+                try {
+                    yield this.Dynamodb.delete(queryParams).promise();
+                }
+                catch (err) {
+                    console.log(err);
+                }
             });
             run();
-        }
-    }
-    onDeleteSession(err, data) {
-        if (err) {
-            console.log(err);
         }
     }
 }

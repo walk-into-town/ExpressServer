@@ -30,6 +30,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
+const result_1 = require("../../static/result");
+const nbsp_1 = require("../Logics/nbsp");
 class CouponManager extends FeatureManager_1.FeatureManager {
     /**
      * 쿠폰 등록 로직
@@ -51,30 +53,30 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 endDate: params.endDate,
                 issued: 0,
                 limit: params.limit,
-                img: params.img
+                img: params.img,
+                paymentCondition: params.paymentCondition
             },
             ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            yield this.Dynamodb.put(queryParams).promise();
-            let result = {
-                result: 'success',
-                message: {
-                    'id': id
-                }
-            };
-            this.res.status(201).send(result);
+            try {
+                yield this.Dynamodb.put(queryParams).promise();
+                this.res.locals.coupons.push(queryParams.Item);
+                // let result = {
+                //     result: 'success',
+                //     message: {
+                //         'id': id
+                //     }
+                // }
+                // this.res.status(201).send(result)
+            }
+            catch (err) { //DB에러 발생
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) { //DB에러 발생
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(400).send(result);
-        }
+        run();
     }
     /**
      * 쿠폰 조회 로직
@@ -83,48 +85,103 @@ class CouponManager extends FeatureManager_1.FeatureManager {
      * 3. 쿼리 실행 후 결과 출력
      */
     read(params) {
-        let type = params.type;
+        params.id = nbsp_1.nbsp2plus(params.id);
         let queryParams = {
-            TableName: 'None',
+            TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.id, },
-            ProjectionExpression: ''
+            ExpressionAttributeValues: { ':id': params.id, }
         };
-        switch (type) {
-            case "coupon":
-                queryParams.TableName = 'Coupon';
-                delete (queryParams.ProjectionExpression);
-                break;
-            case "campaign":
-                queryParams.TableName = 'Campaign';
-                queryParams.ProjectionExpression = 'pinpoint';
-                break;
-            default:
-                let result = {
-                    result: 'failed',
-                    error: 'Type Mismatch. Select Type between coupon and campaign'
-                };
-                this.res.status(400).send(result);
-                return;
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let queryResult = yield this.Dynamodb.query(queryParams).promise();
+                result_1.success.data = queryResult.Items;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    readList(params) {
+        params.value = nbsp_1.nbsp2plus(params.value);
+        let checkParams = {
+            TableName: '',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': params.value },
+            ProjectionExpression: 'coupons, pcoupons'
+        };
+        if (params.type == 'campaign') {
+            checkParams.TableName = 'Campaign';
+        }
+        else if (params.type == 'pinpoint') {
+            checkParams.TableName = 'Pinpoint';
         }
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let queryResult = yield this.Dynamodb.query(queryParams).promise();
-            let result = {
-                result: 'success',
-                message: queryResult.Items
-            };
-            this.res.status(200).send(result);
+            try {
+                let result = yield this.Dynamodb.query(checkParams).promise();
+                let couponParams = {
+                    RequestItems: {
+                        'Coupon': {
+                            Keys: null
+                        }
+                    }
+                };
+                if (params.type == 'campaign') {
+                    let coupon = result.Items[0].coupons;
+                    let pcoupons = result.Items[0].pcoupons;
+                    let couponList = [];
+                    if (coupon.length == 0 && pcoupons.length == 0) {
+                        result_1.success.data = [];
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                    for (const id of coupon) {
+                        pcoupons.push(id);
+                    }
+                    pcoupons.forEach(coupon => {
+                        let obj = {
+                            id: coupon
+                        };
+                        couponList.push(obj);
+                    });
+                    console.log(couponList);
+                    couponParams.RequestItems.Coupon.Keys = couponList;
+                }
+                else {
+                    let coupon = result.Items[0].coupons;
+                    let couponList = [];
+                    if (coupon.length == 0) {
+                        result_1.success.data = [];
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                    for (const id of coupon) {
+                        let obj = {
+                            id: id
+                        };
+                        couponList.push(obj);
+                    }
+                    console.log(couponList);
+                    couponParams.RequestItems.Coupon.Keys = couponList;
+                }
+                let queryResult = yield this.Dynamodb.batchGet(couponParams).promise();
+                let coupons = queryResult.Responses.Coupon;
+                for (const coupon of coupons) {
+                    delete coupon.paymentCondition;
+                }
+                result_1.success.data = coupons;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                error: 'DB Error. Please Contect Manager'
-            };
-            this.res.status(400).send(result);
-        }
+        run();
     }
     /**
      * 쿠폰 수정 로직
@@ -162,8 +219,39 @@ class CouponManager extends FeatureManager_1.FeatureManager {
         updateExp += queryArray.pop();
         console.log(updateExp);
     }
+    /**
+     * 쿠폰 삭제 로직
+     * 1. id 입력 받기
+     * 2. db 삭제 요청
+     * 3. 결과에 따라 값 반환
+     */
     delete(params) {
-        throw new Error("Method not implemented.");
+        console.log(params);
+        var queryParams = {
+            TableName: 'Coupon',
+            Key: {
+                'id': params.id
+            },
+            ReturnValues: 'ALL_OLD'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let dbResult = yield this.Dynamodb.delete(queryParams).promise();
+                if (dbResult.Attributes == undefined) {
+                    result_1.success.data = [];
+                }
+                else {
+                    result_1.success.data = dbResult.Attributes;
+                }
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
 }
 exports.default = CouponManager;

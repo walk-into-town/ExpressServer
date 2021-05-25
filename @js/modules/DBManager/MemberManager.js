@@ -27,13 +27,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
-const SessionManager_1 = __importDefault(require("./SessionManager"));
 const bcrypt = __importStar(require("bcrypt"));
+const result_1 = require("../../static/result");
+const nbsp_1 = require("../Logics/nbsp");
 class MemberManager extends FeatureManager_1.FeatureManager {
     /**
      * 회원가입 로직
@@ -45,63 +43,74 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         let pw;
         let saltRounds = 10;
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let checkparams = {
-                TableName: 'Member',
-                IndexName: 'nicknameIndex',
-                KeyConditionExpression: 'nickname = :value',
-                ExpressionAttributeValues: { ':value': params.nickname },
-            };
-            let checkResult = yield this.Dynamodb.query(checkparams).promise();
-            console.log(checkResult.Items);
-            if (checkResult.Items.length != 0) {
-                let result = {
-                    result: 'failed',
-                    error: '닉네임이 중복되었어요.'
+            try {
+                let nicknameCheckparams = {
+                    TableName: 'Member',
+                    IndexName: 'nicknameIndex',
+                    KeyConditionExpression: 'nickname = :value',
+                    ExpressionAttributeValues: { ':value': params.nickname },
                 };
-                this.res.status(400).send(result);
-                return;
+                let nicknameCheckResult = yield this.Dynamodb.query(nicknameCheckparams).promise();
+                console.log(nicknameCheckResult.Items);
+                if (nicknameCheckResult.Items.length != 0) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '닉네임이 중복되었어요.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                let idCheckParams = {
+                    TableName: 'Member',
+                    KeyConditionExpression: 'id = :id',
+                    ExpressionAttributeValues: { ':id': params.id }
+                };
+                let idCheckResult = yield this.Dynamodb.query(idCheckParams).promise();
+                console.log(idCheckResult.Items);
+                if (idCheckResult.Items.length != 0) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '아이디가 중복되었어요.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
+                    pw = hash;
+                });
+                var queryParams = {
+                    TableName: 'Member',
+                    Item: {
+                        id: params.id,
+                        pw: pw,
+                        profileImg: process.env.domain + 'defaultProfileImg.jpg',
+                        nickname: params.nickname,
+                        isManager: params.isManager,
+                        primeBadge: null,
+                        badge: [],
+                        coupons: [],
+                        myCampaigns: [],
+                        playingCampaigns: [],
+                        selfIntroduction: '자기소개를 꾸며보세요.',
+                        comments: []
+                    },
+                    ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+                };
+                this.Dynamodb.put(queryParams, this.onInsert.bind(this));
             }
-            yield bcrypt.hash(params.pw, saltRounds).then(function (hash) {
-                pw = hash;
-            });
-            var queryParams = {
-                TableName: 'Member',
-                Item: {
-                    id: params.id,
-                    pw: pw,
-                    profileImg: process.env.domain + 'defaultProfileImg.jpg',
-                    nickname: params.nickname,
-                    isManager: params.isManager
-                },
-                ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
-            };
-            this.Dynamodb.put(queryParams, this.onInsert.bind(this));
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                error: 'DB Error! Please Contect Manager'
-            };
-            this.res.status(402).send(result);
-        }
+        run();
     }
     onInsert(err, data) {
         if (err) {
-            let result = {
-                result: 'failed',
-                error: 'ID가 중복되었어요'
-            };
-            this.res.status(400).send(result);
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = 'ID가 중복되었어요.';
+            this.res.status(400).send(err);
         }
         else {
-            let result = {
-                result: 'success',
-                message: 'register success'
-            };
-            this.res.status(201).send(result);
+            result_1.success.data = '회원가입 성공';
+            this.res.status(201).send(result_1.success);
         }
     }
     /**
@@ -113,55 +122,146 @@ class MemberManager extends FeatureManager_1.FeatureManager {
      */
     logout(params) {
         let id = params.id;
-        let sessman = new SessionManager_1.default(this.req, this.res);
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            yield sessman.findBySId(this.req.session.id);
-            if (this.res.locals.result == undefined) {
-                let result = {
-                    result: 'failed',
-                    error: 'Please Login First'
-                };
-                this.res.status(400).send(result);
-                return;
-            }
-            let json = JSON.parse(this.res.locals.result.sess);
-            let findId = json.passport.user.id;
-            if (findId == id) {
+            console.log(this.req.session.passport.user.id);
+            let sessId = this.req.session.passport.user.id;
+            if (sessId == id) {
                 this.req.session.destroy(() => {
                     this.req.session;
                 });
-                let result = {
-                    result: 'success',
-                    message: params.id
-                };
-                this.res.status(200).send(result);
+                result_1.success.data = params.id;
+                console.log('로그아웃 성공');
+                console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
+                this.res.status(200).send(result_1.success);
+                return;
             }
-            else {
-                let result = {
-                    result: 'failed',
-                    error: 'Invalid UserID'
-                };
-                this.res.status(200).send(result);
-            }
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '잘못된 접근입니다.';
+            console.log(`ID와 세션 정보가 다릅니다.\n${JSON.stringify(result_1.fail, null, 2)}`);
+            this.res.status(400).send(result_1.fail);
+            return;
         });
-        try {
-            run();
-        }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                error: err
-            };
-            this.res.status(402).send(result);
-        }
+        run();
     }
     findMember(id) {
     }
     read(params) {
-        throw new Error("Method not implemented.");
+        let id = this.req.session.passport.user.id;
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'myCampaigns, playingCampaigns'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                let myCampaign = result.Items[0].myCampaigns.length;
+                let playingCampaign = result.Items[0].playingCampaigns;
+                let participateCamp = [];
+                let clearCamp = [];
+                playingCampaign.forEach(campaign => {
+                    if (campaign.cleared == true) {
+                        clearCamp.push(campaign);
+                    }
+                    else {
+                        participateCamp.push(campaign);
+                    }
+                });
+                let data = {
+                    playingCampaign: participateCamp.length,
+                    myCampaign: myCampaign,
+                    clearCampaign: clearCamp.length
+                };
+                result_1.success.data = data;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     update(params) {
-        throw new Error("Method not implemented.");
+        let uid = this.req.session.passport.user.id;
+        if (uid != params.uid) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '잘못된 접근입니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
+        let profileImg = params.imgs;
+        let nickname = params.nickname;
+        let selfIntroduction = params.selfIntroduction;
+        let updateExp = 'SET ';
+        let expAttrVal = {};
+        let updateParams = {
+            TableName: 'Member',
+            Key: { id: params.uid },
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            RetrunValues: 'ALL_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (profileImg != '') {
+                    updateExp += 'profileImg = :profileImg ';
+                    expAttrVal[":profileImg"] = profileImg;
+                }
+                if (nickname != '') {
+                    let checkParams = {
+                        TableName: 'Member',
+                        IndexName: 'nicknameIndex',
+                        KeyConditionExpression: `nickname = :value`,
+                        ExpressionAttributeValues: { ':value': params.nickname }
+                    };
+                    console.log('닉네임 중복 여부 확인중...');
+                    let queryResult = yield this.Dynamodb.query(checkParams).promise();
+                    if (queryResult.Items.length != 0) {
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = '닉네임이 중복되었어요';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                    console.log(`닉네임 중복 통과.\nUpdate 쿼리 작성중`);
+                    if (updateExp.length == 4) {
+                        updateExp += 'nickname = :nickname ';
+                        expAttrVal[':nickname'] = nickname;
+                    }
+                    else {
+                        updateExp += ', nickname = :nickname ';
+                        expAttrVal[':nickname'] = nickname;
+                    }
+                }
+                if (selfIntroduction != '') {
+                    if (updateExp.length == 4) {
+                        updateExp += 'selfIntroduction = :selfIntroduction';
+                        expAttrVal[':selfIntroduction'] = selfIntroduction;
+                    }
+                    else {
+                        updateExp += ', selfIntroduction = :selfIntroduction';
+                        expAttrVal[':selfIntroduction'] = selfIntroduction;
+                    }
+                }
+                updateParams.UpdateExpression = updateExp;
+                updateParams.ExpressionAttributeValues = expAttrVal;
+                console.log(`쿼리 작성 완료. 작성된 쿼리\n${JSON.stringify(updateParams, null, 2)}`);
+                console.log('회원정보 수정중');
+                let result = yield this.Dynamodb.update(updateParams).promise();
+                console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`);
+                result_1.success.data = { profileImg };
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     delete(params) {
         throw new Error("Method not implemented.");
@@ -184,35 +284,390 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             TableName: 'Member',
             IndexName: index,
             KeyConditionExpression: `${type} = :value`,
-            ExpressionAttributeValues: { ':value': value },
+            ExpressionAttributeValues: { ':value': value }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let queryResult = yield this.Dynamodb.query(params).promise();
-            let result = {
-                result: 'success',
-                message: ''
-            };
-            if (queryResult.Items.length == 0) {
-                result.message = 'duplicated';
-                this.res.status(201).send(result);
-                return;
+            try {
+                let queryResult = yield this.Dynamodb.query(params).promise();
+                if (queryResult.Items.length == 0) {
+                    result_1.fail.error = result_1.error.invalKey;
+                    result_1.fail.errdesc = '중복되었어요';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                else {
+                    result_1.success.data = '가능해요';
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
             }
-            else {
-                result.message = 'clear';
-                this.res.status(201).send(result);
-                return;
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
             }
         });
-        try {
-            run();
+        run();
+    }
+    readPlaying(params) {
+        let id = params.uid;
+        if (id != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = "잘못된 접근입니다.";
+            this.res.status(400).send(result_1.fail);
+            return;
         }
-        catch (err) {
-            let result = {
-                result: 'failed',
-                message: 'DB Error. Please Contect Manager'
-            };
-            this.res.status(400).send(result);
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'playingCampaigns'
+        };
+        let campaignParams = {
+            RequestItems: {
+                'Campaign': {
+                    Keys: null,
+                    ProjectionExpression: 'id, #name, imgs, description',
+                    ExpressionAttributeNames: { '#name': 'name' }
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let uid = this.req.session.passport.user.id;
+                if (uid != params.uid) {
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = "잘못된 접근입니다.";
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                console.log(`DB 읽어오는중...`);
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                if (result.Items[0].playingCampaigns.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns)}`);
+                let keys = [];
+                for (const campaign of result.Items[0].playingCampaigns) {
+                    let obj = {
+                        'id': campaign.id
+                    };
+                    keys.push(obj);
+                }
+                campaignParams.RequestItems.Campaign.Keys = keys;
+                let data = result.Items[0].playingCampaigns;
+                let camp = yield this.Dynamodb.batchGet(campaignParams).promise();
+                let campaigns = camp.Responses.Campaign;
+                for (const campaign of campaigns) {
+                    for (let i = 0; i < data.length; i++) {
+                        if (data[i].id == campaign.id) {
+                            data[i].name = campaign.name;
+                            data[i].imgs = campaign.imgs;
+                            data[i].description = campaign.description;
+                        }
+                    }
+                }
+                result_1.success.data = data;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(err);
+            }
+        });
+        run();
+    }
+    readMyCamp(params) {
+        let id = params.uid;
+        if (id != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = "잘못된 접근입니다.";
+            this.res.status(400).send(result_1.fail);
+            return;
         }
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'myCampaigns'
+        };
+        let campaignParams = {
+            RequestItems: {
+                'Campaign': {
+                    Keys: null,
+                    ProjectionExpression: 'id, #name, imgs, description',
+                    ExpressionAttributeNames: { '#name': 'name' }
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let uid = this.req.session.passport.user.id;
+                if (uid != params.uid) {
+                    result_1.fail.error = result_1.error.invalAcc;
+                    result_1.fail.errdesc = "잘못된 접근입니다.";
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                console.log(`DB 읽어오는중...`);
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                if (result.Items[0].myCampaigns.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].myCampaigns)}`);
+                let keys = [];
+                for (const id of result.Items[0].myCampaigns) {
+                    let obj = {
+                        'id': id
+                    };
+                    keys.push(obj);
+                }
+                campaignParams.RequestItems.Campaign.Keys = keys;
+                let data = keys;
+                let camp = yield this.Dynamodb.batchGet(campaignParams).promise();
+                let campaigns = camp.Responses.Campaign;
+                for (const campaign of campaigns) {
+                    for (let i = 0; i < data.length; i++) {
+                        if (data[i].id == campaign.id) {
+                            data[i].name = campaign.name;
+                            data[i].imgs = campaign.imgs;
+                            data[i].description = campaign.description;
+                        }
+                    }
+                }
+                result_1.success.data = data;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(err);
+            }
+        });
+        run();
+    }
+    deleteMyCamp(params) {
+        if (this.req.session.passport.user.id != params.uid) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '세션 정보와 id가 일치하지 않습니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
+        let mycampParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'myCampaigns, playingCampaigns',
+            ExpressionAttributeValues: { ':id': params.uid }
+        };
+        let campParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': params.caid }
+        };
+        let deleteparam = {
+            TableName: '',
+            Key: {
+                'id': null
+            }
+        };
+        let updateParams = {
+            TableName: 'Member',
+            Key: null,
+            UpdateExpression: null,
+            ExpressionAttributeValues: { ':newCampaign': null, ':emptylist': [] },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: "attribute_exists(id)"
+        };
+        let getParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: { ':id': null }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const myResult = yield this.Dynamodb.query(mycampParams).promise();
+                const mycamps = myResult.Items[0].myCampaigns;
+                console.log('일치하는 캠페인 검색중');
+                for (let i = 0; mycamps.length; i++) {
+                    if (mycamps[i] == params.caid) {
+                        console.log('일치함');
+                        break;
+                    }
+                    if (i == mycamps.length - 1) {
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = '일치하는 캠페인을 찾을 수 없습니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                }
+                let delcmapResult = yield this.Dynamodb.query(campParams).promise();
+                let deleteItems = delcmapResult.Items[0];
+                console.log(`삭제할 항목 목록\n${JSON.stringify(deleteItems, null, 2)}`);
+                let delCoupon = deleteItems.coupons;
+                let delPcoupon = deleteItems.pcoupons;
+                let delPinpoints = deleteItems.pinpoints;
+                let delCampaign = deleteItems.id;
+                let delMember = deleteItems.users;
+                if (delCoupon.length != 0) {
+                    console.log('캠페인 쿠폰 삭제중');
+                    deleteparam.TableName = 'Coupon';
+                    for (let i = 0; i < delCoupon.length; i++) {
+                        deleteparam.Key.id = delCoupon[i];
+                        console.log(`${i}번째 캠페인 쿠폰 삭제중`);
+                        yield this.Dynamodb.delete(deleteparam).promise();
+                        console.log('캠페인 쿠폰 삭제 성공');
+                    }
+                    console.log('전체 캠페인 쿠폰 삭제 성공');
+                }
+                if (delPcoupon.length != 0) {
+                    deleteparam.TableName = 'Coupon';
+                    for (let i = 0; i < delPcoupon.length; i++) {
+                        deleteparam.Key.id = delPcoupon[i];
+                        console.log(`${i}번째 핀포인트 쿠폰 삭제중`);
+                        yield this.Dynamodb.delete(deleteparam).promise();
+                        console.log('핀포인트 쿠폰 삭제 성공');
+                    }
+                    console.log('전체 핀포인트 쿠폰 삭제 성공');
+                }
+                deleteparam.TableName = 'Pinpoint';
+                for (let i = 0; i < delPinpoints.length; i++) {
+                    deleteparam.Key.id = delPinpoints[i];
+                    console.log(`${i}번째 핀포인트 삭제중`);
+                    yield this.Dynamodb.delete(deleteparam).promise();
+                    console.log('핀포인트 삭제 성공');
+                }
+                console.log('전체 핀포인트 삭제 성공');
+                console.log('참여자 목록 갱신중');
+                for (const id of delMember) {
+                    getParams.ExpressionAttributeValues[":id"] = id;
+                    let queryResult = yield this.Dynamodb.query(getParams).promise();
+                    let playingCamps = queryResult.Items[0].playingCampaigns;
+                    for (let i = 0; i < playingCamps.length; i++) {
+                        if (playingCamps[i].id == params.caid) {
+                            playingCamps.splice(i, 1);
+                            break;
+                        }
+                        if (i == playingCamps.length - 1) {
+                            result_1.fail.error = result_1.error.invalKey;
+                            result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                            this.res.status(400).send(result_1.fail);
+                            return;
+                        }
+                    }
+                    updateParams.ExpressionAttributeValues[":newCampaign"] = playingCamps;
+                    updateParams.UpdateExpression = 'set playingCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)';
+                    updateParams.Key = { 'id': id };
+                    yield this.Dynamodb.update(updateParams).promise();
+                }
+                console.log('참여자 목록 갱신 완료');
+                deleteparam.TableName = 'Campaign';
+                deleteparam.Key.id = delCampaign;
+                yield this.Dynamodb.delete(deleteparam).promise();
+                console.log('캠페인 삭제 성공');
+                result_1.success.data = '제작한 캠페인 삭제 성공';
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    checkPlaying(params) {
+        params.uid = nbsp_1.nbsp2plus(params.uid);
+        params.caid = nbsp_1.nbsp2plus(params.caid);
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: { ':id': params.uid }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                let playing = result.Items[0].playingCampaigns;
+                console.log(playing);
+                for (const camp of playing) {
+                    if (camp.id == params.caid) {
+                        result_1.success.data = '이미 참여중인 캠페인 입니다.';
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                }
+                result_1.success.data = '참여 가능한 캠페인 입니다.';
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
+    deletePlaying(params) {
+        let uid = params.uid;
+        let caid = params.caid;
+        if (uid != this.req.session.passport.user.id) {
+            result_1.fail.error = result_1.error.invalAcc;
+            result_1.fail.errdesc = '세션 정보와 id가 일치하지않습니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: { ':id': uid }
+        };
+        let updateParams = {
+            TableName: 'Member',
+            Key: { id: uid },
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            RetrunValues: 'ALL_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('참여중 캠페인 검색중');
+                let campResult = yield this.Dynamodb.query(queryParams).promise();
+                console.log(`참여중 캠페인\n${JSON.stringify(campResult.Items[0].playingCampaigns, null, 2)}`);
+                let playingCamps = campResult.Items[0].playingCampaigns;
+                for (let i = 0; i < playingCamps.length; i++) {
+                    if (playingCamps[i].id == caid) {
+                        playingCamps.splice(i, 1);
+                        break;
+                    }
+                    if (i == playingCamps.length - 1) {
+                        result_1.fail.error = result_1.error.invalKey;
+                        result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                }
+                updateParams.UpdateExpression = 'SET playingCampaigns = :playingCamp';
+                updateParams.ExpressionAttributeValues = { ':playingCamp': playingCamps };
+                console.log('참여중 캠페인 삭제중');
+                yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = '삭제 성공';
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
 }
 exports.default = MemberManager;

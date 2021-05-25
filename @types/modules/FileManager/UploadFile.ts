@@ -15,6 +15,7 @@ export default class UploadFile extends UploaderInterface{
       },
       filename: function (req, file, cb) {
         let ext = `.${mime.extension(file.mimetype)}`
+        console.log(file.mimetype)
         if(ext == '.mpga'){
           ext = '.mp3'
         }

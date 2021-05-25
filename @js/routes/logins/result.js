@@ -31,8 +31,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * /login/result
+ */
 const express = __importStar(require("express"));
 const SessionManager_1 = __importDefault(require("../../modules/DBManager/SessionManager"));
+const result_1 = require("../../static/result");
 var router = express.Router();
 /**
  * 로그인 성공시 기존 세션 제거
@@ -62,19 +66,14 @@ router.get('/success', function (req, res) {
         sessman.deleteSession(toDelete);
         console.log('로그인 성공!');
     }));
-    let result = {
-        result: 'success',
-        message: req.user,
-        session: req.sessionID
-    };
-    res.status(200).send(result);
+    result_1.success.data = req.user;
+    console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
+    res.status(200).send(result_1.success);
 });
 router.get('/fail', function (req, res) {
-    let result = {
-        result: 'failed',
-        error: req.flash().error[0]
-    };
+    result_1.fail.error = '로그인 실패';
+    result_1.fail.errdesc = req.flash().error[0];
     console.log('로그인 실패');
-    res.status(402).send(result);
+    res.status(400).send(result_1.fail);
 });
 module.exports = router;
