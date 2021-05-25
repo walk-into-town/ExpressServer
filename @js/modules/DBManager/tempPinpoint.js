@@ -48,10 +48,10 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. ConditionExpression을 통해 id가 중복되면 실패
      */
     insert(params) {
-        let date = new Date();
+        let date = new Date(Date.now() + 9 * 60 * 60 * 1000);
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + date.toString()); //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64);
-        let time = new Date();
+        let time = new Date(Date.now() + 9 * 60 * 60 * 1000);
         params.updateTime = time.toISOString();
         if (params.coupons == undefined) {
             params.coupons = [];
