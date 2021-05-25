@@ -11,7 +11,7 @@ export default class PinpointManager extends FeatureManager{
      * 3. ConditionExpression을 통해 id가 중복되면 실패
      */
     public insert(params: any): void {
-        let date = new Date()
+        let date = new Date(Date.now() + 9 * 60 * 60 * 1000)
         let hash = CryptoJS.SHA256(params.name + params.latitude.toString() + params.longitude.toString() + date.toString())  //id 생성
         params.id = hash.toString(CryptoJS.enc.Base64)
         let checkCouponParams = {                   // 쿠폰 id 체크 파라미터
@@ -393,7 +393,7 @@ export default class PinpointManager extends FeatureManager{
      */
     public insertComment(params: any): void{
         let userid = this.req.session.passport.user.id
-        let date = new Date()
+        let date = new Date(Date.now() + 9 * 60 * 60 * 1000)
         let hash = CryptoJS.SHA256(params.pid + date.toString())  //id 생성
         params.coid = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){   //세션의 id와 전송한 id가 다른 경우
@@ -583,7 +583,7 @@ export default class PinpointManager extends FeatureManager{
                     if(cid == params.coid && uid == params.uid){
                         console.log('조건 만족')
                         comments.Items[0].comments[i].text = params.text;
-                        comments.Items[0].comments[i].time = new Date().toISOString()
+                        comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                         success.data = comments.Items[0].comments[i]
                         break;
                     }

@@ -13,7 +13,7 @@ export default class CampaignManager extends FeatureManager{
      * 4. 유효할 때 캠페인 생성 아닐경우 error
      */
     public insert(params: any): void {
-        let date = new Date()
+        let date = new Date(Date.now() + 9 * 60 * 60 * 1000)
         console.log(date.toString())
         let hash = CryptoJS.SHA256(params.ownner + params.name + params.region + date.toString())
         let id = hash.toString(CryptoJS.enc.Base64)
@@ -148,7 +148,7 @@ export default class CampaignManager extends FeatureManager{
                     console.log(`응답 jSON\n${JSON.stringify(fail, null, 2)}`)
                     return;
                 }
-                let date = new Date()
+                let date = new Date(Date.now() + 9 * 60 * 60 * 1000)
                 params.updateTime = date.toISOString()
 
                 var queryParams = {
@@ -566,7 +566,7 @@ export default class CampaignManager extends FeatureManager{
 
     public insertrReview(params: any){
         let userid = this.req.session.passport.user.id
-        let date = new Date()
+        let date = new Date(Date.now() + 9 * 60 * 60 * 1000)
         let hash = CryptoJS.SHA256(params.caid + date.toString())  //id 생성
         params.rid = hash.toString(CryptoJS.enc.Base64)
         if(userid != params.comments.userId){   //세션의 id와 전송한 id가 다른 경우
@@ -746,20 +746,20 @@ export default class CampaignManager extends FeatureManager{
                         console.log('조건 만족')
                         if(params.text == undefined){
                             comments.Items[0].comments[i].rated = params.rated
-                            comments.Items[0].comments[i].time = new Date().toISOString()
+                            comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                             comments.Items[0].comments[i].imgs = params.imgs
                             success.data = comments.Items[0].comments[i]
                         }
                         else if(params.rated == undefined){
                             comments.Items[0].comments[i].text = params.text;
-                            comments.Items[0].comments[i].time = new Date().toISOString()
+                            comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                             comments.Items[0].comments[i].imgs = params.imgs
                             success.data = comments.Items[0].comments[i]
                         }
                         else{
                             comments.Items[0].comments[i].rated = params.rated
                             comments.Items[0].comments[i].text = params.text;
-                            comments.Items[0].comments[i].time = new Date().toISOString()
+                            comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                             comments.Items[0].comments[i].imgs = params.imgs
                             success.data = comments.Items[0].comments[i]
                         }
