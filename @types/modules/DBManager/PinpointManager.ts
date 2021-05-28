@@ -1,6 +1,7 @@
 import { FeatureManager } from "./FeatureManager";
 import * as CryptoJS from 'crypto-js'
 import {success, fail, error} from '../../static/result'
+import { nbsp2plus } from "../Logics/nbsp";
 
 
 export default class PinpointManager extends FeatureManager{
@@ -88,7 +89,7 @@ export default class PinpointManager extends FeatureManager{
                 }
             }
         }
-        params[0].id = this.nbsp2plus(params[0].id)
+        params[0].id = nbsp2plus(params[0].id)
         const run = async () => {              //batch 조회를 수행하기 때문에 비동기 함수를 사용
             try{
                 let test = await this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise()  // read를 수행할때 까지 대기
@@ -223,7 +224,7 @@ export default class PinpointManager extends FeatureManager{
      * 3. 사용자에게 전달
      */
     public readDetail(params: any): void{
-        params.id = this.nbsp2plus(params.id)
+        params.id = nbsp2plus(params.id)
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -326,11 +327,11 @@ export default class PinpointManager extends FeatureManager{
      * 3. 사용자에게 전달
      */
     public readQuiz(params: any): void{
-        params.id = this.nbsp2plus(params.id)
+        params.pid = nbsp2plus(params.pid)
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
-                'id': params.id
+                'id': params.pid
             },
             ProjectionExpression: 'quiz'
         }
@@ -344,7 +345,12 @@ export default class PinpointManager extends FeatureManager{
             this.res.status(400).send(fail)
         }
         else{
-            success.data = data.Item
+            let quiz = data.Item.quiz
+            delete quiz.answer
+            if(quiz.type == '주관식'){
+                delete quiz.choices
+            }
+            success.data = quiz
             this.res.status(201).send(success)
         }
     }
@@ -359,7 +365,7 @@ export default class PinpointManager extends FeatureManager{
     public updateQuiz(params: any): void{
         let queryParams = {
             TableName: 'Pinpoint',
-            Key: {id: params.id},
+            Key: {id: params.pid},
             UpdateExpression: 'set quiz = :quiz',
             ExpressionAttributeValues: {':quiz': params.quiz},
             ReturnValues: 'UPDATED_NEW',
@@ -378,6 +384,128 @@ export default class PinpointManager extends FeatureManager{
             success.data = data.Attributes
             this.res.status(201).send(success)
         }
+    }
+
+    public solveQuiz(params: any){
+        let queryParams = {
+            TableName: 'Pinpoint',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'quiz, coupons',
+            ExpressionAttributeValues: {':id': params.pid}
+        }
+        let memberparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: {':id': this.req.session.passport.user.id}
+        }
+        let campParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'pinpoints, coupons',
+            ExpressionAttributeValues: {':id': params.caid}
+        }
+        let updateParams = {
+            TableName: 'Member',
+            Key: {
+                id: this.req.session.passport.user.id
+            },
+            UpdateExpression: 'set coupons = list_append(if_not_exists(coupons, :emptylist), :newcoupon), playingCampaigns = :newPlaying',
+            ExpressionAttributeValues: {':emptylist' : [], ':newcoupon' : null, ':newPlaying' : null},
+            ConditionExpression: 'attribute_exists(id)'
+        }
+        let couponParams = {
+            TableName: 'Coupon',
+            Key: null,
+            UpdateExpression: 'add issued :number',
+            ConditionExpression: 'attribute_exists(id)',
+            ExpressionAttributeValues: {':number': 1}
+          }
+        const run = async() => {
+            try{
+                let isCampClear = false
+                let memberResult = await this.Dynamodb.query(memberparams).promise()
+                let playingCampaigns = memberResult.Items[0].playingCampaigns
+                console.log('핀포인트 클리어 여부 확인중')
+                let campResult = await this.Dynamodb.query(campParams).promise()
+                let pinpoints = campResult.Items[0].pinpoints
+                let campcoupon = campResult.Items[0].coupons
+                for(const camp of playingCampaigns){
+                    if(camp.id == params.caid){
+                        if(camp.cleared == true){
+                            fail.error = error.invalReq
+                            fail.errdesc = '이미 클리어한 캠페인입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
+                        for(const id of camp.pinpoints){
+                            if(id == params.pid){
+                                console.log('이미 클리어한 핀포인트입니다.')
+                                fail.error = error.invalReq
+                                fail.errdesc = '이미 클리어한 핀포인트입니다.'
+                                this.res.status(400).send(fail)
+                                return;
+                            }
+                        }
+                        if(pinpoints.length - 1 == camp.pinpoints.length){
+                            isCampClear = true;
+                        }
+                        break;
+                    }
+                }
+                console.log('핀포인트 클리어 여부 확인 완료')
+                let result = await this.Dynamodb.query(queryParams).promise()
+                let quiz = result.Items[0].quiz
+                let coupons = result.Items[0].coupons
+                if(quiz.answer == params.answer){
+                    success.data = '정답입니다.'
+                }
+                else{
+                    fail.error = error.invalKey
+                    fail.errdesc = '틀렸습니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+               
+                for(const camp of playingCampaigns){
+                    if(camp.id == params.caid){
+                        camp.pinpoints.push(params.pid)
+                        if(isCampClear == true){
+                            camp.cleared = true;
+                        }
+                    }
+                }
+                let coupon = []
+                if(coupons.length != 0){
+                    if(isCampClear == true){
+                        coupon.push({
+                            id: campcoupon[0],
+                            used: false
+                        })
+                    }
+                    coupon.push({
+                        id: coupons[0],
+                        used: false
+                    })
+                }
+                updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns
+                updateParams.ExpressionAttributeValues[":newcoupon"] = coupon
+                await this.Dynamodb.update(updateParams).promise()
+                
+                couponParams.Key = {id: coupon[0].id};
+                await this.Dynamodb.update(couponParams).promise()
+                couponParams.Key = {id: coupon[1].id}
+                await this.Dynamodb.update(couponParams).promise()
+
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
 
     /**
@@ -448,7 +576,7 @@ export default class PinpointManager extends FeatureManager{
     }
 
     public readComment(params: any): void{
-        let id = this.nbsp2plus(params.pid)
+        let id = nbsp2plus(params.pid)
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',
@@ -689,11 +817,5 @@ export default class PinpointManager extends FeatureManager{
             }
         }
         run();
-    }
-    private nbsp2plus = (query: string): string => {
-        for(let i =0; i < query.length; i++){
-            query = query.replace(' ', '+')
-        }
-        return query
     }
 }

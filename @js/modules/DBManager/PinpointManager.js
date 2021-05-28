@@ -31,16 +31,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
+const nbsp_1 = require("../Logics/nbsp");
 class PinpointManager extends FeatureManager_1.FeatureManager {
-    constructor() {
-        super(...arguments);
-        this.nbsp2plus = (query) => {
-            for (let i = 0; i < query.length; i++) {
-                query = query.replace(' ', '+');
-            }
-            return query;
-        };
-    }
     /**
      * 핀포인트 등록 로직
      * 1. 핀포인트 이름, 위/경도로 hash id 생성
@@ -121,7 +113,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
             }
         };
-        params[0].id = this.nbsp2plus(params[0].id);
+        params[0].id = nbsp_1.nbsp2plus(params[0].id);
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let test = yield this.Dynamodb.batchGet(queryParams, this.onRead.bind(this)).promise(); // read를 수행할때 까지 대기
@@ -245,7 +237,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readDetail(params) {
-        params.id = this.nbsp2plus(params.id);
+        params.id = nbsp_1.nbsp2plus(params.id);
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
@@ -339,11 +331,11 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 3. 사용자에게 전달
      */
     readQuiz(params) {
-        params.id = this.nbsp2plus(params.id);
+        params.pid = nbsp_1.nbsp2plus(params.pid);
         let queryParams = {
             TableName: 'Pinpoint',
             Key: {
-                'id': params.id
+                'id': params.pid
             },
             ProjectionExpression: 'quiz'
         };
@@ -356,7 +348,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(400).send(result_1.fail);
         }
         else {
-            result_1.success.data = data.Item;
+            let quiz = data.Item.quiz;
+            delete quiz.answer;
+            if (quiz.type == '주관식') {
+                delete quiz.choices;
+            }
+            result_1.success.data = quiz;
             this.res.status(201).send(result_1.success);
         }
     }
@@ -370,7 +367,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     updateQuiz(params) {
         let queryParams = {
             TableName: 'Pinpoint',
-            Key: { id: params.id },
+            Key: { id: params.pid },
             UpdateExpression: 'set quiz = :quiz',
             ExpressionAttributeValues: { ':quiz': params.quiz },
             ReturnValues: 'UPDATED_NEW',
@@ -388,6 +385,124 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             result_1.success.data = data.Attributes;
             this.res.status(201).send(result_1.success);
         }
+    }
+    solveQuiz(params) {
+        let queryParams = {
+            TableName: 'Pinpoint',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'quiz, coupons',
+            ExpressionAttributeValues: { ':id': params.pid }
+        };
+        let memberparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: { ':id': this.req.session.passport.user.id }
+        };
+        let campParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'pinpoints, coupons',
+            ExpressionAttributeValues: { ':id': params.caid }
+        };
+        let updateParams = {
+            TableName: 'Member',
+            Key: {
+                id: this.req.session.passport.user.id
+            },
+            UpdateExpression: 'set coupons = list_append(if_not_exists(coupons, :emptylist), :newcoupon), playingCampaigns = :newPlaying',
+            ExpressionAttributeValues: { ':emptylist': [], ':newcoupon': null, ':newPlaying': null },
+            ConditionExpression: 'attribute_exists(id)'
+        };
+        let couponParams = {
+            TableName: 'Coupon',
+            Key: null,
+            UpdateExpression: 'add issued :number',
+            ConditionExpression: 'attribute_exists(id)',
+            ExpressionAttributeValues: { ':number': 1 }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let isCampClear = false;
+                let memberResult = yield this.Dynamodb.query(memberparams).promise();
+                let playingCampaigns = memberResult.Items[0].playingCampaigns;
+                console.log('핀포인트 클리어 여부 확인중');
+                let campResult = yield this.Dynamodb.query(campParams).promise();
+                let pinpoints = campResult.Items[0].pinpoints;
+                let campcoupon = campResult.Items[0].coupons;
+                for (const camp of playingCampaigns) {
+                    if (camp.id == params.caid) {
+                        if (camp.cleared == true) {
+                            result_1.fail.error = result_1.error.invalReq;
+                            result_1.fail.errdesc = '이미 클리어한 캠페인입니다.';
+                            this.res.status(400).send(result_1.fail);
+                            return;
+                        }
+                        for (const id of camp.pinpoints) {
+                            if (id == params.pid) {
+                                console.log('이미 클리어한 핀포인트입니다.');
+                                result_1.fail.error = result_1.error.invalReq;
+                                result_1.fail.errdesc = '이미 클리어한 핀포인트입니다.';
+                                this.res.status(400).send(result_1.fail);
+                                return;
+                            }
+                        }
+                        if (pinpoints.length - 1 == camp.pinpoints.length) {
+                            isCampClear = true;
+                        }
+                        break;
+                    }
+                }
+                console.log('핀포인트 클리어 여부 확인 완료');
+                let result = yield this.Dynamodb.query(queryParams).promise();
+                let quiz = result.Items[0].quiz;
+                let coupons = result.Items[0].coupons;
+                if (quiz.answer == params.answer) {
+                    result_1.success.data = '정답입니다.';
+                }
+                else {
+                    result_1.fail.error = result_1.error.invalKey;
+                    result_1.fail.errdesc = '틀렸습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                for (const camp of playingCampaigns) {
+                    if (camp.id == params.caid) {
+                        camp.pinpoints.push(params.pid);
+                        if (isCampClear == true) {
+                            camp.cleared = true;
+                        }
+                    }
+                }
+                let coupon = [];
+                if (coupons.length != 0) {
+                    if (isCampClear == true) {
+                        coupon.push({
+                            id: campcoupon[0],
+                            used: false
+                        });
+                    }
+                    coupon.push({
+                        id: coupons[0],
+                        used: false
+                    });
+                }
+                updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
+                updateParams.ExpressionAttributeValues[":newcoupon"] = coupon;
+                yield this.Dynamodb.update(updateParams).promise();
+                couponParams.Key = { id: coupon[0].id };
+                yield this.Dynamodb.update(couponParams).promise();
+                couponParams.Key = { id: coupon[1].id };
+                yield this.Dynamodb.update(couponParams).promise();
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     /**
      * 핀포인트 댓글 API
@@ -455,7 +570,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     readComment(params) {
-        let id = this.nbsp2plus(params.pid);
+        let id = nbsp_1.nbsp2plus(params.pid);
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',
