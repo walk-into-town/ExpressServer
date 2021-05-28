@@ -492,11 +492,12 @@ export default class PinpointManager extends FeatureManager{
                 updateParams.ExpressionAttributeValues[":newcoupon"] = coupon
                 await this.Dynamodb.update(updateParams).promise()
                 
-                couponParams.Key = {id: coupon[0].id};
-                await this.Dynamodb.update(couponParams).promise()
-                couponParams.Key = {id: coupon[1].id}
-                await this.Dynamodb.update(couponParams).promise()
-
+                if(coupon.length != 0){
+                    couponParams.Key = {id: coupon[0].id};
+                    await this.Dynamodb.update(couponParams).promise()
+                    couponParams.Key = {id: coupon[1].id}
+                    await this.Dynamodb.update(couponParams).promise()
+                }
                 this.res.status(200).send(success)
             }
             catch(err){

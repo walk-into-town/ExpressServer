@@ -490,10 +490,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
                 updateParams.ExpressionAttributeValues[":newcoupon"] = coupon;
                 yield this.Dynamodb.update(updateParams).promise();
-                couponParams.Key = { id: coupon[0].id };
-                yield this.Dynamodb.update(couponParams).promise();
-                couponParams.Key = { id: coupon[1].id };
-                yield this.Dynamodb.update(couponParams).promise();
+                if (coupon.length != 0) {
+                    couponParams.Key = { id: coupon[0].id };
+                    yield this.Dynamodb.update(couponParams).promise();
+                    couponParams.Key = { id: coupon[1].id };
+                    yield this.Dynamodb.update(couponParams).promise();
+                }
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
