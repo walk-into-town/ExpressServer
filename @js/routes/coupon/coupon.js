@@ -72,12 +72,17 @@ router.delete('/', authentication_1.default, function (req, res) {
 });
 router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
     let couponDB = new CouponManager_1.default(req, res);
-    let query = JSON.parse(req.body.json);
+    let query = req.body;
     let imgs = [];
     for (let i = 0; i < req.files.length; i++) {
         imgs.push(process.env.domain + req.files[i].filename);
     }
     query.imgs = imgs;
     couponDB.update(query);
+});
+router.post('/use', authentication_1.default, function (req, res) {
+    let couponDB = new CouponManager_1.default(req, res);
+    let query = req.body;
+    couponDB.useCoupon(query);
 });
 module.exports = router;

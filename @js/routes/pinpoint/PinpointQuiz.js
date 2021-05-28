@@ -35,7 +35,7 @@ router.post('/', authentication_1.default, function (req, res) {
     DBManager.insertQuiz(query);
 });
 router.get('/', function (req, res) {
-    let query = req.body;
+    let query = req.query;
     let DBManager = new PinpointManager_1.default(req, res);
     DBManager.readQuiz(query);
 });
@@ -49,5 +49,10 @@ router.put('/', authentication_1.default, function (req, res) {
     let query = req.body;
     let DBManager = new PinpointManager_1.default(req, res);
     DBManager.updateQuiz(query);
+});
+router.post('/check', authentication_1.default, function (req, res) {
+    let query = req.body;
+    let DBManager = new PinpointManager_1.default(req, res);
+    DBManager.solveQuiz(query);
 });
 module.exports = router;
