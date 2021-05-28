@@ -253,5 +253,44 @@ class CouponManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
+    useCoupon(params) {
+        let id = this.req.session.passport.user.id;
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'coupons',
+            ExpressionAttributeValues: { ':id': id }
+        };
+        let updateParams = {
+            TableName: 'Member',
+            Key: { 'id': id },
+            UpdateExpression: 'set coupons = :newcoupons',
+            ExpressionAttributeValues: { ':newcoupons': null }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let result = yield this.Dynamodb.query(queryParams).promise();
+            let coupons = result.Items[0].coupons;
+            if (coupons.length == 0) {
+                result_1.fail.error = result_1.error.invalReq;
+                result_1.fail.errdesc = '사용 가능한 쿠폰이 없습니다.';
+                this.res.status(400).send(result_1.fail);
+                return;
+            }
+            for (const coupon of coupons) {
+                if (coupon.id == params.cid && coupon.used == false) {
+                    coupon.used = true;
+                    result_1.success.data = '쿠폰 사용 성공';
+                    updateParams.ExpressionAttributeValues[":newcoupons"] = coupons;
+                    yield this.Dynamodb.update(updateParams).promise();
+                    this.res.status(201).send(result_1.success);
+                    return;
+                }
+            }
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = '이미 사용하거나 없는 쿠폰입니다.';
+            this.res.status(400).send(result_1.fail);
+        });
+        run();
+    }
 }
 exports.default = CouponManager;
