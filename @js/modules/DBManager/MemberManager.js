@@ -479,7 +479,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             TableName: 'Member',
             Key: null,
             UpdateExpression: null,
-            ExpressionAttributeValues: { ':newCampaign': null, ':emptylist': [] },
+            ExpressionAttributeValues: { ':newCampaign': null },
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: "attribute_exists(id)"
         };
@@ -496,6 +496,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('일치하는 캠페인 검색중');
                 for (let i = 0; mycamps.length; i++) {
                     if (mycamps[i] == params.caid) {
+                        mycamps.splice(i, 1);
                         console.log('일치함');
                         break;
                     }
@@ -561,11 +562,15 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                         }
                     }
                     updateParams.ExpressionAttributeValues[":newCampaign"] = playingCamps;
-                    updateParams.UpdateExpression = 'set playingCampaigns = list_append(if_not_exists(myCampaigns, :emptylist), :newCampaign)';
+                    updateParams.UpdateExpression = 'set playingCampaigns = :newCampaign)';
                     updateParams.Key = { 'id': id };
                     yield this.Dynamodb.update(updateParams).promise();
                 }
                 console.log('참여자 목록 갱신 완료');
+                updateParams.ExpressionAttributeValues[":newCampaign"] = mycamps;
+                updateParams.UpdateExpression = 'set myCampaigns = :newCampaign';
+                updateParams.Key = { 'id': params.uid };
+                yield this.Dynamodb.update(updateParams).promise();
                 deleteparam.TableName = 'Campaign';
                 deleteparam.Key.id = delCampaign;
                 yield this.Dynamodb.delete(deleteparam).promise();
