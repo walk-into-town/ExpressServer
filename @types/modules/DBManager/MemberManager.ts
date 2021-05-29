@@ -663,4 +663,53 @@ export default class MemberManager extends FeatureManager{
         }
         run()
     }
+
+    public readMyCoupon(params: any){
+        let id = this.req.session.passport.user.id
+        let memberparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': id},
+            ProjectionExpression: 'coupons'
+        }
+        let couponBatch = {
+            RequestItems: {
+                'Coupon': {
+                    Keys: []
+                }
+            }
+        }
+        const run = async() => {
+            try{
+                console.log('내 쿠폰 조회중')
+                let memberResult = await this.Dynamodb.query(memberparams).promise()
+                let couponIds = memberResult.Items[0].coupons
+                console.log(`조회 성공. 내 쿠폰 목록\n${JSON.stringify(couponIds, null, 2)}`)
+                if(couponIds.length == 0){
+                    success.data = []
+                    this.res.status(200).send(success)
+                    return;
+                }
+                for(const coupon of couponIds){
+                    let obj = {
+                        'id': coupon.id
+                    }
+                    couponBatch.RequestItems.Coupon.Keys.push(obj)
+                }
+                console.log('쿠폰 테이블 조회중')
+                let couponResult = await this.Dynamodb.batchGet(couponBatch).promise()
+                let coupons = couponResult.Responses.Coupon
+                console.log(`쿠폰 테이블 조회 성공. 조회한 쿠폰\n${JSON.stringify(coupons, null, 2)}`)
+                success.data = coupons
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+
+        run()
+    }
 }

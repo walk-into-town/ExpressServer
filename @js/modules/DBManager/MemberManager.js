@@ -675,5 +675,52 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
+    readMyCoupon(params) {
+        let id = this.req.session.passport.user.id;
+        let memberparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': id },
+            ProjectionExpression: 'coupons'
+        };
+        let couponBatch = {
+            RequestItems: {
+                'Coupon': {
+                    Keys: []
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('내 쿠폰 조회중');
+                let memberResult = yield this.Dynamodb.query(memberparams).promise();
+                let couponIds = memberResult.Items[0].coupons;
+                console.log(`조회 성공. 내 쿠폰 목록\n${JSON.stringify(couponIds, null, 2)}`);
+                if (couponIds.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                for (const coupon of couponIds) {
+                    let obj = {
+                        'id': coupon.id
+                    };
+                    couponBatch.RequestItems.Coupon.Keys.push(obj);
+                }
+                console.log('쿠폰 테이블 조회중');
+                let couponResult = yield this.Dynamodb.batchGet(couponBatch).promise();
+                let coupons = couponResult.Responses.Coupon;
+                console.log(`쿠폰 테이블 조회 성공. 조회한 쿠폰\n${JSON.stringify(coupons, null, 2)}`);
+                result_1.success.data = coupons;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
 }
 exports.default = MemberManager;
