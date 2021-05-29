@@ -118,7 +118,9 @@ router.delete('/', isAuthenticated, function(req: express.Request, res: express.
 })
 
 router.get('/coupon', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let query = req.query
+    let memberDB = new MemberManager(req, res)
+    memberDB.readMyCoupon(query)
 })
 
 router.put('/coupon', isAuthenticated, function(req: express.Request, res: express.Response){

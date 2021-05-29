@@ -124,6 +124,9 @@ router.get('/', authentication_1.default, function (req, res) {
 router.delete('/', authentication_1.default, function (req, res) {
 });
 router.get('/coupon', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.readMyCoupon(query);
 });
 router.put('/coupon', authentication_1.default, function (req, res) {
 });
