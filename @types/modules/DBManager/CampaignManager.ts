@@ -453,6 +453,7 @@ export default class CampaignManager extends FeatureManager{
     }
 
     public readPlaying(params: any):void {
+        params.caid = nbsp2plus(params.caid)
         let campaignParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -473,13 +474,13 @@ export default class CampaignManager extends FeatureManager{
                 console.log('캠페인 검색중')
                 let campResult = await this.Dynamodb.query(campaignParams).promise()
                 console.log('캠페인 검색 완료')
-                let users = campResult.Items[0].users
                 if(campResult.Items.length == 0){
                     fail.error = error.invalReq
                     fail.errdesc = '캠페인을 찾을 수 없습니다.'
                     this.res.status(400).send(fail)
                     return;                    
                 }
+                let users = campResult.Items[0].users
                 if(users.length == 0){
                     success.data = []
                     this.res.status(200).send(success)

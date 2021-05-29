@@ -465,6 +465,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
     delete(params) {
     }
     readPlaying(params) {
+        params.caid = nbsp_1.nbsp2plus(params.caid);
         let campaignParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
@@ -485,13 +486,13 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log('캠페인 검색중');
                 let campResult = yield this.Dynamodb.query(campaignParams).promise();
                 console.log('캠페인 검색 완료');
-                let users = campResult.Items[0].users;
                 if (campResult.Items.length == 0) {
                     result_1.fail.error = result_1.error.invalReq;
                     result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
                     this.res.status(400).send(result_1.fail);
                     return;
                 }
+                let users = campResult.Items[0].users;
                 if (users.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
