@@ -60,7 +60,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 goods: params.goods,
                 endDate: params.endDate,
                 issued: 0,
-                limit: params.limit,
+                limit: Number(params.limit),
                 imgs: params.img,
                 paymentCondition: params.paymentCondition
             },
