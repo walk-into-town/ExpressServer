@@ -477,13 +477,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 let coupon = [];
+                if (isCampClear == true && campcoupon.length != 0) {
+                    coupon.push({
+                        id: campcoupon[0],
+                        used: false
+                    });
+                }
                 if (coupons.length != 0) {
-                    if (isCampClear == true) {
-                        coupon.push({
-                            id: campcoupon[0],
-                            used: false
-                        });
-                    }
                     coupon.push({
                         id: coupons[0],
                         used: false
