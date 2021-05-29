@@ -257,6 +257,12 @@ export default class CouponManager extends FeatureManager{
             }
             for(const coupon of coupons){
                 if(coupon.id == params.cid && coupon.used == false){
+                    if(coupon.endDate < new Date().toISOString()){
+                        fail.error = error.invalReq
+                        fail.errdesc = '유효기간 초과'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
                     coupon.used = true;
                     success.data = '쿠폰 사용 성공'
                     updateParams.ExpressionAttributeValues[":newcoupons"] = coupons

@@ -278,6 +278,12 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             }
             for (const coupon of coupons) {
                 if (coupon.id == params.cid && coupon.used == false) {
+                    if (coupon.endDate < new Date().toISOString()) {
+                        result_1.fail.error = result_1.error.invalReq;
+                        result_1.fail.errdesc = '유효기간 초과';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
                     coupon.used = true;
                     result_1.success.data = '쿠폰 사용 성공';
                     updateParams.ExpressionAttributeValues[":newcoupons"] = coupons;
