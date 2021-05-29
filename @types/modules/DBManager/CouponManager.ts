@@ -57,11 +57,11 @@ export default class CouponManager extends FeatureManager{
      * 3. 쿼리 실행 후 결과 출력
      */
     public read(params: any): void {
-        params.id = nbsp2plus(params.id)
+        params.value = nbsp2plus(params.value)
         let queryParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: {':id': params.id,}
+            ExpressionAttributeValues: {':id': params.value,}
         }
         const run = async() => {
             try{ 
