@@ -422,6 +422,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':number': 1 },
             ExpressionAttributeNames: { '#limit': 'limit' }
         };
+        let batchCoupon = {
+            RequestItems: {
+                'Coupon': {
+                    Keys: []
+                }
+            }
+        };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let isCampClear = false;
@@ -505,7 +512,25 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
                 updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                for (const coup of this.res.locals.coupon2insert) {
+                    let obj = {
+                        id: coup.id
+                    };
+                    batchCoupon.RequestItems.Coupon.Keys.push(obj);
+                }
+                let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
+                let getCoupons = getCoupon.Responses.Coupon;
+                let answer = [];
+                for (const coupon of getCoupons) {
+                    let obj = {
+                        name: coupon.name,
+                        goods: coupon.goods,
+                        imgs: coupon.imgs
+                    };
+                    answer.push(obj);
+                }
                 yield this.Dynamodb.update(updateParams).promise();
+                result_1.success.data = answer;
                 this.res.status(201).send(result_1.success);
             }
             catch (err) {
@@ -518,9 +543,26 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 if (this.res.locals.coupon.length == 0) {
                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                    for (const coup of this.res.locals.coupon2insert) {
+                        let obj = {
+                            id: coup.id
+                        };
+                        batchCoupon.RequestItems.Coupon.Keys.push(obj);
+                    }
+                    let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
+                    let getCoupons = getCoupon.Responses.Coupon;
+                    let answer = [];
+                    for (const coupon of getCoupons) {
+                        let obj = {
+                            name: coupon.name,
+                            goods: coupon.goods,
+                            imgs: coupon.imgs
+                        };
+                        answer.push(obj);
+                    }
                     yield this.Dynamodb.update(updateParams).promise();
-                    result_1.success.data = '정답입니다.';
-                    this.res.status(200).send(result_1.success);
+                    result_1.success.data = answer;
+                    this.res.status(201).send(result_1.success);
                     return;
                 }
                 else {
@@ -531,18 +573,52 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                 if (err) {
                                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                                    for (const coup of this.res.locals.coupon2insert) {
+                                        let obj = {
+                                            id: coup.id
+                                        };
+                                        batchCoupon.RequestItems.Coupon.Keys.push(obj);
+                                    }
+                                    let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
+                                    let getCoupons = getCoupon.Responses.Coupon;
+                                    let answer = [];
+                                    for (const coupon of getCoupons) {
+                                        let obj = {
+                                            name: coupon.name,
+                                            goods: coupon.goods,
+                                            imgs: coupon.imgs
+                                        };
+                                        answer.push(obj);
+                                    }
                                     yield this.Dynamodb.update(updateParams).promise();
-                                    result_1.success.data = '정답입니다.';
-                                    this.res.status(200).send(result_1.success);
+                                    result_1.success.data = answer;
+                                    this.res.status(201).send(result_1.success);
                                     return;
                                 }
                                 else {
                                     this.res.locals.coupon2insert.push(this.res.locals.coupon[0]);
                                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                                    for (const coup of this.res.locals.coupon2insert) {
+                                        let obj = {
+                                            id: coup.id
+                                        };
+                                        batchCoupon.RequestItems.Coupon.Keys.push(obj);
+                                    }
+                                    let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
+                                    let getCoupons = getCoupon.Responses.Coupon;
+                                    let answer = [];
+                                    for (const coupon of getCoupons) {
+                                        let obj = {
+                                            name: coupon.name,
+                                            goods: coupon.goods,
+                                            imgs: coupon.imgs
+                                        };
+                                        answer.push(obj);
+                                    }
                                     yield this.Dynamodb.update(updateParams).promise();
-                                    result_1.success.data = '정답입니다.';
-                                    this.res.status(200).send(result_1.success);
+                                    result_1.success.data = answer;
+                                    this.res.status(201).send(result_1.success);
                                     return;
                                 }
                             });
@@ -551,9 +627,26 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     catch (err) {
                         updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                         updateParams.ExpressionAttributeValues[":newcoupon"] = [];
+                        for (const coup of this.res.locals.coupon2insert) {
+                            let obj = {
+                                id: coup.id
+                            };
+                            batchCoupon.RequestItems.Coupon.Keys.push(obj);
+                        }
+                        let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
+                        let getCoupons = getCoupon.Responses.Coupon;
+                        let answer = [];
+                        for (const coupon of getCoupons) {
+                            let obj = {
+                                name: coupon.name,
+                                goods: coupon.goods,
+                                imgs: coupon.imgs
+                            };
+                            answer.push(obj);
+                        }
                         yield this.Dynamodb.update(updateParams).promise();
-                        result_1.success.data = '정답입니다.';
-                        this.res.status(200).send(result_1.success);
+                        result_1.success.data = answer;
+                        this.res.status(201).send(result_1.success);
                         return;
                     }
                 }

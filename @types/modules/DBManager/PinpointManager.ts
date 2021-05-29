@@ -422,6 +422,13 @@ export default class PinpointManager extends FeatureManager{
             ExpressionAttributeValues: {':number': 1},
             ExpressionAttributeNames: {'#limit': 'limit'}
         }
+        let batchCoupon = {
+            RequestItems:{
+                'Coupon':{
+                    Keys: []
+                }
+            }
+        }
         const run = async() => {
             try{
                 let isCampClear = false
@@ -506,7 +513,25 @@ export default class PinpointManager extends FeatureManager{
                 }
                 updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns
                 updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert
+                for(const coup of this.res.locals.coupon2insert){
+                    let obj = {
+                        id: coup.id
+                    }
+                    batchCoupon.RequestItems.Coupon.Keys.push(obj)
+                }
+                let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
+                let getCoupons = getCoupon.Responses.Coupon
+                let answer = []
+                for(const coupon of getCoupons){
+                    let obj = {
+                        name: coupon.name,
+                        goods: coupon.goods,
+                        imgs: coupon.imgs
+                    }
+                    answer.push(obj)
+                }
                 await this.Dynamodb.update(updateParams).promise()
+                success.data = answer
                 this.res.status(201).send(success)
             }
             catch(err){
@@ -519,9 +544,26 @@ export default class PinpointManager extends FeatureManager{
                 if(this.res.locals.coupon.length == 0){
                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns
                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert
+                    for(const coup of this.res.locals.coupon2insert){
+                        let obj = {
+                            id: coup.id
+                        }
+                        batchCoupon.RequestItems.Coupon.Keys.push(obj)
+                    }
+                    let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
+                    let getCoupons = getCoupon.Responses.Coupon
+                    let answer = []
+                    for(const coupon of getCoupons){
+                        let obj = {
+                            name: coupon.name,
+                            goods: coupon.goods,
+                            imgs: coupon.imgs
+                        }
+                        answer.push(obj)
+                    }
                     await this.Dynamodb.update(updateParams).promise()
-                    success.data = '정답입니다.'
-                    this.res.status(200).send(success)
+                    success.data = answer
+                    this.res.status(201).send(success)
                     return;
                 }
                 else{
@@ -531,18 +573,52 @@ export default class PinpointManager extends FeatureManager{
                             if(err){
                                 updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns
                                 updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert
+                                for(const coup of this.res.locals.coupon2insert){
+                                    let obj = {
+                                        id: coup.id
+                                    }
+                                    batchCoupon.RequestItems.Coupon.Keys.push(obj)
+                                }
+                                let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
+                                let getCoupons = getCoupon.Responses.Coupon
+                                let answer = []
+                                for(const coupon of getCoupons){
+                                    let obj = {
+                                        name: coupon.name,
+                                        goods: coupon.goods,
+                                        imgs: coupon.imgs
+                                    }
+                                    answer.push(obj)
+                                }
                                 await this.Dynamodb.update(updateParams).promise()
-                                success.data = '정답입니다.'
-                                this.res.status(200).send(success)
+                                success.data = answer
+                                this.res.status(201).send(success)
                                 return;
                             }
                             else{
                                 this.res.locals.coupon2insert.push(this.res.locals.coupon[0])
                                 updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns
                                 updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert
+                                for(const coup of this.res.locals.coupon2insert){
+                                    let obj = {
+                                        id: coup.id
+                                    }
+                                    batchCoupon.RequestItems.Coupon.Keys.push(obj)
+                                }
+                                let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
+                                let getCoupons = getCoupon.Responses.Coupon
+                                let answer = []
+                                for(const coupon of getCoupons){
+                                    let obj = {
+                                        name: coupon.name,
+                                        goods: coupon.goods,
+                                        imgs: coupon.imgs
+                                    }
+                                    answer.push(obj)
+                                }
                                 await this.Dynamodb.update(updateParams).promise()
-                                success.data = '정답입니다.'
-                                this.res.status(200).send(success)
+                                success.data = answer
+                                this.res.status(201).send(success)
                                 return;
                             }
                         }.bind(this))
@@ -550,9 +626,26 @@ export default class PinpointManager extends FeatureManager{
                     catch(err){
                         updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns
                         updateParams.ExpressionAttributeValues[":newcoupon"] = []
+                        for(const coup of this.res.locals.coupon2insert){
+                            let obj = {
+                                id: coup.id
+                            }
+                            batchCoupon.RequestItems.Coupon.Keys.push(obj)
+                        }
+                        let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
+                        let getCoupons = getCoupon.Responses.Coupon
+                        let answer = []
+                        for(const coupon of getCoupons){
+                            let obj = {
+                                name: coupon.name,
+                                goods: coupon.goods,
+                                imgs: coupon.imgs
+                            }
+                            answer.push(obj)
+                        }
                         await this.Dynamodb.update(updateParams).promise()
-                        success.data = '정답입니다.'
-                        this.res.status(200).send(success)
+                        success.data = answer
+                        this.res.status(201).send(success)
                         return;
                     }
                 }
