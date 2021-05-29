@@ -225,8 +225,8 @@ router.get('/scan', function (req, res) {
     campaignDB.scan();
 });
 //캠페인 수정
-router.put('/', authentication_1.default, upload.array('img'), function (req, res) {
-    let query = JSON.parse(req.body.json);
+router.put('/', authentication_1.default, upload.array('imgs'), function (req, res) {
+    let query = req.body;
     let campaignDB = new CampaignManager_1.default(req, res);
     let imgs = [];
     if (req.files != undefined) {

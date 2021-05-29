@@ -207,8 +207,8 @@ router.get('/scan', function(req: express.Request, res: express.Response){
 })
 
 //캠페인 수정
-router.put('/',isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
-    let query = JSON.parse(req.body.json)
+router.put('/',isAuthenticated, upload.array('imgs'), function(req: express.Request, res: express.Response){
+    let query = req.body
     let campaignDB = new CampaignManager(req,res)
     let imgs: Array<string> = []
     if(req.files != undefined){

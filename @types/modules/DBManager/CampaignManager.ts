@@ -408,44 +408,39 @@ export default class CampaignManager extends FeatureManager{
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {':id': params.cid}
         }
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: {id: params.caid},
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            ReturnValues: 'UPDATED_NEW'
+        }
+        let updateExp: string = 'SET '
+        let expAttrVal: any = {}
         const run = async() => {
             try{
-                const result = await this.Dynamodb.query(queryParams).promise()
-                let originCampaign = result.Items[0]
-                if(originCampaign == undefined){        //일치하는 id 없음
-                    fail.error = error.dataNotFound
-                    fail.errdesc = '일치하는 캠페인 id 없음'
-                    this.res.status(400).send(fail)
-                    return;
+                if(params.description != ''){
+                    updateExp = updateExp + 'description = :newdesc ';
+                    expAttrVal[':newdesc'] = params.description
                 }
-                let pinpoints = []; let coupons = []
-                params.pinpoints.forEach(pinpoint => {
-                    pinpoints.push({"id": pinpoint})
-                })
-                params.coupons.forEach(coupon => {
-                    coupons.push({"id": coupon})
-                })
-                let checkParams = {
-                    RequestItems:{
-                        'Pinpoint':{
-                            Keys: pinpoints
-                        },
-                        'Coupon':{
-                            Keys: coupons
-                        }
+                if(params.imgs.length != 0){
+                    if(updateExp.length == 4){
+                        updateExp += 'imgs = list_append(imgs, :newimgs) '
+                        expAttrVal[':newimgs'] = params.imgs
+                    }
+                    else{
+                        updateExp += ', imgs = list_append(imgs, :newimgs)'
+                        expAttrVal[':newimgs'] = params.imgs
                     }
                 }
-                const check = await this.Dynamodb.batchGet(checkParams).promise()
-                let pinpointCheck = check.Responses.Pinpoint.length           
-                let couponCheck = check.Responses.Coupon.length
-                if(pinpointCheck != pinpoints.length || couponCheck != coupons.length){
-                    fail.error = error.dataNotFound
-                    fail.errdesc = '일치하는 핀포인트 또는 쿠폰 id 없음'
-                    this.res.status(400).send(fail)
-                    return;
-                }
+                updateParams.UpdateExpression = updateExp
+                updateParams.ExpressionAttributeValues = expAttrVal
+                let result = await this.Dynamodb.update(updateParams).promise()
+                console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`)
+                success.data = result.Attributes
+                this.res.status(201).send(success)
             }
-            catch (err) {                             //DB 에러 발생
+            catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
