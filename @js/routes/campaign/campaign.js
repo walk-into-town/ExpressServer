@@ -96,6 +96,7 @@ router.post('/', authentication_1.default, function (req, res) {
         res.locals.pids = [];
         res.locals.cids = [];
         res.locals.campid = '';
+        let campCoupon;
         try {
             console.log(`쿠폰 등록중...`);
             for (let i = 0; i < coupons.length; i++) {
@@ -104,13 +105,14 @@ router.post('/', authentication_1.default, function (req, res) {
             }
             for (let i = 0; i < res.locals.coupons.length; i++) {
                 if (res.locals.coupons[i].paymentCondition == -1) {
-                    query.coupons = res.locals.coupons[i].id;
+                    campCoupon = res.locals.coupons[i].id;
                 }
                 else {
                     query.pcoupons.push(res.locals.coupons[i].id);
                     pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id];
                 }
             }
+            query.coupons = campCoupon;
             console.log(`핀포인트 등록중...`);
             for (let i = 0; i < pinpoints.length; i++) {
                 console.log(`${i}번째 핀포인트 등록`);
