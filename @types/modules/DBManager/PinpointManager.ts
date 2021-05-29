@@ -505,7 +505,7 @@ export default class PinpointManager extends FeatureManager{
                     }
                 }
                 updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns
-                updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon
+                updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert
                 await this.Dynamodb.update(updateParams).promise()
                 this.res.status(201).send(success)
             }

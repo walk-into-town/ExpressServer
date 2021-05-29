@@ -504,7 +504,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
-                updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon;
+                updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
                 yield this.Dynamodb.update(updateParams).promise();
                 this.res.status(201).send(result_1.success);
             }
