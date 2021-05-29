@@ -308,8 +308,8 @@ export default class MemberManager extends FeatureManager{
             RequestItems:{
                 'Campaign':{
                     Keys: null,
-                    ProjectionExpression: 'id, #name, imgs, description',
-                    ExpressionAttributeNames: {'#name': 'name'}
+                    ProjectionExpression: 'id, #name, imgs, description, #region',
+                    ExpressionAttributeNames: {'#name': 'name', '#region': 'region'},
                 }
             }
         }
@@ -329,7 +329,7 @@ export default class MemberManager extends FeatureManager{
                     this.res.status(200).send(success)
                     return;
                 }
-                console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns)}`)
+                console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns, null, 2)}`)
                 let keys = []
                 for(const campaign of result.Items[0].playingCampaigns){
                     let obj = {
@@ -347,6 +347,7 @@ export default class MemberManager extends FeatureManager{
                             data[i].name = campaign.name
                             data[i].imgs = campaign.imgs
                             data[i].description = campaign.description
+                            data[i].region = campaign.region
                         }
                     }
                 }
