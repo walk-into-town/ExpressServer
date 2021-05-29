@@ -61,7 +61,7 @@ export default class CouponManager extends FeatureManager{
         let queryParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: {':id': params.value,}
+            ExpressionAttributeValues: {':id': params.value}
         }
         const run = async() => {
             try{ 
@@ -80,13 +80,13 @@ export default class CouponManager extends FeatureManager{
 
     public readList(params: any): void{
         params.value = nbsp2plus(params.value)
-        let checkParams = {
+        let checkParams = {                     //캠페인/핀포인트에서 쿠폰을 가져오는 parameter
             TableName: '',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {':id': params.value},
             ProjectionExpression: 'coupons, pcoupons'
         }
-        if(params.type == 'campaign'){
+        if(params.type == 'campaign'){          //요청의 type에 따라 테이블 명을 지정
             checkParams.TableName = 'Campaign'
         }
         else if(params.type == 'pinpoint'){
@@ -95,13 +95,14 @@ export default class CouponManager extends FeatureManager{
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(checkParams).promise()
-                let couponParams = {
+                let couponParams = {            //batchget으로 쿠폰 내용을 가져오기 위한 parameter
                     RequestItems:{
                         'Coupon':{
                             Keys: null
                         }
                     }
                 }
+                //캠페인 / 핀포인트에서 쿠폰 id를 가져와 couponParams에 넣기
                 if(params.type == 'campaign'){
                     let coupon:Array<string> = result.Items[0].coupons
                     let pcoupons:Array<string> = result.Items[0].pcoupons
@@ -140,12 +141,9 @@ export default class CouponManager extends FeatureManager{
                     console.log(couponList)
                     couponParams.RequestItems.Coupon.Keys = couponList
                 }
-                
+                // 위에서 넣은 couponParams를 이용해 batchGet으로 쿠폰 내용 가져와 응답하기
                 let queryResult = await this.Dynamodb.batchGet(couponParams).promise()
                 let coupons = queryResult.Responses.Coupon
-                for (const coupon of coupons) {
-                    delete coupon.paymentCondition
-                }
                 success.data = coupons
                 this.res.status(200).send(success)
             }
