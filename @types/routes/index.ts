@@ -12,6 +12,7 @@ const debug = require('./debug')
 const coupon = require('./coupon/coupon')
 const pinpoint = require('./pinpoint/pinpoint')
 const monster = require('./monster/monster')
+const file = require('./file/file')
 
 
 router.use('/test', testroute)
@@ -25,5 +26,6 @@ router.use('/manager', manager)
 router.use('/auth', auth)
 router.use('/login/result', loginResult)
 router.use('/debug', debug)
+router.use('/file', file)
 
 module.exports = router
