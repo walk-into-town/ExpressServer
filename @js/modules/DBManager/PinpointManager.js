@@ -418,8 +418,9 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             TableName: 'Coupon',
             Key: null,
             UpdateExpression: 'add issued :number',
-            ConditionExpression: 'attribute_exists(id)',
-            ExpressionAttributeValues: { ':number': 1 }
+            ConditionExpression: 'attribute_exists(id) and issued < #limit',
+            ExpressionAttributeValues: { ':number': 1 },
+            ExpressionAttributeNames: { '#limit': 'limit' }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -472,6 +473,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                         if (isCampClear == true) {
                             camp.cleared = true;
                         }
+                        break;
                     }
                 }
                 let coupon = [];
@@ -487,21 +489,74 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                         used: false
                     });
                 }
-                updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
-                updateParams.ExpressionAttributeValues[":newcoupon"] = coupon;
-                yield this.Dynamodb.update(updateParams).promise();
-                if (coupon.length != 0) {
-                    couponParams.Key = { id: coupon[0].id };
-                    yield this.Dynamodb.update(couponParams).promise();
-                    couponParams.Key = { id: coupon[1].id };
-                    yield this.Dynamodb.update(couponParams).promise();
+                this.res.locals.coupon = [];
+                this.res.locals.coupon2insert = [];
+                for (const coup of coupon) {
+                    this.res.locals.coupon.push(coup);
                 }
-                this.res.status(200).send(result_1.success);
+                this.res.locals.playingCampaigns = playingCampaigns;
+                if (coupon.length != 0) {
+                    for (const coup of coupon) {
+                        couponParams.Key = { id: coup.id };
+                        this.res.locals.coupon.shift();
+                        yield this.Dynamodb.update(couponParams).promise();
+                        this.res.locals.coupon2insert.push(coup);
+                    }
+                }
+                updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
+                updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon;
+                yield this.Dynamodb.update(updateParams).promise();
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
-                result_1.fail.error = result_1.error.dbError;
-                result_1.fail.errdesc = err;
-                this.res.status(521).send(result_1.fail);
+                if (err.code != 'ConditionalCheckFailedException') {
+                    result_1.fail.error = result_1.error.dbError;
+                    result_1.fail.errdesc = err;
+                    this.res.status(521).send(result_1.fail);
+                    return;
+                }
+                if (this.res.locals.coupon.length == 0) {
+                    updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
+                    updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                    yield this.Dynamodb.update(updateParams).promise();
+                    result_1.success.data = '정답입니다.';
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                else {
+                    try {
+                        couponParams.Key = { id: this.res.locals.coupon[0].id };
+                        this.Dynamodb.update(couponParams, function (err, data) {
+                            return __awaiter(this, void 0, void 0, function* () {
+                                if (err) {
+                                    updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
+                                    updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                                    yield this.Dynamodb.update(updateParams).promise();
+                                    result_1.success.data = '정답입니다.';
+                                    this.res.status(200).send(result_1.success);
+                                    return;
+                                }
+                                else {
+                                    this.res.locals.coupon2insert.push(this.res.locals.coupon[0]);
+                                    updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
+                                    updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
+                                    yield this.Dynamodb.update(updateParams).promise();
+                                    result_1.success.data = '정답입니다.';
+                                    this.res.status(200).send(result_1.success);
+                                    return;
+                                }
+                            });
+                        }.bind(this));
+                    }
+                    catch (err) {
+                        updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
+                        updateParams.ExpressionAttributeValues[":newcoupon"] = [];
+                        yield this.Dynamodb.update(updateParams).promise();
+                        result_1.success.data = '정답입니다.';
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                }
             }
         });
         run();
