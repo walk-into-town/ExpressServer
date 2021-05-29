@@ -464,6 +464,57 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
     }
     delete(params) {
     }
+    readPlaying(params) {
+        let campaignParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: '#users',
+            ExpressionAttributeValues: { ':id': params.caid },
+            ExpressionAttributeNames: { '#users': 'users' }
+        };
+        let MemberParams = {
+            RequestItems: {
+                'Member': {
+                    Keys: [],
+                    ProjectionExpression: 'nickname, profileImg'
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('캠페인 검색중');
+                let campResult = yield this.Dynamodb.query(campaignParams).promise();
+                console.log('캠페인 검색 완료');
+                let users = campResult.Items[0].users;
+                if (campResult.Items.length == 0) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                if (users.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                console.log('회원정보 쿼리 생성중');
+                for (const id of users) {
+                    MemberParams.RequestItems.Member.Keys.push({ 'id': id });
+                }
+                console.log('회원정보 쿼리 생성 완료\n회원 조회중');
+                let result = yield this.Dynamodb.batchGet(MemberParams).promise();
+                console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`);
+                result_1.success.data = result.Responses.Member;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
     participate(params) {
         if (this.req.session.passport.user.id != params.uid) { //세션 탈취 방지
             result_1.fail.error = result_1.error.invalAcc;

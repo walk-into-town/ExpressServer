@@ -452,6 +452,58 @@ export default class CampaignManager extends FeatureManager{
         
     }
 
+    public readPlaying(params: any):void {
+        let campaignParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: '#users',
+            ExpressionAttributeValues: {':id': params.caid},
+            ExpressionAttributeNames: {'#users': 'users'}
+        }
+        let MemberParams = {
+            RequestItems:{
+                'Member':{
+                    Keys: [],
+                    ProjectionExpression: 'nickname, profileImg'
+                }
+            }
+        }
+        const run = async() => {
+            try{
+                console.log('캠페인 검색중')
+                let campResult = await this.Dynamodb.query(campaignParams).promise()
+                console.log('캠페인 검색 완료')
+                let users = campResult.Items[0].users
+                if(campResult.Items.length == 0){
+                    fail.error = error.invalReq
+                    fail.errdesc = '캠페인을 찾을 수 없습니다.'
+                    this.res.status(400).send(fail)
+                    return;                    
+                }
+                if(users.length == 0){
+                    success.data = []
+                    this.res.status(200).send(success)
+                    return;
+                }
+                console.log('회원정보 쿼리 생성중')
+                for(const id of users){
+                    MemberParams.RequestItems.Member.Keys.push({'id': id})
+                }
+                console.log('회원정보 쿼리 생성 완료\n회원 조회중')
+                let result = await this.Dynamodb.batchGet(MemberParams).promise()
+                console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`)
+                success.data = result.Responses.Member
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run();
+    }
+
     public participate(params: any): void{
         if(this.req.session.passport.user.id != params.uid){   //세션 탈취 방지
             fail.error = error.invalAcc

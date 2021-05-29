@@ -220,4 +220,11 @@ router.put('/',isAuthenticated, upload.array('imgs'), function(req: express.Requ
     campaignDB.update(query)
 })
 
+//플레이중 유저 조회
+router.get('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
+    let campaignDB = new CampaignManager(req, res)
+    let query = req.query
+    campaignDB.readPlaying(query)
+})
+
 module.exports = router

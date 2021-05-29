@@ -237,4 +237,10 @@ router.put('/', authentication_1.default, upload.array('imgs'), function (req, r
     query.imgs = imgs;
     campaignDB.update(query);
 });
+//플레이중 유저 조회
+router.get('/playing', authentication_1.default, function (req, res) {
+    let campaignDB = new CampaignManager_1.default(req, res);
+    let query = req.query;
+    campaignDB.readPlaying(query);
+});
 module.exports = router;
