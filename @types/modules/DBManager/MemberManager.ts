@@ -15,6 +15,12 @@ export default class MemberManager extends FeatureManager{
         let pw: string; let saltRounds = 10
         const run = async () => {
             try{
+                if(params.nickname == '(일수없음)'){
+                    fail.error = error.invalReq
+                    fail.errdesc = '잘못된 닉네임입니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
                 let nicknameCheckparams = {
                     TableName: 'Member',
                     IndexName: 'nicknameIndex',
@@ -175,6 +181,13 @@ export default class MemberManager extends FeatureManager{
         let updateExp: string = 'SET '
         let expAttrVal: any = {}
 
+        if(nickname == '(알수없음)'){
+            fail.error = error.invalReq
+            fail.errdesc = '잘못된 닉네임입니다.'
+            this.res.status(400).send(fail)
+            return;
+        }
+
         let updateParams = {
             TableName: 'Member',
             Key: {id: params.uid},
@@ -252,10 +265,12 @@ export default class MemberManager extends FeatureManager{
         }
         let deleteMemberParam = {
             TableName: 'Member',
-            Key: {
-               'id': uid
-            }
-        }
+            Key: { id: uid },
+            UpdateExpression: 'set nickname = :nickname, profimeImg = :defaultImg',
+            ExpressionAttributeValues: { ':nickname': '(알수없음)', ':defaultImg': 'https://walk-into-town.kro.kr/defaultProfileImg.jpg' },
+            ReturnValues: 'UPDATED_NEW',
+            ConditionExpression: 'attribute_exists(id)'
+          };
         let campaignParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
