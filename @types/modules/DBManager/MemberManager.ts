@@ -243,7 +243,70 @@ export default class MemberManager extends FeatureManager{
     }
 
     public delete(params: any): void {
-        throw new Error("Method not implemented.");
+        let uid: string = this.req.session.passport.user.id
+        let memberParam = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: {':id': uid}
+        }
+        let deleteMemberParam = {
+            TableName: 'Member',
+            Key: {
+               'id': uid
+            }
+        }
+        let campaignParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: '#users',
+            ExpressionAttributeNames: {'#users': 'users'},
+            ExpressionAttributeValues: {':id': null}
+        }
+        let campaignUpdateParam = {
+            TableName: 'Campaign',
+            Key: {id : null},
+            UpdateExpression: 'set #users = :newusers',
+            ExpressionAttributeNames: {'#users': 'users'},
+            ExpressionAttributeValues: {':newusers': null}
+        }
+        const run = async() => {
+            try{
+                console.log('참여중인 캠페인 조회중')
+                let campResult = await this.Dynamodb.query(memberParam).promise()
+                let playing = campResult.Items[0].playingCampaigns
+                console.log(`참여중인 캠페인 조회 완료\n${JSON.stringify(playing, null, 2)}`)
+                console.log('참여중인 캠페인 수정중')
+                for(const campaign of playing){
+                    console.log('캠페인 참여 유저 확인중')
+                    campaignParams.ExpressionAttributeValues[":id"] = campaign.id
+                    let camp = await this.Dynamodb.query(campaignParams).promise()
+                    let users: Array<string> = camp.Items[0].users
+                    for(let i = 0; i < users.length; i++){
+                        if(uid == users[i]){
+                            users.splice(i, 1);
+                            campaignUpdateParam.Key.id = campaign.id
+                            campaignUpdateParam.ExpressionAttributeValues[":newusers"] = users
+                            await this.Dynamodb.update(campaignUpdateParam).promise()
+                            break;
+                        }
+                    }
+                    console.log('캠페인 참여 유저 수정 완료')
+                }
+                console.log('캠페인 수정 완료\n회원 삭제 시작')
+                await this.Dynamodb.delete(deleteMemberParam).promise()
+                console.log('회원 삭제 성공')
+                success.data = '탈퇴 성공'
+                this.res.status(200).send(success)
+            }
+            catch(err) {
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+
+        run()
     }
     
     public check(type: string, params: any): void{
