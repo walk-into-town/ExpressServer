@@ -27,11 +27,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const express = __importStar(require("express"));
 const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
+const RankingManager_1 = __importDefault(require("../../modules/DBManager/RankingManager"));
 var router = express.Router();
 const uploader = new UploadFile_1.default();
 const upload = uploader.testupload();
 router.put('/clear', function (req, res) {
 });
 router.get('/ranking', function (req, res) {
+    let query = req.query;
+    let rankingManaber = new RankingManager_1.default(req, res);
+    rankingManaber.read(query);
 });
 module.exports = router;
