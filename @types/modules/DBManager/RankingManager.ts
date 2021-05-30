@@ -20,17 +20,28 @@ export default class Rankingmanager extends FeatureManager{
         run();
     }
     public read(params: any): void {
+        let uid = this.req.session.passport.user.id
         if(params.type == 'single'){
             let queryParams = {
                 TableName: 'Ranking',
                 KeyConditionExpression: 'userId = :id',
-                ExpressionAttributeValues: {':id': this.req.session.passport.user.id}
+                ExpressionAttributeValues: {':id': uid}
+            }
+            let memberParams = {
+                TableName: 'Member',
+                KeyConditionExpression: 'id = :id',
+                ExpressionAttributeValues: {':id': uid},
+                ProjectionExpression: 'nickname, profileImg'
             }
             const run = async() => {
                 try{
                     let result = await this.Dynamodb.query(queryParams).promise()
-                    success.data = result.Items[0]
-                    this.res.status(200).send(success)
+                    let ranking = result.Items[0]
+                    let memberResult = await this.Dynamodb.query(memberParams).promise()
+                    let member = memberResult.Items[0]
+                    ranking.nickname = member.nickname
+                    ranking.profileImg = member.profileImg
+                    this.res.status(200).send(ranking)
                     return                        
                 }
                 catch(err){
@@ -46,6 +57,14 @@ export default class Rankingmanager extends FeatureManager{
             let queryParams = {
                 TableName: 'Ranking'
             }
+            let memberparams = {
+                RequestItems: {
+                    'Member': {
+                        Keys: [],
+                        ProjectionExpression: 'nickname, profileImg, id'
+                    }
+                }
+            }
             const run = async() => {
                 try{
                     let result = await this.Dynamodb.scan(queryParams).promise()
@@ -54,6 +73,21 @@ export default class Rankingmanager extends FeatureManager{
                         ranking.push(item)
                     }
                     ranking = await rankingSort(ranking)
+                    for(const rank of ranking){
+                        memberparams.RequestItems.Member.Keys.push({id: rank.userId})
+                    }
+                    let memberResult = await this.Dynamodb.batchGet(memberparams).promise()
+                    let member = memberResult.Responses.Member
+                    for(const rank of ranking){
+                        for(let i = 0; i < member.length; i++){
+                            if(rank.userId == member[i].id){
+                                rank.nickname = member[i].nickname
+                                rank.profileImg = member[i].profileImg
+                                member.splice(i, 0)
+                                break;
+                            }
+                        }
+                    }
                     success.data = ranking
                     this.res.status(200).send(success)
                     return;
