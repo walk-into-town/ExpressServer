@@ -30,26 +30,34 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
         run();
     }
     read(params) {
-        try {
-            if (params.type == 'single') {
-                let queryParams = {
-                    TableName: 'Ranking',
-                    KeyConditionExpression: 'id = :id',
-                    ExpressionAttributeValues: { ':id': this.req.session.passport.user.id }
-                };
-                const run = () => __awaiter(this, void 0, void 0, function* () {
+        if (params.type == 'single') {
+            let queryParams = {
+                TableName: 'Ranking',
+                KeyConditionExpression: 'userId = :id',
+                ExpressionAttributeValues: { ':id': this.req.session.passport.user.id }
+            };
+            const run = () => __awaiter(this, void 0, void 0, function* () {
+                try {
                     let result = yield this.Dynamodb.query(queryParams).promise();
                     result_1.success.data = result.Items[0];
+                    this.res.status(200).send(result_1.success);
                     return;
-                });
-                run();
-                return;
-            }
-            if (params.type == 'list') {
-                let queryParams = {
-                    TableName: 'Ranking'
-                };
-                const run = () => __awaiter(this, void 0, void 0, function* () {
+                }
+                catch (err) {
+                    result_1.fail.error = result_1.error.dbError;
+                    result_1.fail.errdesc = err;
+                    this.res.status(521).send(result_1.fail);
+                }
+            });
+            run();
+            return;
+        }
+        if (params.type == 'list') {
+            let queryParams = {
+                TableName: 'Ranking'
+            };
+            const run = () => __awaiter(this, void 0, void 0, function* () {
+                try {
                     let result = yield this.Dynamodb.scan(queryParams).promise();
                     let ranking = [];
                     for (const item of result.Items) {
@@ -59,19 +67,19 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     result_1.success.data = ranking;
                     this.res.status(200).send(result_1.success);
                     return;
-                });
-                run();
-                return;
-            }
-            result_1.fail.error = result_1.error.invalReq;
-            result_1.fail.errdesc = 'type은 single | list 중 하니이어야 합니다.';
-            this.res.status(400).send(result_1.fail);
+                }
+                catch (err) {
+                    result_1.fail.error = result_1.error.dbError;
+                    result_1.fail.errdesc = err;
+                    this.res.status(521).send(result_1.fail);
+                }
+            });
+            run();
+            return;
         }
-        catch (err) {
-            result_1.fail.error = result_1.error.dbError;
-            result_1.fail.errdesc = err;
-            this.res.status(521).send(result_1.fail);
-        }
+        result_1.fail.error = result_1.error.invalReq;
+        result_1.fail.errdesc = 'type은 single | list 중 하니이어야 합니다.';
+        this.res.status(400).send(result_1.fail);
     }
     update(params) {
         throw new Error("Method not implemented.");

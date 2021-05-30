@@ -20,26 +20,34 @@ export default class Rankingmanager extends FeatureManager{
         run();
     }
     public read(params: any): void {
-        try{
-            if(params.type == 'single'){
-                let queryParams = {
-                    TableName: 'Ranking',
-                    KeyConditionExpression: 'id = :id',
-                    ExpressionAttributeValues: {':id': this.req.session.passport.user.id}
-                }
-                const run = async() => {
+        if(params.type == 'single'){
+            let queryParams = {
+                TableName: 'Ranking',
+                KeyConditionExpression: 'userId = :id',
+                ExpressionAttributeValues: {':id': this.req.session.passport.user.id}
+            }
+            const run = async() => {
+                try{
                     let result = await this.Dynamodb.query(queryParams).promise()
                     success.data = result.Items[0]
-                    return
+                    this.res.status(200).send(success)
+                    return                        
                 }
-                run()
-                return;
+                catch(err){
+                    fail.error = error.dbError
+                    fail.errdesc = err
+                    this.res.status(521).send(fail)
+                }
             }
-            if(params.type == 'list'){
-                let queryParams = {
-                    TableName: 'Ranking'
-                }
-                const run = async() => {
+            run()
+            return;
+        }
+        if(params.type == 'list'){
+            let queryParams = {
+                TableName: 'Ranking'
+            }
+            const run = async() => {
+                try{
                     let result = await this.Dynamodb.scan(queryParams).promise()
                     let ranking = []
                     for(const item of result.Items){
@@ -50,18 +58,18 @@ export default class Rankingmanager extends FeatureManager{
                     this.res.status(200).send(success)
                     return;
                 }
-                run()
-                return;
+                catch(err){
+                    fail.error = error.dbError
+                    fail.errdesc = err
+                    this.res.status(521).send(fail)
+                }
             }
-            fail.error = error.invalReq
-            fail.errdesc = 'type은 single | list 중 하니이어야 합니다.'
-            this.res.status(400).send(fail)
+            run()
+            return;
         }
-        catch(err){
-            fail.error = error.dbError
-            fail.errdesc = err
-            this.res.status(521).send(fail)
-        }
+        fail.error = error.invalReq
+        fail.errdesc = 'type은 single | list 중 하니이어야 합니다.'
+        this.res.status(400).send(fail)
     }
     public update(params: any): void {
         throw new Error("Method not implemented.");
