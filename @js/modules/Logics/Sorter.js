@@ -8,7 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-module.exports = function quickSort(array, left = 0, right = array.length - 1) {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.rankingSort = exports.campaignSort = void 0;
+let campaignSort = function (array, left = 0, right = array.length - 1) {
     return __awaiter(this, void 0, void 0, function* () {
         if (left >= right) {
             return array;
@@ -16,8 +18,8 @@ module.exports = function quickSort(array, left = 0, right = array.length - 1) {
         const mid = Math.floor((left + right) / 2);
         const pivot = array[mid].name;
         const partition = divide(array, left, right, pivot);
-        quickSort(array, left, partition - 1);
-        quickSort(array, partition, right);
+        exports.campaignSort(array, left, partition - 1);
+        exports.campaignSort(array, partition, right);
         function divide(array, left, right, pivot) {
             while (left <= right) {
                 while (array[left].name < pivot) {
@@ -39,3 +41,36 @@ module.exports = function quickSort(array, left = 0, right = array.length - 1) {
         return array;
     });
 };
+exports.campaignSort = campaignSort;
+let rankingSort = function (array, left = 0, right = array.length - 1) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (left >= right) {
+            return array;
+        }
+        const mid = Math.floor((left + right) / 2);
+        const pivot = array[mid].name;
+        const partition = divide(array, left, right, pivot);
+        exports.rankingSort(array, left, partition - 1);
+        exports.rankingSort(array, partition, right);
+        function divide(array, left, right, pivot) {
+            while (left >= right) {
+                while (array[left].cleared < pivot) {
+                    left++;
+                }
+                while (array[right].cleared > pivot) {
+                    right--;
+                }
+                if (left >= right) {
+                    let swap = array[left];
+                    array[left] = array[right];
+                    array[right] = swap;
+                    left++;
+                    right--;
+                }
+            }
+            return left;
+        }
+        return array;
+    });
+};
+exports.rankingSort = rankingSort;
