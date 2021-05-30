@@ -288,7 +288,6 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             Key: { id: uid },
             UpdateExpression: 'set nickname = :nickname, profimeImg = :defaultImg',
             ExpressionAttributeValues: { ':nickname': '(알수없음)', ':defaultImg': 'https://walk-into-town.kro.kr/defaultProfileImg.jpg' },
-            ReturnValues: 'UPDATED_NEW',
             ConditionExpression: 'attribute_exists(id)'
         };
         let campaignParams = {
@@ -329,7 +328,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     console.log('캠페인 참여 유저 수정 완료');
                 }
                 console.log('캠페인 수정 완료\n회원 삭제 시작');
-                yield this.Dynamodb.delete(deleteMemberParam).promise();
+                yield this.Dynamodb.update(deleteMemberParam).promise();
                 console.log('회원 삭제 성공');
                 result_1.success.data = '탈퇴 성공';
                 this.res.status(200).send(result_1.success);
