@@ -122,6 +122,8 @@ router.get('/', authentication_1.default, function (req, res) {
 });
 //회원탈퇴
 router.delete('/', authentication_1.default, function (req, res) {
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.delete('');
 });
 router.get('/coupon', authentication_1.default, function (req, res) {
     let query = req.query;

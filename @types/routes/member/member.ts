@@ -114,7 +114,8 @@ router.get('/', isAuthenticated, function(req: express.Request, res: express.Res
 
 //회원탈퇴
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let memberDB = new MemberManager(req, res)
+    memberDB.delete('')
 })
 
 router.get('/coupon', isAuthenticated, function(req: express.Request, res: express.Response){
