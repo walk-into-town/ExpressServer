@@ -27,11 +27,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
+const RankingManager_1 = __importDefault(require("./RankingManager"));
 class PinpointManager extends FeatureManager_1.FeatureManager {
     /**
      * 핀포인트 등록 로직
@@ -386,6 +390,13 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             this.res.status(201).send(result_1.success);
         }
     }
+    /**
+     * 퀴즈풀기 로직
+     * 1. 참여중인 캠페인 조회
+     * 2. 클리어한 캠페인 / 핀포인트인 경우 에러
+     * 3. 정답 확인
+     * 4. 정답인 경우
+     */
     solveQuiz(params) {
         let queryParams = {
             TableName: 'Pinpoint',
@@ -431,22 +442,24 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                let isCampClear = false;
+                let isCampClear = false; //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
+                console.log('참여중 캠페인 조회중');
                 let memberResult = yield this.Dynamodb.query(memberparams).promise();
                 let playingCampaigns = memberResult.Items[0].playingCampaigns;
+                console.log(`참여중 캠페인 조회 성공\n${JSON.stringify(playingCampaigns, null, 2)}`);
                 console.log('핀포인트 클리어 여부 확인중');
                 let campResult = yield this.Dynamodb.query(campParams).promise();
                 let pinpoints = campResult.Items[0].pinpoints;
                 let campcoupon = campResult.Items[0].coupons;
-                for (const camp of playingCampaigns) {
-                    if (camp.id == params.caid) {
-                        if (camp.cleared == true) {
+                for (const camp of playingCampaigns) { // 참여중 캠페인 목록에서
+                    if (camp.id == params.caid) { // 이미 참여중인 캠페인
+                        if (camp.cleared == true) { // 이미 클리어한 캠페인인 경우
                             result_1.fail.error = result_1.error.invalReq;
                             result_1.fail.errdesc = '이미 클리어한 캠페인입니다.';
                             this.res.status(400).send(result_1.fail);
                             return;
                         }
-                        for (const id of camp.pinpoints) {
+                        for (const id of camp.pinpoints) { // 클리어 하지 않은 경우 핀포인트 클리어 여부 체크
                             if (id == params.pid) {
                                 console.log('이미 클리어한 핀포인트입니다.');
                                 result_1.fail.error = result_1.error.invalReq;
@@ -455,25 +468,25 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                 return;
                             }
                         }
-                        if (pinpoints.length - 1 == camp.pinpoints.length) {
+                        if (pinpoints.length - 1 == camp.pinpoints.length) { // 이 핀포인트 클리어 = 캠페인 클리어인 경우
                             isCampClear = true;
                         }
                         break;
                     }
                 }
                 console.log('핀포인트 클리어 여부 확인 완료');
+                console.log('핀포인트 정보 조회중');
                 let result = yield this.Dynamodb.query(queryParams).promise();
                 let quiz = result.Items[0].quiz;
                 let coupons = result.Items[0].coupons;
-                if (quiz.answer == params.answer) {
-                    result_1.success.data = '정답입니다.';
-                }
-                else {
+                console.log(`핀포인트 조회 성공\n${JSON.stringify(result.Items[0], null, 2)}`);
+                if (quiz.answer != params.answer) { //정답이 아닌 경우 틀림 메시지 전달 후 종료
                     result_1.fail.error = result_1.error.invalKey;
                     result_1.fail.errdesc = '틀렸습니다.';
                     this.res.status(400).send(result_1.fail);
                     return;
                 }
+                // 캠페인 클리어인 경우 cleared를 true로
                 for (const camp of playingCampaigns) {
                     if (camp.id == params.caid) {
                         camp.pinpoints.push(params.pid);
@@ -483,36 +496,39 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                         break;
                     }
                 }
-                let coupon = [];
-                if (isCampClear == true && campcoupon.length != 0) {
+                // 랭킹에 핀포인트 클리어 적용
+                let rankingDB = new RankingManager_1.default(this.req, this.res);
+                rankingDB.insert('');
+                let coupon = []; // 등록된 쿠폰을 담는 배열
+                if (isCampClear == true && campcoupon.length != 0) { //캠페인 클리어이며 캠페인 쿠폰이 있는 경우 캠페인 쿠폰 등록
                     coupon.push({
                         id: campcoupon[0],
                         used: false
                     });
                 }
-                if (coupons.length != 0) {
+                if (coupons.length != 0) { // 핀포인트 쿠폰이 있는 경우 핀포인트 쿠폰 등록
                     coupon.push({
                         id: coupons[0],
                         used: false
                     });
                 }
-                this.res.locals.coupon = [];
-                this.res.locals.coupon2insert = [];
-                for (const coup of coupon) {
+                this.res.locals.coupon = []; // 발급해야할 쿠폰을 담는 배열
+                this.res.locals.coupon2insert = []; // 발급된 쿠폰
+                for (const coup of coupon) { // 배열 깊은 복사
                     this.res.locals.coupon.push(coup);
                 }
                 this.res.locals.playingCampaigns = playingCampaigns;
-                if (coupon.length != 0) {
-                    for (const coup of coupon) {
+                if (coupon.length != 0) { // 등록된 쿠폰이 존재하는 경우
+                    for (const coup of coupon) { // 쿠폰 발급을 진행, limit를 초과하지 않으면 발급된 쿠폰에 추가
                         couponParams.Key = { id: coup.id };
                         this.res.locals.coupon.shift();
-                        yield this.Dynamodb.update(couponParams).promise();
+                        yield this.Dynamodb.update(couponParams).promise(); // limit를 넘긴 경우 예외처리에서 남은 쿠폰 처리
                         this.res.locals.coupon2insert.push(coup);
                     }
                 }
                 updateParams.ExpressionAttributeValues[":newPlaying"] = playingCampaigns;
                 updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
-                for (const coup of this.res.locals.coupon2insert) {
+                for (const coup of this.res.locals.coupon2insert) { // batchGet parameter를 만들기 위한 반복문
                     let obj = {
                         id: coup.id
                     };
@@ -520,8 +536,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
                 let getCoupons = getCoupon.Responses.Coupon;
-                let answer = [];
-                for (const coupon of getCoupons) {
+                let answer = []; // 응답에 쓰일 쿠폰 정보를 담는 배열
+                for (const coupon of getCoupons) { // 필요한 정보를 object로 만들어 answer에 push
                     let obj = {
                         name: coupon.name,
                         goods: coupon.goods,
@@ -534,16 +550,16 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 this.res.status(201).send(result_1.success);
             }
             catch (err) {
-                if (err.code != 'ConditionalCheckFailedException') {
+                if (err.code != 'ConditionalCheckFailedException') { // 쿠폰 발급 개수 초과 에러가 아닌 경우
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
                     this.res.status(521).send(result_1.fail);
                     return;
                 }
-                if (this.res.locals.coupon.length == 0) {
+                if (this.res.locals.coupon.length == 0) { // 발급할 쿠폰이 더이상 없는 경우
                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
-                    for (const coup of this.res.locals.coupon2insert) {
+                    for (const coup of this.res.locals.coupon2insert) { // batchGet을 위한 parameter 작성 반복문
                         let obj = {
                             id: coup.id
                         };
@@ -552,7 +568,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
                     let getCoupons = getCoupon.Responses.Coupon;
                     let answer = [];
-                    for (const coupon of getCoupons) {
+                    for (const coupon of getCoupons) { //쿠폰 object를 생성하고 answer에 push
                         let obj = {
                             name: coupon.name,
                             goods: coupon.goods,
@@ -565,12 +581,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     this.res.status(201).send(result_1.success);
                     return;
                 }
-                else {
+                else { // 등록할 쿠폰이 남아있는 경우
                     try {
-                        couponParams.Key = { id: this.res.locals.coupon[0].id };
+                        couponParams.Key = { id: this.res.locals.coupon[0].id }; // 쿠폰 발급을 위한 parameter 생성
                         this.Dynamodb.update(couponParams, function (err, data) {
                             return __awaiter(this, void 0, void 0, function* () {
-                                if (err) {
+                                if (err) { // 쿠폰 발급에 실패한 경우( 쿠폰 제한 초과 )
                                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
                                     for (const coup of this.res.locals.coupon2insert) {
@@ -595,7 +611,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                     this.res.status(201).send(result_1.success);
                                     return;
                                 }
-                                else {
+                                else { // 쿠폰 발급 성공
                                     this.res.locals.coupon2insert.push(this.res.locals.coupon[0]);
                                     updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                                     updateParams.ExpressionAttributeValues[":newcoupon"] = this.res.locals.coupon2insert;
@@ -624,7 +640,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                             });
                         }.bind(this));
                     }
-                    catch (err) {
+                    catch (err) { // 발급할 쿠폰이 없는 경우
                         updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                         updateParams.ExpressionAttributeValues[":newcoupon"] = [];
                         for (const coup of this.res.locals.coupon2insert) {
