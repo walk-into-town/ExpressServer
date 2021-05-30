@@ -73,8 +73,8 @@ module.exports = () => {
                 ExpressionAttributeValues: { ':id': username }
             }).promise();
             if (result.Items[0].nickname == '(알수없음)') {
-                console.log(null, false, { message: '삭제된 게정입니다.' });
-                return;
+                console.log('삭제된 게정입니다.');
+                return done(null, false, { message: '삭제된 게정입니다.' });
             }
             if (result.Items[0] == undefined) {
                 console.log('ID 불일치');
@@ -120,8 +120,8 @@ module.exports = () => {
             let data = yield doclient.query(params).promise();
             let result = data.Items[0];
             if (result.Items[0].nickname == '(알수없음)') {
-                console.log(null, false, { message: '삭제된 게정입니다.' });
-                return;
+                console.log('삭제된 게정입니다.');
+                return cb(null, false, { message: '삭제된 게정입니다.' });
             }
             if (result == undefined) { //id 없는경우
                 console.log('새로운 구글 ID');
@@ -177,8 +177,8 @@ module.exports = () => {
                 let data = yield doclient.query(params).promise();
                 let result = data.Items[0];
                 if (result.Items[0].nickname == '(알수없음)') {
-                    console.log(null, false, { message: '삭제된 게정입니다.' });
-                    return;
+                    console.log('삭제된 게정입니다.');
+                    return cb(null, false, { message: '삭제된 게정입니다.' });
                 }
                 if (result == undefined) { //id 없는경우
                     console.log('새로운 카카오 ID');
