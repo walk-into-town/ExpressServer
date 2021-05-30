@@ -18,8 +18,12 @@ let campaignSort = function (array, left = 0, right = array.length - 1) {
         const mid = Math.floor((left + right) / 2);
         const pivot = array[mid].name;
         const partition = divide(array, left, right, pivot);
-        exports.campaignSort(array, left, partition - 1);
-        exports.campaignSort(array, partition, right);
+        setTimeout(function () {
+            exports.campaignSort(array, left, partition - 1);
+        });
+        setTimeout(function () {
+            exports.campaignSort(array, partition, right);
+        });
         function divide(array, left, right, pivot) {
             while (left <= right) {
                 while (array[left].name < pivot) {
@@ -50,8 +54,12 @@ let rankingSort = function (array, left = 0, right = array.length - 1) {
         const mid = Math.floor((left + right) / 2);
         const pivot = array[mid].name;
         const partition = divide(array, left, right, pivot);
-        exports.rankingSort(array, left, partition - 1);
-        exports.rankingSort(array, partition, right);
+        setTimeout(function () {
+            exports.rankingSort(array, left, partition - 1);
+        });
+        setTimeout(function () {
+            exports.rankingSort(array, partition, right);
+        });
         function divide(array, left, right, pivot) {
             while (left >= right) {
                 while (array[left].cleared < pivot) {

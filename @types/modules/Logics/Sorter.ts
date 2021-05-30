@@ -5,8 +5,12 @@ export let campaignSort = async function (array: Array<any>, left: number = 0, r
   const mid = Math.floor((left + right) / 2);
   const pivot = array[mid].name;
   const partition = divide(array, left, right, pivot);
-  campaignSort(array, left, partition - 1);
-  campaignSort(array, partition, right);
+  setTimeout(function() {         // maximum call stack size exceeded 에러 방지
+    campaignSort(array, left, partition - 1);
+  })
+  setTimeout(function() {
+    campaignSort(array, partition, right);
+  })
   function divide (array: Array<any>, left: number, right: number, pivot: String) {
     while (left <= right) {
       while (array[left].name < pivot) {
@@ -35,8 +39,12 @@ export let rankingSort = async function (array: Array<any>, left: number = 0, ri
   const mid = Math.floor((left + right) / 2);
   const pivot = array[mid].name;
   const partition = divide(array, left, right, pivot);
-  rankingSort(array, left, partition - 1);
-  rankingSort(array, partition, right);
+  setTimeout(function() {
+    rankingSort(array, left, partition - 1);
+  })
+  setTimeout(function() {
+    rankingSort(array, partition, right);
+  })
   function divide (array: Array<any>, left: number, right: number, pivot: String) {
     while (left >= right) {
       while (array[left].cleared < pivot) {
