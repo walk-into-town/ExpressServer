@@ -2,6 +2,7 @@ import { FeatureManager, toRead } from "./FeatureManager"
 import * as CryptoJS from 'crypto-js'
 import { error, fail, success } from "../../static/result"
 import {nbsp2plus} from '../Logics/nbsp'
+import { campaignSort } from "../Logics/Sorter"
 
 
 export default class CampaignManager extends FeatureManager{
@@ -284,7 +285,6 @@ export default class CampaignManager extends FeatureManager{
     public readPart(params: any, readType: toRead): void{
         let criterion = readType
         let value = params
-        const quickSort = require('../Logics/Sorter')
         const run = async(criterion, value) => {
             try{
                 console.log('DB 요청 params 설정중')
@@ -338,8 +338,8 @@ export default class CampaignManager extends FeatureManager{
                     }
                 }
                 console.log('정렬 시작')
-                toSort = await quickSort(toSort)
-                primearr = await quickSort(primearr)
+                toSort = await campaignSort(toSort)
+                primearr = await campaignSort(primearr)
                 primearr.push(...toSort)
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
@@ -347,6 +347,7 @@ export default class CampaignManager extends FeatureManager{
                 this.res.status(200).send(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)

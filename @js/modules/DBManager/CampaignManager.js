@@ -32,6 +32,7 @@ const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
+const Sorter_1 = require("../Logics/Sorter");
 class CampaignManager extends FeatureManager_1.FeatureManager {
     /**
      * 캠페인 생성 로직
@@ -300,7 +301,6 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
     readPart(params, readType) {
         let criterion = readType;
         let value = params;
-        const quickSort = require('../Logics/Sorter');
         const run = (criterion, value) => __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log('DB 요청 params 설정중');
@@ -355,8 +355,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 console.log('정렬 시작');
-                toSort = yield quickSort(toSort);
-                primearr = yield quickSort(primearr);
+                toSort = yield Sorter_1.campaignSort(toSort);
+                primearr = yield Sorter_1.campaignSort(primearr);
                 primearr.push(...toSort);
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`);
                 result_1.success.data = primearr;
@@ -364,6 +364,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
