@@ -923,6 +923,7 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async () => {
             try{
+                let isNewComment = true
                 let comments = await this.Dynamodb.query(findParams).promise()
                 if(comments.Items[0] == undefined){
                     fail.error = error.dataNotFound
@@ -940,27 +941,56 @@ export default class PinpointManager extends FeatureManager{
                         }
                         for(const user of comments.Items[0].comments[i].rateList){
                             if(user.id == params.uid){
+                                isNewComment = false;
                                 if(user.like == params.like){
                                     fail.error = error.invalReq
                                     fail.errdesc = '이미 좋아요 / 싫어요를 누르셨습니다.'
                                     this.res.status(400).send(fail)
                                     return;
                                 }
+                                break;
                             }
                         }
-                        if(params.like == true){
-                            comments.Items[0].comments[i].rated += 1;
-                            console.log(comments.Items[0].comments[i])
-                            comments.Items[0].comments[i].rateList.push({id: params.uid, like: true})
-                            success.data = comments.Items[0].comments[i]
-                            break;
+                        if(isNewComment == true){
+                            if(params.like == true){
+                                comments.Items[0].comments[i].rated += 1;
+                                console.log(comments.Items[0].comments[i])
+                                comments.Items[0].comments[i].rateList.push({id: params.uid, like: true})
+                                success.data = comments.Items[0].comments[i]
+                                break;
+                            }
+                            else{
+                                comments.Items[0].comments[i].rated -= 1;
+                                comments.Items[0].comments[i].rateList.push({id: params.uid, like: false})
+                                success.data = comments.Items[0].comments[i]
+                                break;
+                            }
                         }
                         else{
-                            comments.Items[0].comments[i].rated -= 1;
-                            comments.Items[0].comments[i].rateList.push({id: params.uid, like: false})
-                            success.data = comments.Items[0].comments[i]
-                            break;
+                            if(params.like == true){
+                                comments.Items[0].comments[i].rated += 1;
+                                console.log(comments.Items[0].comments[i])
+                                for(const rate of comments.Items[0].comments[i].rateList){
+                                    if(rate.id = params.uid){
+                                        rate.like = true;
+                                    }
+                                }
+                                comments.Items[0].comments[i].rateList.push({id: params.uid, like: true})
+                                success.data = comments.Items[0].comments[i]
+                                break;
+                            }
+                            else{
+                                comments.Items[0].comments[i].rated -= 1;
+                                for(const rate of comments.Items[0].comments[i].rateList){
+                                    if(rate.id = params.uid){
+                                        rate.like = false;
+                                    }
+                                }
+                                success.data = comments.Items[0].comments[i]
+                                break;
+                            }
                         }
+
                     }
                     if(i == comments.Items[0].comments.length - 1){
                         fail.error = error.dataNotFound
