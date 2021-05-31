@@ -113,8 +113,9 @@ export default class Rankingmanager extends FeatureManager{
         let updateParams = {
             TableName: 'Ranking',
             Key: {'userId': null},
-            UpdateExpression: 'set rank = :newrank',
-            ExpressionAttributeValues: {':newrank': null}
+            UpdateExpression: 'set #rank = :newrank',
+            ExpressionAttributeValues: {':newrank': null},
+            ExpressionAttributeNames: {'#rank': 'rank'}
         }
         const run = async() => {
             let rankResult = await this.Dynamodb.scan(queryParams).promise()
@@ -137,6 +138,8 @@ export default class Rankingmanager extends FeatureManager{
                 await this.Dynamodb.update(updateParams).promise()
             }
             console.log('랭킹 갱신 성공')
+            success.data = '랭킹 갱신 성공'
+            this.res.status(201).send(success)
         }
         run()
     }
