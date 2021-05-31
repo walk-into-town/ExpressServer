@@ -34,7 +34,16 @@ const upload = uploader.testupload();
 router.put('/clear', function (req, res) {
 });
 router.get('/ranking', function (req, res) {
-    let query = req.query;
+    let query = {
+        type: 'list'
+    };
+    let rankingManaber = new RankingManager_1.default(req, res);
+    rankingManaber.read(query);
+});
+router.get('/myranking', function (req, res) {
+    let query = {
+        type: 'single'
+    };
     let rankingManaber = new RankingManager_1.default(req, res);
     rankingManaber.read(query);
 });
