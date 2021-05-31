@@ -167,6 +167,32 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
+    readReverse(params) {
+        let pid = params.value;
+        let queryParams = {
+            TableName: 'Campaign',
+            FilterExpression: 'contains(pinpoints, :pid)',
+            ExpressionAttributeValues: { ':pid': pid }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let queryResult = yield this.Dynamodb.scan(queryParams).promise();
+                if (queryResult.Items.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                result_1.success.data = queryResult.Items[0];
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
+    }
     onRead(err, data) {
         if (err) {
             result_1.fail.error = result_1.error.dbError;
