@@ -106,7 +106,6 @@ export default class Rankingmanager extends FeatureManager{
         this.res.status(400).send(fail)
     }
     public update(params: any): void {
-        let uid = this.req.session.passport.user.id
         let queryParams = {
             TableName: 'Ranking'
         }
@@ -142,9 +141,9 @@ export default class Rankingmanager extends FeatureManager{
             this.res.status(201).send(success)
         }
         run()
+        return;
     }
     public delete(params: any): void {
         throw new Error("Method not implemented.");
-    }
-    
+    }   
 }
