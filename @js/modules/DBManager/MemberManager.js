@@ -531,7 +531,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     pinpoint2respond.push(...pinpoints);
                     pinpointParam.RequestItems.Pinpoint.Keys = []; // 요청 parameter의 id 초기화
                 }
-                this.res.status(200).send(pinpoint2respond);
+                result_1.success.data = pinpoint2respond;
+                this.res.status(200).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;

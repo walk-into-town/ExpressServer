@@ -516,7 +516,8 @@ export default class MemberManager extends FeatureManager{
                     pinpoint2respond.push(...pinpoints)
                     pinpointParam.RequestItems.Pinpoint.Keys = []               // 요청 parameter의 id 초기화
                 }
-                this.res.status(200).send(pinpoint2respond)
+                success.data = pinpoint2respond
+                this.res.status(200).send(success)
             }
             catch(err){
                 fail.error = error.dbError
