@@ -116,7 +116,39 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
         this.res.status(400).send(result_1.fail);
     }
     update(params) {
-        throw new Error("Method not implemented.");
+        let uid = this.req.session.passport.user.id;
+        let queryParams = {
+            TableName: 'Ranking'
+        };
+        let updateParams = {
+            TableName: 'Ranking',
+            Key: { 'userId': null },
+            UpdateExpression: 'set rank = :newrank',
+            ExpressionAttributeValues: { ':newrank': null }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let rankResult = yield this.Dynamodb.scan(queryParams).promise();
+            let ranks = rankResult.Items;
+            ranks = yield Sorter_1.rankingSort(ranks);
+            for (let i = 0; i < ranks.length; i++) { // 전체 정렬된 랭킹에 대하여
+                if (i == 0) { // 배열의 0번째 원소 = 1등
+                    ranks[0].rank = 1;
+                    continue;
+                }
+                if (ranks[i].cleared == ranks[i - 1].cleared) { // 이번 요소와 이전 요소의 클리어 수가 동일 = 같은 순위로 설정
+                    ranks[i].rank = ranks[i - 1].rank;
+                    continue;
+                }
+                ranks[i].rank = i + 1;
+            }
+            for (const rank of ranks) {
+                updateParams.Key.userId = rank.userId;
+                updateParams.ExpressionAttributeValues[":newrank"] = rank.rank;
+                yield this.Dynamodb.update(updateParams).promise();
+            }
+            console.log('랭킹 갱신 성공');
+        });
+        run();
     }
     delete(params) {
         throw new Error("Method not implemented.");
