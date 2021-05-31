@@ -440,6 +440,91 @@ export default class MemberManager extends FeatureManager{
         run();
     }
 
+    public readPlayingPinpoint(params: any): void{
+        let uid = this.req.session.passport.user.id
+        let memberParam = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'playingCampaigns',
+            ExpressionAttributeValues: {':id': uid}
+        }
+        let campaignParam = {
+            RequestItems:{
+                'Campaign':{
+                    Keys: [],
+                    ProjectionExpression: 'id, #name, imgs, description, #region, pinpoints',
+                    ExpressionAttributeNames: {'#name': 'name', '#region': 'region'},
+                }
+            }
+        }
+        let pinpointParam = {
+            RequestItems: {
+                'Pinpoint': {
+                    Keys: [],
+                    ProjectionExpression: '#name, imgs, latitude, longitude, description, updateTime, coupons',
+                    ExpressionAttributeNames: { '#name' : 'name'}
+                }
+            }
+        }
+
+        const run = async() => {
+            try{
+                console.log('참여중인 캠페인 목록 조회중')
+                let memberResult = await this.Dynamodb.query(memberParam).promise()
+                let playing: Array<any> = memberResult.Items[0].playingCampaigns
+                console.log(`참여중인 캠페인 목록 조회 성공\n${JSON.stringify(playing, null, 2)}`)
+                if(playing.length == 0){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = '참여중인 캠페인이 없습니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+                console.log('캠페인 조회 parameter 생성중')
+                let playingPinpoints = []               // 클리어한 핀포인트를 담는 배열
+                for(const camp of playing){             // 참여중 캠페인에 대해서
+                    if(camp.cleared == true){           // 클리어한 경우 통과
+                        continue
+                    }                                   // 클리어하지 않은 경우
+                    playingPinpoints.push(...camp.pinpoints)        // 클리어한 핀포인트 추가
+                    let obj = {id: camp.id}
+                    campaignParam.RequestItems.Campaign.Keys.push(obj)  // 캠페인 요청 parameter에 id 추가
+                }
+                if(campaignParam.RequestItems.Campaign.Keys.length == 0){   // 추가된 id가 없는 경우 = 모든 캠페인 클리어
+                    fail.error = error.invalReq
+                    fail.errdesc = '모든 캠페인을 클리어했습니다.'
+                    this.res.status(200).send(fail)
+                    return;
+                }
+                console.log('캠페인 조회 param 생성 완료\n캠페인의 핀포인트 id 조회 시작')
+                let campaignResult = await this.Dynamodb.batchGet(campaignParam).promise()
+                let campaigns = campaignResult.Responses.Campaign
+                for(const camp of campaigns){               // 조회한 캠페인에 대해
+                    for(const pid of camp.pinpoints) {      // 조회한 캠페인의 핀포인트에 대해
+                        let pos = playingPinpoints.indexOf(pid)     // 클리어한 핀포인트가 있는지 조회
+                        if(pos != -1){                          // 이미 클리어한 핀포인트인 경우 통과
+                            continue;
+                        }
+                        let obj = {
+                            'id': pid
+                        }
+                        pinpointParam.RequestItems.Pinpoint.Keys.push(obj)      // 아닌경우 핀포인트 요청 parameter에 id 추가
+                    }
+                    let pinpointResult = await this.Dynamodb.batchGet(pinpointParam).promise()
+                    let pinpoints = pinpointResult.Responses.Pinpoint
+                    camp.pinpoints = pinpoints                                  // 가져온 핀포인트의 값을 해당 campaign의 pinpint를 대체
+                    pinpointParam.RequestItems.Pinpoint.Keys = []               // 요청 parameter의 id 초기화
+                }
+                this.res.status(200).send(campaigns)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
+    }
+
     public readMyCamp(params: any): void{
         let id = params.uid
         if(id != this.req.session.passport.user.id){
