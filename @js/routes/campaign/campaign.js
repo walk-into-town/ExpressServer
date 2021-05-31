@@ -167,6 +167,7 @@ router.post('/', authentication_1.default, function (req, res) {
 //캠페인 조회
 router.get('/', function (req, res) {
     let query = req.query;
+    let campaignDB = new CampaignManager_1.default(req, res);
     if (query.value == '') {
         res.redirect('campaign/scan');
         return;
@@ -176,9 +177,13 @@ router.get('/', function (req, res) {
     if (query.type == 'id' && query.condition == 'exact') {
         type = FeatureManager_1.toRead.id;
     }
-    else if (query.type == 'id' && query.condition != 'exact') {
+    else if (query.type == 'pinpoint' && query.condition == 'exact') {
+        campaignDB.readByPinpoint(query);
+        return;
+    }
+    else if ((query.type == 'id' || query.type == 'pinpoint') && query.condition != 'exact') {
         result_1.fail.error = result_1.error.invalReq;
-        result_1.fail.errdesc = 'id 조회는 exact만 가능합니다.';
+        result_1.fail.errdesc = 'id / pinpoint 조회는 exact만 가능합니다.';
         res.status(400).send(result_1.fail);
         return;
     }
@@ -198,7 +203,6 @@ router.get('/', function (req, res) {
         console.log(`조회 실패. 응답 JSON\n${JSON.stringify(result_1.fail, null, 2)}`);
         return;
     }
-    let campaignDB = new CampaignManager_1.default(req, res);
     if (query.condition == 'exact') {
         console.log('일치 조회 시작');
         campaignDB.read(query.value, type);
