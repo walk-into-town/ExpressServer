@@ -477,7 +477,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             RequestItems: {
                 'Pinpoint': {
                     Keys: [],
-                    ProjectionExpression: '#name, imgs, latitude, longitude, description, updateTime, coupons',
+                    ProjectionExpression: '#name, imgs, latitude, longitude, description, updateTime, coupons, comments, quiz',
                     ExpressionAttributeNames: { '#name': 'name' }
                 }
             }
