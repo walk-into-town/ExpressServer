@@ -37,14 +37,18 @@ router.get('/ranking', function (req, res) {
     let query = {
         type: 'list'
     };
-    let rankingManaber = new RankingManager_1.default(req, res);
-    rankingManaber.read(query);
+    let rankingManager = new RankingManager_1.default(req, res);
+    rankingManager.read(query);
 });
 router.get('/myranking', function (req, res) {
     let query = {
         type: 'single'
     };
-    let rankingManaber = new RankingManager_1.default(req, res);
-    rankingManaber.read(query);
+    let rankingManager = new RankingManager_1.default(req, res);
+    rankingManager.read(query);
+});
+router.put('/ranking', function (req, res) {
+    let rankingManager = new RankingManager_1.default(req, res);
+    rankingManager.update('');
 });
 module.exports = router;

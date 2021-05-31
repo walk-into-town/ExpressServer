@@ -19,16 +19,21 @@ router.get('/ranking', function(req: express.Request, res: express.Response){
     let query = {
         type: 'list'
     }
-    let rankingManaber = new Rankingmanager(req, res)
-    rankingManaber.read(query)
+    let rankingManager = new Rankingmanager(req, res)
+    rankingManager.read(query)
 })
 
 router.get('/myranking', function(req: express.Request, res: express.Response){
     let query = {
         type: 'single'
     }
-    let rankingManaber = new Rankingmanager(req, res)
-    rankingManaber.read(query)
+    let rankingManager = new Rankingmanager(req, res)
+    rankingManager.read(query)
+})
+
+router.put('/ranking', function(req: express.Request, res: express.Response){
+    let rankingManager = new Rankingmanager(req, res)
+    rankingManager.update('')
 })
 
 module.exports = router
