@@ -970,7 +970,6 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                         rate.like = true;
                                     }
                                 }
-                                comments.Items[0].comments[i].rateList.push({ id: params.uid, like: true });
                                 result_1.success.data = comments.Items[0].comments[i];
                                 break;
                             }

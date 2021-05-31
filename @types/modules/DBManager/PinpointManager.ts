@@ -975,7 +975,6 @@ export default class PinpointManager extends FeatureManager{
                                         rate.like = true;
                                     }
                                 }
-                                comments.Items[0].comments[i].rateList.push({id: params.uid, like: true})
                                 success.data = comments.Items[0].comments[i]
                                 break;
                             }
