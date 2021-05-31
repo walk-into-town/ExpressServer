@@ -65,10 +65,16 @@ router.get('/', function(req: express.Request, res: express.Response){
         pinpointDB.readList(query)
         return; 
     }
+    if(query.type == 'reverse'){
+        query.value = nbsp2plus(query.value)
+        pinpointDB.readReverse(query)
+        return;
+    }
     fail.error = error.invalReq
     fail.errdesc = 'type은 list | single중 하나여야 합니다.'
     res.status(400).send(fail)
 })
+
 
 // router.post('/inquiry', function(req: express.Request, res: express.Response){
 //     let query = req.body

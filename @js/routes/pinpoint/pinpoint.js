@@ -81,6 +81,11 @@ router.get('/', function (req, res) {
         pinpointDB.readList(query);
         return;
     }
+    if (query.type == 'reverse') {
+        query.value = nbsp_1.nbsp2plus(query.value);
+        pinpointDB.readReverse(query);
+        return;
+    }
     result_1.fail.error = result_1.error.invalReq;
     result_1.fail.errdesc = 'type은 list | single중 하나여야 합니다.';
     res.status(400).send(result_1.fail);
