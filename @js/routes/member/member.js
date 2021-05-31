@@ -78,6 +78,11 @@ router.post('/playing', authentication_1.default, function (req, res) {
     let campaingDB = new CampaignManager_1.default(req, res);
     campaingDB.participate(query);
 });
+router.get('/playing/pinpoint', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let MemberDB = new MemberManager_1.default(req, res);
+    MemberDB.readPlayingPinpoint(query);
+});
 //제작한 캠페인 조회
 router.get('/mycampaign', authentication_1.default, function (req, res) {
     let query = req.query;
@@ -122,8 +127,13 @@ router.get('/', authentication_1.default, function (req, res) {
 });
 //회원탈퇴
 router.delete('/', authentication_1.default, function (req, res) {
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.delete('');
 });
 router.get('/coupon', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.readMyCoupon(query);
 });
 router.put('/coupon', authentication_1.default, function (req, res) {
 });

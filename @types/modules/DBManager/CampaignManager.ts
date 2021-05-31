@@ -2,6 +2,7 @@ import { FeatureManager, toRead } from "./FeatureManager"
 import * as CryptoJS from 'crypto-js'
 import { error, fail, success } from "../../static/result"
 import {nbsp2plus} from '../Logics/nbsp'
+import { campaignSort } from "../Logics/Sorter"
 
 
 export default class CampaignManager extends FeatureManager{
@@ -284,7 +285,6 @@ export default class CampaignManager extends FeatureManager{
     public readPart(params: any, readType: toRead): void{
         let criterion = readType
         let value = params
-        const quickSort = require('../Logics/Sorter')
         const run = async(criterion, value) => {
             try{
                 console.log('DB 요청 params 설정중')
@@ -338,8 +338,8 @@ export default class CampaignManager extends FeatureManager{
                     }
                 }
                 console.log('정렬 시작')
-                toSort = await quickSort(toSort)
-                primearr = await quickSort(primearr)
+                toSort = await campaignSort(toSort)
+                primearr = await campaignSort(primearr)
                 primearr.push(...toSort)
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
@@ -347,6 +347,7 @@ export default class CampaignManager extends FeatureManager{
                 this.res.status(200).send(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -408,44 +409,39 @@ export default class CampaignManager extends FeatureManager{
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {':id': params.cid}
         }
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: {id: params.caid},
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            ReturnValues: 'UPDATED_NEW'
+        }
+        let updateExp: string = 'SET '
+        let expAttrVal: any = {}
         const run = async() => {
             try{
-                const result = await this.Dynamodb.query(queryParams).promise()
-                let originCampaign = result.Items[0]
-                if(originCampaign == undefined){        //일치하는 id 없음
-                    fail.error = error.dataNotFound
-                    fail.errdesc = '일치하는 캠페인 id 없음'
-                    this.res.status(400).send(fail)
-                    return;
+                if(params.description != ''){
+                    updateExp = updateExp + 'description = :newdesc ';
+                    expAttrVal[':newdesc'] = params.description
                 }
-                let pinpoints = []; let coupons = []
-                params.pinpoints.forEach(pinpoint => {
-                    pinpoints.push({"id": pinpoint})
-                })
-                params.coupons.forEach(coupon => {
-                    coupons.push({"id": coupon})
-                })
-                let checkParams = {
-                    RequestItems:{
-                        'Pinpoint':{
-                            Keys: pinpoints
-                        },
-                        'Coupon':{
-                            Keys: coupons
-                        }
+                if(params.imgs.length != 0){
+                    if(updateExp.length == 4){
+                        updateExp += 'imgs = list_append(imgs, :newimgs) '
+                        expAttrVal[':newimgs'] = params.imgs
+                    }
+                    else{
+                        updateExp += ', imgs = list_append(imgs, :newimgs)'
+                        expAttrVal[':newimgs'] = params.imgs
                     }
                 }
-                const check = await this.Dynamodb.batchGet(checkParams).promise()
-                let pinpointCheck = check.Responses.Pinpoint.length           
-                let couponCheck = check.Responses.Coupon.length
-                if(pinpointCheck != pinpoints.length || couponCheck != coupons.length){
-                    fail.error = error.dataNotFound
-                    fail.errdesc = '일치하는 핀포인트 또는 쿠폰 id 없음'
-                    this.res.status(400).send(fail)
-                    return;
-                }
+                updateParams.UpdateExpression = updateExp
+                updateParams.ExpressionAttributeValues = expAttrVal
+                let result = await this.Dynamodb.update(updateParams).promise()
+                console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`)
+                success.data = result.Attributes
+                this.res.status(201).send(success)
             }
-            catch (err) {                             //DB 에러 발생
+            catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -455,6 +451,59 @@ export default class CampaignManager extends FeatureManager{
     }
     public delete(params: any): void {
         
+    }
+
+    public readPlaying(params: any):void {
+        params.caid = nbsp2plus(params.caid)
+        let campaignParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: '#users',
+            ExpressionAttributeValues: {':id': params.caid},
+            ExpressionAttributeNames: {'#users': 'users'}
+        }
+        let MemberParams = {
+            RequestItems:{
+                'Member':{
+                    Keys: [],
+                    ProjectionExpression: 'nickname, profileImg'
+                }
+            }
+        }
+        const run = async() => {
+            try{
+                console.log('캠페인 검색중')
+                let campResult = await this.Dynamodb.query(campaignParams).promise()
+                console.log('캠페인 검색 완료')
+                if(campResult.Items.length == 0){
+                    fail.error = error.invalReq
+                    fail.errdesc = '캠페인을 찾을 수 없습니다.'
+                    this.res.status(400).send(fail)
+                    return;                    
+                }
+                let users = campResult.Items[0].users
+                if(users.length == 0){
+                    success.data = []
+                    this.res.status(200).send(success)
+                    return;
+                }
+                console.log('회원정보 쿼리 생성중')
+                for(const id of users){
+                    MemberParams.RequestItems.Member.Keys.push({'id': id})
+                }
+                console.log('회원정보 쿼리 생성 완료\n회원 조회중')
+                let result = await this.Dynamodb.batchGet(MemberParams).promise()
+                console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`)
+                success.data = result.Responses.Member
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run();
     }
 
     public participate(params: any): void{

@@ -26,16 +26,9 @@ const upload = uploader.testupload()
 router.use('/review', review)
 
 //캠페인 등록
-router.post('/',isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
+router.post('/', isAuthenticated, function(req: express.Request, res: express.Response){
     res.locals.coupons = [];
     let query = req.body
-    let imgs: Array<string> = []
-    if(req.files != undefined){
-        for(let i = 0; i < req.files.length; i++){
-            imgs.push(process.env.domain + req.files[i].filename)
-        }
-    }
-    query.imgs = imgs
     query.pcoupons = []
     console.log(`캠페인 등록\n요청 JSON\n${JSON.stringify(query, null, 2)}`)
     let coupons = req.body.coupons
@@ -80,6 +73,7 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
         res.locals.pids = []
         res.locals.cids = []
         res.locals.campid = ''
+        let campCoupon;
         try{
             console.log(`쿠폰 등록중...`)
             for(let i = 0; i < coupons.length; i++){
@@ -88,14 +82,14 @@ router.post('/',isAuthenticated, upload.array('img'), function(req: express.Requ
             }
             for(let i = 0; i < res.locals.coupons.length; i++){
                 if(res.locals.coupons[i].paymentCondition == -1){
-                    query.coupons = res.locals.coupons[i].id
+                    campCoupon = res.locals.coupons[i].id
                 }
                 else{
                     query.pcoupons.push(res.locals.coupons[i].id)
                     pinpoints[res.locals.coupons[i].paymentCondition].coupons = [res.locals.coupons[i].id]
                 }
             }
-    
+            query.coupons = campCoupon
             console.log(`핀포인트 등록중...`)
             for(let i = 0; i < pinpoints.length; i++){
                 console.log(`${i}번째 핀포인트 등록`)
@@ -207,8 +201,8 @@ router.get('/scan', function(req: express.Request, res: express.Response){
 })
 
 //캠페인 수정
-router.put('/',isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
-    let query = JSON.parse(req.body.json)
+router.put('/',isAuthenticated, upload.array('imgs'), function(req: express.Request, res: express.Response){
+    let query = req.body
     let campaignDB = new CampaignManager(req,res)
     let imgs: Array<string> = []
     if(req.files != undefined){
@@ -218,6 +212,13 @@ router.put('/',isAuthenticated, upload.array('img'), function(req: express.Reque
     }
     query.imgs = imgs
     campaignDB.update(query)
+})
+
+//플레이중 유저 조회
+router.get('/playing', isAuthenticated, function(req: express.Request, res: express.Response){
+    let campaignDB = new CampaignManager(req, res)
+    let query = req.query
+    campaignDB.readPlaying(query)
 })
 
 module.exports = router

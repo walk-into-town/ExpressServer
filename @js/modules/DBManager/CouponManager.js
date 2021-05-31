@@ -85,11 +85,11 @@ class CouponManager extends FeatureManager_1.FeatureManager {
      * 3. 쿼리 실행 후 결과 출력
      */
     read(params) {
-        params.id = nbsp_1.nbsp2plus(params.id);
+        params.value = nbsp_1.nbsp2plus(params.value);
         let queryParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.id, }
+            ExpressionAttributeValues: { ':id': params.value }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -113,7 +113,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':id': params.value },
             ProjectionExpression: 'coupons, pcoupons'
         };
-        if (params.type == 'campaign') {
+        if (params.type == 'campaign') { //요청의 type에 따라 테이블 명을 지정
             checkParams.TableName = 'Campaign';
         }
         else if (params.type == 'pinpoint') {
@@ -129,6 +129,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                         }
                     }
                 };
+                //캠페인 / 핀포인트에서 쿠폰 id를 가져와 couponParams에 넣기
                 if (params.type == 'campaign') {
                     let coupon = result.Items[0].coupons;
                     let pcoupons = result.Items[0].pcoupons;
@@ -167,11 +168,9 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                     console.log(couponList);
                     couponParams.RequestItems.Coupon.Keys = couponList;
                 }
+                // 위에서 넣은 couponParams를 이용해 batchGet으로 쿠폰 내용 가져와 응답하기
                 let queryResult = yield this.Dynamodb.batchGet(couponParams).promise();
                 let coupons = queryResult.Responses.Coupon;
-                for (const coupon of coupons) {
-                    delete coupon.paymentCondition;
-                }
                 result_1.success.data = coupons;
                 this.res.status(200).send(result_1.success);
             }
@@ -250,6 +249,51 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
             }
+        });
+        run();
+    }
+    useCoupon(params) {
+        let id = this.req.session.passport.user.id;
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'coupons',
+            ExpressionAttributeValues: { ':id': id }
+        };
+        let updateParams = {
+            TableName: 'Member',
+            Key: { 'id': id },
+            UpdateExpression: 'set coupons = :newcoupons',
+            ExpressionAttributeValues: { ':newcoupons': null }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let result = yield this.Dynamodb.query(queryParams).promise();
+            let coupons = result.Items[0].coupons;
+            if (coupons.length == 0) {
+                result_1.fail.error = result_1.error.invalReq;
+                result_1.fail.errdesc = '사용 가능한 쿠폰이 없습니다.';
+                this.res.status(400).send(result_1.fail);
+                return;
+            }
+            for (const coupon of coupons) {
+                if (coupon.id == params.cid && coupon.used == false) {
+                    if (coupon.endDate < new Date().toISOString()) {
+                        result_1.fail.error = result_1.error.invalReq;
+                        result_1.fail.errdesc = '유효기간 초과';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                    coupon.used = true;
+                    result_1.success.data = '쿠폰 사용 성공';
+                    updateParams.ExpressionAttributeValues[":newcoupons"] = coupons;
+                    yield this.Dynamodb.update(updateParams).promise();
+                    this.res.status(201).send(result_1.success);
+                    return;
+                }
+            }
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = '이미 사용하거나 없는 쿠폰입니다.';
+            this.res.status(400).send(result_1.fail);
         });
         run();
     }

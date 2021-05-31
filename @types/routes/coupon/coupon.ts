@@ -55,7 +55,7 @@ router.delete('/', isAuthenticated, function(req: express.Request, res: express.
 
 router.put('/', isAuthenticated, upload.array('img'), function(req: express.Request, res: express.Response){
     let couponDB = new CouponManager(req, res)
-    let query = JSON.parse(req.body.json)
+    let query = req.body
     let imgs: Array<string> = []
     for(let i = 0; i < req.files.length; i++){
         imgs.push(process.env.domain + req.files[i].filename)
@@ -64,5 +64,10 @@ router.put('/', isAuthenticated, upload.array('img'), function(req: express.Requ
     couponDB.update(query)
 })
 
+router.post('/use', isAuthenticated, function(req: express.Request, res: express.Response){
+    let couponDB = new CouponManager(req, res)
+    let query = req.body
+    couponDB.useCoupon(query)
+})
 
 module.exports = router

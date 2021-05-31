@@ -65,6 +65,12 @@ router.post('/playing', isAuthenticated, function(req: express.Request, res: exp
     campaingDB.participate(query)
 })
 
+router.get('/playing/pinpoint', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.query
+    let MemberDB = new MemberManager(req, res)
+    MemberDB.readPlayingPinpoint(query)
+})
+
 //제작한 캠페인 조회
 router.get('/mycampaign', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.query
@@ -114,11 +120,14 @@ router.get('/', isAuthenticated, function(req: express.Request, res: express.Res
 
 //회원탈퇴
 router.delete('/', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let memberDB = new MemberManager(req, res)
+    memberDB.delete('')
 })
 
 router.get('/coupon', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let query = req.query
+    let memberDB = new MemberManager(req, res)
+    memberDB.readMyCoupon(query)
 })
 
 router.put('/coupon', isAuthenticated, function(req: express.Request, res: express.Response){

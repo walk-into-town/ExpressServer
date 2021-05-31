@@ -15,5 +15,6 @@ export const error = {
     invalReq: 'Invalid Request Values',
     dataNotFound: 'Can not find data from DB',
     typeMiss: 'Type Mismatch',
-    invalAcc: 'Invalid Access'
+    invalAcc: 'Invalid Access',
+    invalFile: 'Invalid File'
 }

@@ -44,6 +44,10 @@ module.exports = () => {
           KeyConditionExpression: 'id = :id',
           ExpressionAttributeValues: {':id' : username}
         }).promise()
+        if(result.Items[0].nickname == '(알수없음)'){
+          console.log('삭제된 게정입니다.')
+          return done(null, false, {message: '삭제된 게정입니다.'});
+        }
         if(result.Items[0] == undefined){
           console.log('ID 불일치')
           return done(null, false, {message: 'ID 또는 패스워드가 잘못되었습니다.'})
@@ -89,6 +93,10 @@ module.exports = () => {
         }
         let data = await doclient.query(params).promise()
         let result = data.Items[0]
+        if(result.Items[0].nickname == '(알수없음)'){
+          console.log('삭제된 게정입니다.')
+          return cb(null, false, {message: '삭제된 게정입니다.'});
+        }
         if(result == undefined){  //id 없는경우
           console.log('새로운 구글 ID')
           let query = {
@@ -143,6 +151,10 @@ module.exports = () => {
         }
         let data = await doclient.query(params).promise()
         let result = data.Items[0]
+        if(result.Items[0].nickname == '(알수없음)'){
+          console.log('삭제된 게정입니다.')
+          return cb(null, false, {message: '삭제된 게정입니다.'});
+        }
         if(result == undefined){  //id 없는경우
           console.log('새로운 카카오 ID')
           let query = {

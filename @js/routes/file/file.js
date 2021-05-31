@@ -23,36 +23,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * /pinpoint/quiz
+ * /game
  */
 const express = __importStar(require("express"));
-const PinpointManager_1 = __importDefault(require("../../modules/DBManager/PinpointManager"));
-const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const UploadFile_1 = __importDefault(require("../../modules/FileManager/UploadFile"));
+const result_1 = require("../../static/result");
 var router = express.Router();
-router.post('/', authentication_1.default, function (req, res) {
-    let query = req.body;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.insertQuiz(query);
-});
-router.get('/', function (req, res) {
-    let query = req.query;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.readQuiz(query);
-});
-router.delete('/', authentication_1.default, function (req, res) {
-    let query = req.body;
-    query.quiz = null;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.updateQuiz(query);
-});
-router.put('/', authentication_1.default, function (req, res) {
-    let query = req.body;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.updateQuiz(query);
-});
-router.post('/check', authentication_1.default, function (req, res) {
-    let query = req.body;
-    let DBManager = new PinpointManager_1.default(req, res);
-    DBManager.solveQuiz(query);
+const uploader = new UploadFile_1.default();
+const upload = uploader.testupload();
+router.post('/', upload.array('imgs'), function (req, res) {
+    let imgs = [];
+    if (req.files != undefined) {
+        for (let i = 0; i < req.files.length; i++) {
+            imgs.push(process.env.domain + req.files[i].filename);
+        }
+    }
+    else {
+        result_1.fail.error = result_1.error.invalFile;
+        result_1.fail.errdesc = '파일 전송 에러. 파일이 누락되었거나 전송 도중 손상되었습니다.';
+        res.status(400).send(result_1.fail);
+        return;
+    }
+    result_1.success.data = imgs;
+    res.status(201).send(result_1.success);
 });
 module.exports = router;

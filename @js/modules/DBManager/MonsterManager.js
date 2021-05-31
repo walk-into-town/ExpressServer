@@ -50,7 +50,14 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
             try {
                 let result = yield this.Dynamodb.query(queryParams).promise();
                 console.log(result.Items[0].imgs);
-                result_1.success.data = result.Items[0].imgs;
+                let url = null;
+                const getRandomNumber = () => {
+                    return Math.floor(Math.random() * (result.Items[0].imgs.length - 0)) + 0;
+                };
+                url = result.Items[0].imgs[getRandomNumber()];
+                let test = url.substr(url.length - 14, 14);
+                let debugUrl = process.env.domain + 'images/' + test;
+                result_1.success.data = debugUrl;
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {

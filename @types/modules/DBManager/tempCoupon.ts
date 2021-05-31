@@ -31,7 +31,7 @@ export default class CouponManager extends FeatureManager{
                 goods: params.goods,
                 endDate: params.endDate,
                 issued: 0,
-                limit: params.limit,
+                limit: Number(params.limit),
                 imgs: params.img,
                 paymentCondition: params.paymentCondition
             },

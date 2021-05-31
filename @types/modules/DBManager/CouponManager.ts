@@ -57,11 +57,11 @@ export default class CouponManager extends FeatureManager{
      * 3. 쿼리 실행 후 결과 출력
      */
     public read(params: any): void {
-        params.id = nbsp2plus(params.id)
+        params.value = nbsp2plus(params.value)
         let queryParams = {
             TableName: 'Coupon',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: {':id': params.id,}
+            ExpressionAttributeValues: {':id': params.value}
         }
         const run = async() => {
             try{ 
@@ -80,13 +80,13 @@ export default class CouponManager extends FeatureManager{
 
     public readList(params: any): void{
         params.value = nbsp2plus(params.value)
-        let checkParams = {
+        let checkParams = {                     //캠페인/핀포인트에서 쿠폰을 가져오는 parameter
             TableName: '',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {':id': params.value},
             ProjectionExpression: 'coupons, pcoupons'
         }
-        if(params.type == 'campaign'){
+        if(params.type == 'campaign'){          //요청의 type에 따라 테이블 명을 지정
             checkParams.TableName = 'Campaign'
         }
         else if(params.type == 'pinpoint'){
@@ -95,13 +95,14 @@ export default class CouponManager extends FeatureManager{
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(checkParams).promise()
-                let couponParams = {
+                let couponParams = {            //batchget으로 쿠폰 내용을 가져오기 위한 parameter
                     RequestItems:{
                         'Coupon':{
                             Keys: null
                         }
                     }
                 }
+                //캠페인 / 핀포인트에서 쿠폰 id를 가져와 couponParams에 넣기
                 if(params.type == 'campaign'){
                     let coupon:Array<string> = result.Items[0].coupons
                     let pcoupons:Array<string> = result.Items[0].pcoupons
@@ -140,12 +141,9 @@ export default class CouponManager extends FeatureManager{
                     console.log(couponList)
                     couponParams.RequestItems.Coupon.Keys = couponList
                 }
-                
+                // 위에서 넣은 couponParams를 이용해 batchGet으로 쿠폰 내용 가져와 응답하기
                 let queryResult = await this.Dynamodb.batchGet(couponParams).promise()
                 let coupons = queryResult.Responses.Coupon
-                for (const coupon of coupons) {
-                    delete coupon.paymentCondition
-                }
                 success.data = coupons
                 this.res.status(200).send(success)
             }
@@ -228,6 +226,52 @@ export default class CouponManager extends FeatureManager{
                 fail.errdesc = err
                 this.res.status(521).send(fail)
             }
+        }
+        run()
+    }
+
+    public useCoupon(params: any): void{
+        let id = this.req.session.passport.user.id
+        let queryParams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: 'coupons',
+            ExpressionAttributeValues: {':id': id}
+        }
+        let updateParams = {
+            TableName: 'Member',
+            Key: {'id': id},
+            UpdateExpression: 'set coupons = :newcoupons',
+            ExpressionAttributeValues: {':newcoupons': null}
+        }
+        const run = async() => {
+            let result = await this.Dynamodb.query(queryParams).promise()
+            let coupons: Array<any> = result.Items[0].coupons
+            if(coupons.length == 0){
+                fail.error = error.invalReq
+                fail.errdesc = '사용 가능한 쿠폰이 없습니다.'
+                this.res.status(400).send(fail)
+                return;
+            }
+            for(const coupon of coupons){
+                if(coupon.id == params.cid && coupon.used == false){
+                    if(coupon.endDate < new Date().toISOString()){
+                        fail.error = error.invalReq
+                        fail.errdesc = '유효기간 초과'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
+                    coupon.used = true;
+                    success.data = '쿠폰 사용 성공'
+                    updateParams.ExpressionAttributeValues[":newcoupons"] = coupons
+                    await this.Dynamodb.update(updateParams).promise()
+                    this.res.status(201).send(success)
+                    return;
+                }
+            }
+            fail.error = error.invalReq
+            fail.errdesc = '이미 사용하거나 없는 쿠폰입니다.'
+            this.res.status(400).send(fail)
         }
         run()
     }

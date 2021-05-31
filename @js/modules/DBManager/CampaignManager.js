@@ -32,6 +32,7 @@ const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
+const Sorter_1 = require("../Logics/Sorter");
 class CampaignManager extends FeatureManager_1.FeatureManager {
     /**
      * 캠페인 생성 로직
@@ -300,7 +301,6 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
     readPart(params, readType) {
         let criterion = readType;
         let value = params;
-        const quickSort = require('../Logics/Sorter');
         const run = (criterion, value) => __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log('DB 요청 params 설정중');
@@ -355,8 +355,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 console.log('정렬 시작');
-                toSort = yield quickSort(toSort);
-                primearr = yield quickSort(primearr);
+                toSort = yield Sorter_1.campaignSort(toSort);
+                primearr = yield Sorter_1.campaignSort(primearr);
                 primearr.push(...toSort);
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`);
                 result_1.success.data = primearr;
@@ -364,6 +364,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 this.res.status(200).send(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -422,45 +423,39 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: { ':id': params.cid }
         };
+        let updateParams = {
+            TableName: 'Campaign',
+            Key: { id: params.caid },
+            UpdateExpression: null,
+            ExpressionAttributeValues: null,
+            ReturnValues: 'UPDATED_NEW'
+        };
+        let updateExp = 'SET ';
+        let expAttrVal = {};
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                const result = yield this.Dynamodb.query(queryParams).promise();
-                let originCampaign = result.Items[0];
-                if (originCampaign == undefined) { //일치하는 id 없음
-                    result_1.fail.error = result_1.error.dataNotFound;
-                    result_1.fail.errdesc = '일치하는 캠페인 id 없음';
-                    this.res.status(400).send(result_1.fail);
-                    return;
+                if (params.description != '') {
+                    updateExp = updateExp + 'description = :newdesc ';
+                    expAttrVal[':newdesc'] = params.description;
                 }
-                let pinpoints = [];
-                let coupons = [];
-                params.pinpoints.forEach(pinpoint => {
-                    pinpoints.push({ "id": pinpoint });
-                });
-                params.coupons.forEach(coupon => {
-                    coupons.push({ "id": coupon });
-                });
-                let checkParams = {
-                    RequestItems: {
-                        'Pinpoint': {
-                            Keys: pinpoints
-                        },
-                        'Coupon': {
-                            Keys: coupons
-                        }
+                if (params.imgs.length != 0) {
+                    if (updateExp.length == 4) {
+                        updateExp += 'imgs = list_append(imgs, :newimgs) ';
+                        expAttrVal[':newimgs'] = params.imgs;
                     }
-                };
-                const check = yield this.Dynamodb.batchGet(checkParams).promise();
-                let pinpointCheck = check.Responses.Pinpoint.length;
-                let couponCheck = check.Responses.Coupon.length;
-                if (pinpointCheck != pinpoints.length || couponCheck != coupons.length) {
-                    result_1.fail.error = result_1.error.dataNotFound;
-                    result_1.fail.errdesc = '일치하는 핀포인트 또는 쿠폰 id 없음';
-                    this.res.status(400).send(result_1.fail);
-                    return;
+                    else {
+                        updateExp += ', imgs = list_append(imgs, :newimgs)';
+                        expAttrVal[':newimgs'] = params.imgs;
+                    }
                 }
+                updateParams.UpdateExpression = updateExp;
+                updateParams.ExpressionAttributeValues = expAttrVal;
+                let result = yield this.Dynamodb.update(updateParams).promise();
+                console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`);
+                result_1.success.data = result.Attributes;
+                this.res.status(201).send(result_1.success);
             }
-            catch (err) { //DB 에러 발생
+            catch (err) {
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -469,6 +464,58 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         run();
     }
     delete(params) {
+    }
+    readPlaying(params) {
+        params.caid = nbsp_1.nbsp2plus(params.caid);
+        let campaignParams = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ProjectionExpression: '#users',
+            ExpressionAttributeValues: { ':id': params.caid },
+            ExpressionAttributeNames: { '#users': 'users' }
+        };
+        let MemberParams = {
+            RequestItems: {
+                'Member': {
+                    Keys: [],
+                    ProjectionExpression: 'nickname, profileImg'
+                }
+            }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('캠페인 검색중');
+                let campResult = yield this.Dynamodb.query(campaignParams).promise();
+                console.log('캠페인 검색 완료');
+                if (campResult.Items.length == 0) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                let users = campResult.Items[0].users;
+                if (users.length == 0) {
+                    result_1.success.data = [];
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                console.log('회원정보 쿼리 생성중');
+                for (const id of users) {
+                    MemberParams.RequestItems.Member.Keys.push({ 'id': id });
+                }
+                console.log('회원정보 쿼리 생성 완료\n회원 조회중');
+                let result = yield this.Dynamodb.batchGet(MemberParams).promise();
+                console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`);
+                result_1.success.data = result.Responses.Member;
+                this.res.status(200).send(result_1.success);
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     participate(params) {
         if (this.req.session.passport.user.id != params.uid) { //세션 탈취 방지
