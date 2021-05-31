@@ -938,23 +938,26 @@ export default class PinpointManager extends FeatureManager{
                         if(comments.Items[0].comments[i].rateList == undefined){
                             comments.Items[0].comments[i].rateList = []
                         }
-                        for(const id of comments.Items[0].comments[i].rateList){
-                            if(id == params.uid){
-                                fail.error = error.invalReq
-                                fail.errdesc = '이미 좋아요/싫어요를 누르셨습니다.'
-                                this.res.status(400).send(fail)
-                                return;
+                        for(const user of comments.Items[0].comments[i].rateList){
+                            if(user.id == params.uid){
+                                if(user.like == params.like){
+                                    fail.error = error.invalReq
+                                    fail.errdesc = '이미 좋아요 / 싫어요를 누르셨습니다.'
+                                    this.res.status(400).send(fail)
+                                    return;
+                                }
                             }
                         }
                         if(params.like == true){
                             comments.Items[0].comments[i].rated += 1;
                             console.log(comments.Items[0].comments[i])
-                            comments.Items[0].comments[i].rateList.push(params.uid)
+                            comments.Items[0].comments[i].rateList.push({id: params.uid, like: true})
                             success.data = comments.Items[0].comments[i]
                             break;
                         }
                         else{
                             comments.Items[0].comments[i].rated -= 1;
+                            comments.Items[0].comments[i].rateList.push({id: params.uid, like: false})
                             success.data = comments.Items[0].comments[i]
                             break;
                         }
