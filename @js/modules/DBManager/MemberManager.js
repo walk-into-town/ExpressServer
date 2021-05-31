@@ -175,7 +175,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     }
                 });
                 let data = {
-                    playingCampaign: participateCamp.length,
+                    playingCampaign: playingCampaign.length,
                     myCampaign: myCampaign,
                     clearCampaign: clearCamp.length
                 };

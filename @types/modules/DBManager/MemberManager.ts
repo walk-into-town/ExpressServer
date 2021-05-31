@@ -152,7 +152,7 @@ export default class MemberManager extends FeatureManager{
                     }
                 });
                 let data = {
-                    playingCampaign: participateCamp.length,
+                    playingCampaign: playingCampaign.length,
                     myCampaign: myCampaign,
                     clearCampaign: clearCamp.length
                 }
