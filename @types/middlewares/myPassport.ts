@@ -44,13 +44,13 @@ module.exports = () => {
           KeyConditionExpression: 'id = :id',
           ExpressionAttributeValues: {':id' : username}
         }).promise()
-        if(result.Items[0].nickname == '(알수없음)'){
-          console.log('삭제된 게정입니다.')
-          return done(null, false, {message: '삭제된 게정입니다.'});
-        }
         if(result.Items[0] == undefined){
           console.log('ID 불일치')
           return done(null, false, {message: 'ID 또는 패스워드가 잘못되었습니다.'})
+        }
+        if(result.Items[0].nickname == '(알수없음)'){
+          console.log('삭제된 게정입니다.')
+          return done(null, false, {message: '삭제된 게정입니다.'});
         }
         console.log('ID 일치')
         let pw = result.Items[0].pw
