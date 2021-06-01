@@ -33,6 +33,7 @@ const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
 const Sorter_1 = require("../Logics/Sorter");
+const responseInit_1 = require("../Logics/responseInit");
 class CampaignManager extends FeatureManager_1.FeatureManager {
     /**
      * 캠페인 생성 로직
@@ -206,6 +207,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log('제작 캠페인 업데이트 완료');
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 for (const id of this.res.locals.cids) {
@@ -336,12 +338,14 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     result_1.success.data = result.Items;
                     console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 if (result.Items.length == 0) {
                     result_1.success.data = [];
                     console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 let toSort = [];
@@ -362,6 +366,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.success.data = primearr;
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 console.log(err);
@@ -385,10 +390,12 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 if (queryResult.Items.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 result_1.success.data = queryResult.Items[0];
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -409,6 +416,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.success.data = queryResult.Items;
                 console.log(`조회 성공. 응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -435,6 +443,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             }
             console.log(`조회 성공. 응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
             this.res.status(200).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -480,6 +489,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`);
                 result_1.success.data = result.Attributes;
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -523,6 +533,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 if (users.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 console.log('회원정보 쿼리 생성중');
@@ -534,6 +545,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`);
                 result_1.success.data = result.Responses.Member;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -633,6 +645,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.success.data = partiResult.Attributes;
                 console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(result_1.success.data, null, 2)}`);
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -723,6 +736,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 let updateMember = yield this.Dynamodb.update(memberParam).promise();
                 result_1.success.data = comment[0];
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -753,6 +767,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`);
                 result_1.success.data = result.Items[0].comments;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -853,6 +869,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 console.log('댓글 수정중...');
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -938,6 +955,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
                 result_1.success.data = updateResult.Attributes.comments;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;

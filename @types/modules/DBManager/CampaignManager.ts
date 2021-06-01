@@ -3,6 +3,7 @@ import * as CryptoJS from 'crypto-js'
 import { error, fail, success } from "../../static/result"
 import {nbsp2plus} from '../Logics/nbsp'
 import { campaignSort } from "../Logics/Sorter"
+import { successInit } from "../Logics/responseInit"
 
 
 export default class CampaignManager extends FeatureManager{
@@ -187,6 +188,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log('제작 캠페인 업데이트 완료')
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 for (const id of this.res.locals.cids) {
@@ -319,12 +321,14 @@ export default class CampaignManager extends FeatureManager{
                     success.data = result.Items
                     console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 if(result.Items.length == 0){
                     success.data = []
                     console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 let toSort = []
@@ -345,6 +349,7 @@ export default class CampaignManager extends FeatureManager{
                 success.data = primearr
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 console.log(err)
@@ -369,10 +374,12 @@ export default class CampaignManager extends FeatureManager{
                 if(queryResult.Items.length == 0){
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 success.data = queryResult.Items[0]
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -394,6 +401,7 @@ export default class CampaignManager extends FeatureManager{
                 success.data = queryResult.Items
                 console.log(`조회 성공. 응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -421,6 +429,7 @@ export default class CampaignManager extends FeatureManager{
             }
             console.log(`조회 성공. 응답 JSON\n${JSON.stringify(success, null, 2)}`)
             this.res.status(200).send(success)
+            successInit(success)
         }
     }
 
@@ -467,6 +476,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`)
                 success.data = result.Attributes
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -512,6 +522,7 @@ export default class CampaignManager extends FeatureManager{
                 if(users.length == 0){
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 console.log('회원정보 쿼리 생성중')
@@ -523,6 +534,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`)
                 success.data = result.Responses.Member
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -623,6 +635,7 @@ export default class CampaignManager extends FeatureManager{
                 success.data = partiResult.Attributes
                 console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(success.data, null, 2)}`)
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -714,6 +727,7 @@ export default class CampaignManager extends FeatureManager{
                 let updateMember = await this.Dynamodb.update(memberParam).promise()
                 success.data = comment[0]
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -745,6 +759,8 @@ export default class CampaignManager extends FeatureManager{
                 console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`)
                 success.data = result.Items[0].comments
                 this.res.status(200).send(success)
+                successInit(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -847,6 +863,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log('댓글 수정중...')
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -933,6 +950,7 @@ export default class CampaignManager extends FeatureManager{
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 success.data = updateResult.Attributes.comments
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
