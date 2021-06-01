@@ -78,6 +78,7 @@ router.post('/playing', authentication_1.default, function (req, res) {
     let campaingDB = new CampaignManager_1.default(req, res);
     campaingDB.participate(query);
 });
+//참여중 핀포인트 조회
 router.get('/playing/pinpoint', authentication_1.default, function (req, res) {
     let query = req.query;
     let MemberDB = new MemberManager_1.default(req, res);

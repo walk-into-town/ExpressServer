@@ -58,4 +58,7 @@ router.get('/scan/Monster', function (req, res) {
     let scanner = new scan_1.default(req, res);
     scanner.monster();
 });
+router.get('/session', upload.array('img'), function (req, res) {
+    res.status(200).send(req.session);
+});
 module.exports = router;

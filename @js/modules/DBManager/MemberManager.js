@@ -175,7 +175,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     }
                 });
                 let data = {
-                    playingCampaign: participateCamp.length,
+                    playingCampaign: playingCampaign.length,
                     myCampaign: myCampaign,
                     clearCampaign: clearCamp.length
                 };
@@ -477,13 +477,14 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             RequestItems: {
                 'Pinpoint': {
                     Keys: [],
-                    ProjectionExpression: '#name, imgs, latitude, longitude, description, updateTime, coupons',
+                    ProjectionExpression: 'id, #name, imgs, latitude, longitude, description, updateTime, coupons, comments, quiz',
                     ExpressionAttributeNames: { '#name': 'name' }
                 }
             }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
+                let pinpoint2respond = [];
                 console.log('참여중인 캠페인 목록 조회중');
                 let memberResult = yield this.Dynamodb.query(memberParam).promise();
                 let playing = memberResult.Items[0].playingCampaigns;
@@ -527,9 +528,11 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     let pinpointResult = yield this.Dynamodb.batchGet(pinpointParam).promise();
                     let pinpoints = pinpointResult.Responses.Pinpoint;
                     camp.pinpoints = pinpoints; // 가져온 핀포인트의 값을 해당 campaign의 pinpint를 대체
+                    pinpoint2respond.push(...pinpoints);
                     pinpointParam.RequestItems.Pinpoint.Keys = []; // 요청 parameter의 id 초기화
                 }
-                this.res.status(200).send(campaigns);
+                result_1.success.data = pinpoint2respond;
+                this.res.status(200).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;

@@ -152,7 +152,7 @@ export default class MemberManager extends FeatureManager{
                     }
                 });
                 let data = {
-                    playingCampaign: participateCamp.length,
+                    playingCampaign: playingCampaign.length,
                     myCampaign: myCampaign,
                     clearCampaign: clearCamp.length
                 }
@@ -461,7 +461,7 @@ export default class MemberManager extends FeatureManager{
             RequestItems: {
                 'Pinpoint': {
                     Keys: [],
-                    ProjectionExpression: '#name, imgs, latitude, longitude, description, updateTime, coupons',
+                    ProjectionExpression: 'id, #name, imgs, latitude, longitude, description, updateTime, coupons, comments, quiz',
                     ExpressionAttributeNames: { '#name' : 'name'}
                 }
             }
@@ -469,6 +469,7 @@ export default class MemberManager extends FeatureManager{
 
         const run = async() => {
             try{
+                let pinpoint2respond = []
                 console.log('참여중인 캠페인 목록 조회중')
                 let memberResult = await this.Dynamodb.query(memberParam).promise()
                 let playing: Array<any> = memberResult.Items[0].playingCampaigns
@@ -512,9 +513,11 @@ export default class MemberManager extends FeatureManager{
                     let pinpointResult = await this.Dynamodb.batchGet(pinpointParam).promise()
                     let pinpoints = pinpointResult.Responses.Pinpoint
                     camp.pinpoints = pinpoints                                  // 가져온 핀포인트의 값을 해당 campaign의 pinpint를 대체
+                    pinpoint2respond.push(...pinpoints)
                     pinpointParam.RequestItems.Pinpoint.Keys = []               // 요청 parameter의 id 초기화
                 }
-                this.res.status(200).send(campaigns)
+                success.data = pinpoint2respond
+                this.res.status(200).send(success)
             }
             catch(err){
                 fail.error = error.dbError

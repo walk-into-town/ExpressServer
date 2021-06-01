@@ -70,6 +70,7 @@ router.get('/', function(req: express.Request, res: express.Response){
     res.status(400).send(fail)
 })
 
+
 // router.post('/inquiry', function(req: express.Request, res: express.Response){
 //     let query = req.body
 //     let pinpointDB = new PinpointManager(req, res)

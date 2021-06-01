@@ -65,6 +65,7 @@ router.post('/playing', isAuthenticated, function(req: express.Request, res: exp
     campaingDB.participate(query)
 })
 
+//참여중 핀포인트 조회
 router.get('/playing/pinpoint', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.query
     let MemberDB = new MemberManager(req, res)

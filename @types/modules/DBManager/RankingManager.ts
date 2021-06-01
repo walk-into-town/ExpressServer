@@ -106,10 +106,44 @@ export default class Rankingmanager extends FeatureManager{
         this.res.status(400).send(fail)
     }
     public update(params: any): void {
-        throw new Error("Method not implemented.");
+        let queryParams = {
+            TableName: 'Ranking'
+        }
+        let updateParams = {
+            TableName: 'Ranking',
+            Key: {'userId': null},
+            UpdateExpression: 'set #rank = :newrank',
+            ExpressionAttributeValues: {':newrank': null},
+            ExpressionAttributeNames: {'#rank': 'rank'}
+        }
+        const run = async() => {
+            let rankResult = await this.Dynamodb.scan(queryParams).promise()
+            let ranks = rankResult.Items
+            ranks = await rankingSort(ranks)
+            for(let i =0; i < ranks.length; i++){           // 전체 정렬된 랭킹에 대하여
+                if(i == 0){                                 // 배열의 0번째 원소 = 1등
+                    ranks[0].rank = 1
+                    continue
+                }
+                if(ranks[i].cleared == ranks[i-1].cleared){ // 이번 요소와 이전 요소의 클리어 수가 동일 = 같은 순위로 설정
+                    ranks[i].rank = ranks[i-1].rank
+                    continue
+                }
+                ranks[i].rank = i + 1;
+            }
+            for(const rank of ranks){
+                updateParams.Key.userId = rank.userId
+                updateParams.ExpressionAttributeValues[":newrank"] = rank.rank
+                await this.Dynamodb.update(updateParams).promise()
+            }
+            console.log('랭킹 갱신 성공')
+            success.data = '랭킹 갱신 성공'
+            this.res.status(201).send(success)
+        }
+        run()
+        return;
     }
     public delete(params: any): void {
         throw new Error("Method not implemented.");
-    }
-    
+    }   
 }

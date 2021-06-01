@@ -356,6 +356,33 @@ export default class CampaignManager extends FeatureManager{
         run(criterion, value)
     }
 
+    public readByPinpoint(params: any){
+        let pid = nbsp2plus(params.value)
+        let queryParams = {
+            TableName: 'Campaign',
+            FilterExpression: 'contains(pinpoints, :pid)',
+            ExpressionAttributeValues: {':pid': pid}
+        }
+        const run = async() => {
+            try{
+                let queryResult = await this.Dynamodb.scan(queryParams).promise()
+                if(queryResult.Items.length == 0){
+                    success.data = []
+                    this.res.status(200).send(success)
+                    return;
+                }
+                success.data = queryResult.Items[0]
+                this.res.status(200).send(success)
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
+    }
+
     public scan(){
         let queryParams = {
             TableName: 'Campaign'
