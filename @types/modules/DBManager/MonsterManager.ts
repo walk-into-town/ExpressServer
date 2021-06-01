@@ -40,7 +40,6 @@ export default class MonsterManager extends FeatureManager{
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(queryParams).promise()
-                console.log(result.Items[0].imgs)
                 let url: string = null;
                 const getRandomNumber = () => {           // 0 ~ img의 길이 -1사이 숫자
                     return Math.floor(Math.random() * (result.Items[0].imgs.length - 0)) + 0
@@ -48,6 +47,7 @@ export default class MonsterManager extends FeatureManager{
                 url = result.Items[0].imgs[getRandomNumber()]
                 let test = url.substr(url.length - 14, 14);
                 let debugUrl = process.env.domain + 'images/' + test
+                console.log(debugUrl)
                 success.data = debugUrl
                 this.res.status(200).send(success)
             }
