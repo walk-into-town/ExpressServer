@@ -355,8 +355,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 console.log('정렬 시작');
-                toSort = yield Sorter_1.campaignSort(toSort);
-                primearr = yield Sorter_1.campaignSort(primearr);
+                toSort.sort(Sorter_1.campaignSort);
+                primearr.sort(Sorter_1.campaignSort);
                 primearr.push(...toSort);
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`);
                 result_1.success.data = primearr;

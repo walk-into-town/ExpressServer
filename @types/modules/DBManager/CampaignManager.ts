@@ -338,8 +338,8 @@ export default class CampaignManager extends FeatureManager{
                     }
                 }
                 console.log('정렬 시작')
-                toSort = await campaignSort(toSort)
-                primearr = await campaignSort(primearr)
+                toSort.sort(campaignSort)
+                primearr.sort(campaignSort)
                 primearr.push(...toSort)
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
