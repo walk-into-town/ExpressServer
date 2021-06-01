@@ -72,7 +72,7 @@ export default class Rankingmanager extends FeatureManager{
                     for(const item of result.Items){
                         ranking.push(item)
                     }
-                    ranking = await rankingSort(ranking)
+                    ranking.sort(rankingSort)
                     for(const rank of ranking){
                         memberparams.RequestItems.Member.Keys.push({id: rank.userId})
                     }
@@ -88,6 +88,7 @@ export default class Rankingmanager extends FeatureManager{
                             }
                         }
                     }
+                    ranking.sort(rankingSort)
                     success.data = ranking
                     this.res.status(200).send(success)
                     return;
@@ -118,8 +119,11 @@ export default class Rankingmanager extends FeatureManager{
         }
         const run = async() => {
             let rankResult = await this.Dynamodb.scan(queryParams).promise()
-            let ranks = rankResult.Items
-            ranks = await rankingSort(ranks)
+            let ranks = []
+            for(const rank of rankResult.Items){
+                ranks.push(rank)
+            }
+            ranks.sort(rankingSort)
             for(let i =0; i < ranks.length; i++){           // 전체 정렬된 랭킹에 대하여
                 if(i == 0){                                 // 배열의 0번째 원소 = 1등
                     ranks[0].rank = 1
