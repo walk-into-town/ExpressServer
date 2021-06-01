@@ -357,7 +357,7 @@ export default class CampaignManager extends FeatureManager{
     }
 
     public readByPinpoint(params: any){
-        let pid = params.value
+        let pid = nbsp2plus(params.value)
         let queryParams = {
             TableName: 'Campaign',
             FilterExpression: 'contains(pinpoints, :pid)',
