@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const result_1 = require("../../static/result");
+const responseInit_1 = require("../Logics/responseInit");
 class MonsterManager extends FeatureManager_1.FeatureManager {
     insert(params) {
         params.number = parseInt(params.number);
@@ -28,6 +29,7 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
                 let data = yield this.Dynamodb.update(queryParams).promise();
                 result_1.success.data = data.Attributes.imgs;
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -59,6 +61,7 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
                 console.log(debugUrl);
                 result_1.success.data = debugUrl;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;

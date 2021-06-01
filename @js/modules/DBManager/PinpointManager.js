@@ -36,6 +36,7 @@ const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
 const RankingManager_1 = __importDefault(require("./RankingManager"));
+const responseInit_1 = require("../Logics/responseInit");
 class PinpointManager extends FeatureManager_1.FeatureManager {
     /**
      * 핀포인트 등록 로직
@@ -86,6 +87,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 let queryResult = yield this.Dynamodb.put(queryParams).promise();
                 result_1.success.result = params.id;
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
             }
             catch (err) {
@@ -129,6 +131,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = this.res.locals.result.Pinpoint;
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -202,6 +205,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = data.Attributes;
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -229,6 +233,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = data.Attributes;
             this.res.status(200).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -266,6 +271,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = data.Item;
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -295,6 +301,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = data.Attributes;
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -326,6 +333,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = data.Attributes;
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -359,6 +367,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             }
             result_1.success.data = quiz;
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -388,6 +397,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = data.Attributes;
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -443,6 +453,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let isCampClear = false; //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
+                result_1.success.data = {};
+                result_1.success.data.isClear = false;
                 console.log('참여중 캠페인 조회중');
                 let memberResult = yield this.Dynamodb.query(memberparams).promise();
                 let playingCampaigns = memberResult.Items[0].playingCampaigns;
@@ -457,6 +469,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                             result_1.fail.error = result_1.error.invalReq;
                             result_1.fail.errdesc = '이미 클리어한 캠페인입니다.';
                             this.res.status(400).send(result_1.fail);
+                            responseInit_1.successInit(result_1.success);
                             return;
                         }
                         for (const id of camp.pinpoints) { // 클리어 하지 않은 경우 핀포인트 클리어 여부 체크
@@ -465,6 +478,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                 result_1.fail.error = result_1.error.invalReq;
                                 result_1.fail.errdesc = '이미 클리어한 핀포인트입니다.';
                                 this.res.status(400).send(result_1.fail);
+                                responseInit_1.successInit(result_1.success);
                                 return;
                             }
                         }
@@ -484,6 +498,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     result_1.fail.error = result_1.error.invalKey;
                     result_1.fail.errdesc = '틀렸습니다.';
                     this.res.status(400).send(result_1.fail);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 // 캠페인 클리어인 경우 cleared를 true로
@@ -492,6 +507,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                         camp.pinpoints.push(params.pid);
                         if (isCampClear == true) {
                             camp.cleared = true;
+                            result_1.success.data.isClear = true;
                         }
                         break;
                     }
@@ -546,14 +562,16 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     answer.push(obj);
                 }
                 yield this.Dynamodb.update(updateParams).promise();
-                result_1.success.data = answer;
+                result_1.success.data.coupons = answer;
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 if (err.code != 'ConditionalCheckFailedException') { // 쿠폰 발급 개수 초과 에러가 아닌 경우
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
                     this.res.status(521).send(result_1.fail);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 if (this.res.locals.coupon.length == 0) { // 발급할 쿠폰이 더이상 없는 경우
@@ -577,8 +595,9 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                         answer.push(obj);
                     }
                     yield this.Dynamodb.update(updateParams).promise();
-                    result_1.success.data = answer;
+                    result_1.success.data.coupons = answer;
                     this.res.status(201).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 else { // 등록할 쿠폰이 남아있는 경우
@@ -607,8 +626,9 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                         answer.push(obj);
                                     }
                                     yield this.Dynamodb.update(updateParams).promise();
-                                    result_1.success.data = answer;
+                                    result_1.success.data.coupons = answer;
                                     this.res.status(201).send(result_1.success);
+                                    responseInit_1.successInit(result_1.success);
                                     return;
                                 }
                                 else { // 쿠폰 발급 성공
@@ -633,8 +653,9 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                                         answer.push(obj);
                                     }
                                     yield this.Dynamodb.update(updateParams).promise();
-                                    result_1.success.data = answer;
+                                    result_1.success.data.coupons = answer;
                                     this.res.status(201).send(result_1.success);
+                                    responseInit_1.successInit(result_1.success);
                                     return;
                                 }
                             });
@@ -661,8 +682,9 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                             answer.push(obj);
                         }
                         yield this.Dynamodb.update(updateParams).promise();
-                        result_1.success.data = answer;
+                        result_1.success.data.coupons = answer;
                         this.res.status(201).send(result_1.success);
+                        responseInit_1.successInit(result_1.success);
                         return;
                     }
                 }
@@ -726,6 +748,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 let queryResult = yield this.Dynamodb.update(queryParams).promise();
                 result_1.success.data = comment[0];
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -754,6 +777,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = result.Items[0].comments;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -821,6 +845,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
                 result_1.success.data = updateResult.Attributes.comments;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -885,6 +910,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 console.log('댓글 수정중...');
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -997,6 +1023,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 console.log('댓글 수정중...');
                 let updateResult = yield this.Dynamodb.update(updateParams).promise();
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;

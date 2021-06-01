@@ -32,6 +32,7 @@ const FeatureManager_1 = require("./FeatureManager");
 const bcrypt = __importStar(require("bcrypt"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
+const responseInit_1 = require("../Logics/responseInit");
 class MemberManager extends FeatureManager_1.FeatureManager {
     /**
      * 회원가입 로직
@@ -117,6 +118,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = '회원가입 성공';
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -139,6 +141,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('로그아웃 성공');
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
                 return;
             }
             result_1.fail.error = result_1.error.invalAcc;
@@ -181,6 +184,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 };
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -266,6 +270,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`);
                 result_1.success.data = { profileImg };
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -332,6 +337,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('회원 삭제 성공');
                 result_1.success.data = '탈퇴 성공';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -373,6 +379,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 else {
                     result_1.success.data = '가능해요';
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
             }
@@ -421,6 +428,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (result.Items[0].playingCampaigns.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns, null, 2)}`);
@@ -447,6 +455,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -533,6 +542,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = pinpoint2respond;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -579,6 +589,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (result.Items[0].myCampaigns.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].myCampaigns)}`);
@@ -604,6 +615,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -739,6 +751,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('캠페인 삭제 성공');
                 result_1.success.data = '제작한 캠페인 삭제 성공';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -766,11 +779,13 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     if (camp.id == params.caid) {
                         result_1.success.data = '이미 참여중인 캠페인 입니다.';
                         this.res.status(200).send(result_1.success);
+                        responseInit_1.successInit(result_1.success);
                         return;
                     }
                 }
                 result_1.success.data = '참여 가능한 캠페인 입니다.';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -827,6 +842,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 yield this.Dynamodb.update(updateParams).promise();
                 result_1.success.data = '삭제 성공';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -860,6 +876,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (couponIds.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 for (const coupon of couponIds) {
@@ -874,6 +891,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log(`쿠폰 테이블 조회 성공. 조회한 쿠폰\n${JSON.stringify(coupons, null, 2)}`);
                 result_1.success.data = coupons;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;

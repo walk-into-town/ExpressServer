@@ -1,6 +1,7 @@
 import { FeatureManager } from "./FeatureManager";
 import {Monster} from '../../models/Monster'
 import { error, fail, success } from "../../static/result";
+import { successInit } from "../Logics/responseInit";
 
 export default class MonsterManager extends FeatureManager{
     public insert(params: any): void {
@@ -19,6 +20,7 @@ export default class MonsterManager extends FeatureManager{
                 let data = await this.Dynamodb.update(queryParams).promise()
                 success.data = data.Attributes.imgs
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -50,6 +52,7 @@ export default class MonsterManager extends FeatureManager{
                 console.log(debugUrl)
                 success.data = debugUrl
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError

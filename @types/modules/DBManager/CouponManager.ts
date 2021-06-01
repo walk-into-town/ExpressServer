@@ -2,6 +2,7 @@ import { FeatureManager} from "./FeatureManager";
 import * as CryptoJS from 'crypto-js'
 import { error, fail, success } from "../../static/result";
 import {nbsp2plus} from '../Logics/nbsp'
+import { successInit } from "../Logics/responseInit";
 
 export default class CouponManager extends FeatureManager{
     /**
@@ -68,6 +69,7 @@ export default class CouponManager extends FeatureManager{
                 let queryResult = await this.Dynamodb.query(queryParams).promise()
                 success.data = queryResult.Items
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -110,6 +112,7 @@ export default class CouponManager extends FeatureManager{
                     if(coupon.length == 0 && pcoupons.length == 0){
                         success.data = []
                         this.res.status(200).send(success)
+                        successInit(success)
                         return;
                     }
                     for (const id of coupon) {
@@ -130,6 +133,7 @@ export default class CouponManager extends FeatureManager{
                     if(coupon.length == 0){
                         success.data = []
                         this.res.status(200).send(success)
+                        successInit(success)
                         return;
                     }
                     for(const id of coupon){
@@ -146,6 +150,7 @@ export default class CouponManager extends FeatureManager{
                 let coupons = queryResult.Responses.Coupon
                 success.data = coupons
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -220,6 +225,7 @@ export default class CouponManager extends FeatureManager{
                 success.data = dbResult.Attributes
             }
             this.res.status(200).send(success)
+            successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -266,6 +272,7 @@ export default class CouponManager extends FeatureManager{
                     updateParams.ExpressionAttributeValues[":newcoupons"] = coupons
                     await this.Dynamodb.update(updateParams).promise()
                     this.res.status(201).send(success)
+                    successInit(success)
                     return;
                 }
             }

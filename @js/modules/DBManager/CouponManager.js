@@ -32,6 +32,7 @@ const FeatureManager_1 = require("./FeatureManager");
 const CryptoJS = __importStar(require("crypto-js"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
+const responseInit_1 = require("../Logics/responseInit");
 class CouponManager extends FeatureManager_1.FeatureManager {
     /**
      * 쿠폰 등록 로직
@@ -96,6 +97,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 let queryResult = yield this.Dynamodb.query(queryParams).promise();
                 result_1.success.data = queryResult.Items;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -137,6 +139,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                     if (coupon.length == 0 && pcoupons.length == 0) {
                         result_1.success.data = [];
                         this.res.status(200).send(result_1.success);
+                        responseInit_1.successInit(result_1.success);
                         return;
                     }
                     for (const id of coupon) {
@@ -157,6 +160,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                     if (coupon.length == 0) {
                         result_1.success.data = [];
                         this.res.status(200).send(result_1.success);
+                        responseInit_1.successInit(result_1.success);
                         return;
                     }
                     for (const id of coupon) {
@@ -173,6 +177,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                 let coupons = queryResult.Responses.Coupon;
                 result_1.success.data = coupons;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -243,6 +248,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                     result_1.success.data = dbResult.Attributes;
                 }
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -288,6 +294,7 @@ class CouponManager extends FeatureManager_1.FeatureManager {
                     updateParams.ExpressionAttributeValues[":newcoupons"] = coupons;
                     yield this.Dynamodb.update(updateParams).promise();
                     this.res.status(201).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
             }

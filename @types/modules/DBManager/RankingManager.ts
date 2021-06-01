@@ -1,4 +1,5 @@
 import { error, fail, success } from "../../static/result";
+import { successInit } from "../Logics/responseInit";
 import { rankingSort } from "../Logics/Sorter";
 import { FeatureManager, toRead } from "./FeatureManager";
 
@@ -91,6 +92,7 @@ export default class Rankingmanager extends FeatureManager{
                     ranking.sort(rankingSort)
                     success.data = ranking
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 catch(err){
@@ -143,6 +145,7 @@ export default class Rankingmanager extends FeatureManager{
             console.log('랭킹 갱신 성공')
             success.data = '랭킹 갱신 성공'
             this.res.status(201).send(success)
+            successInit(success)
         }
         run()
         return;

@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const result_1 = require("../../static/result");
+const responseInit_1 = require("../Logics/responseInit");
 const Sorter_1 = require("../Logics/Sorter");
 const FeatureManager_1 = require("./FeatureManager");
 class Rankingmanager extends FeatureManager_1.FeatureManager {
@@ -101,6 +102,7 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     ranking.sort(Sorter_1.rankingSort);
                     result_1.success.data = ranking;
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 catch (err) {
@@ -153,6 +155,7 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
             console.log('랭킹 갱신 성공');
             result_1.success.data = '랭킹 갱신 성공';
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         });
         run();
         return;

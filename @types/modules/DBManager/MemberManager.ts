@@ -3,6 +3,7 @@ import SessionManager from './SessionManager'
 import * as bcrypt from 'bcrypt'
 import { error, fail, success } from "../../static/result";
 import {nbsp2plus} from '../Logics/nbsp'
+import { successInit } from "../Logics/responseInit";
 
 export default class MemberManager extends FeatureManager{
     /**
@@ -91,6 +92,7 @@ export default class MemberManager extends FeatureManager{
         else{
             success.data = '회원가입 성공'
             this.res.status(201).send(success)
+            successInit(success)
         }
     }
 
@@ -114,6 +116,7 @@ export default class MemberManager extends FeatureManager{
                 console.log('로그아웃 성공')
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
+                successInit(success)
                 return;
             }
             fail.error = error.invalAcc
@@ -158,6 +161,7 @@ export default class MemberManager extends FeatureManager{
                 }
                 success.data = data
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -245,6 +249,7 @@ export default class MemberManager extends FeatureManager{
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`)
                 success.data = {profileImg}
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -312,6 +317,7 @@ export default class MemberManager extends FeatureManager{
                 console.log('회원 삭제 성공')
                 success.data = '탈퇴 성공'
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err) {
                 fail.error = error.dbError
@@ -355,6 +361,7 @@ export default class MemberManager extends FeatureManager{
                 else{
                     success.data = '가능해요'
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
             }
@@ -404,6 +411,7 @@ export default class MemberManager extends FeatureManager{
                 if(result.Items[0].playingCampaigns.length == 0){
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns, null, 2)}`)
@@ -430,6 +438,7 @@ export default class MemberManager extends FeatureManager{
                 }
                 success.data = data
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -518,6 +527,7 @@ export default class MemberManager extends FeatureManager{
                 }
                 success.data = pinpoint2respond
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -565,6 +575,7 @@ export default class MemberManager extends FeatureManager{
                 if(result.Items[0].myCampaigns.length == 0){
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].myCampaigns)}`)
@@ -590,6 +601,7 @@ export default class MemberManager extends FeatureManager{
                 }
                 success.data = data
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -729,6 +741,7 @@ export default class MemberManager extends FeatureManager{
                 console.log('캠페인 삭제 성공')
                 success.data = '제작한 캠페인 삭제 성공'
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -757,11 +770,13 @@ export default class MemberManager extends FeatureManager{
                     if(camp.id == params.caid){
                         success.data = '이미 참여중인 캠페인 입니다.'
                         this.res.status(200).send(success)
+                        successInit(success)
                         return;
                     }
                 }
                 success.data = '참여 가능한 캠페인 입니다.'
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -819,6 +834,7 @@ export default class MemberManager extends FeatureManager{
                 await this.Dynamodb.update(updateParams).promise()
                 success.data = '삭제 성공'
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -853,6 +869,7 @@ export default class MemberManager extends FeatureManager{
                 if(couponIds.length == 0){
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 for(const coupon of couponIds){
@@ -867,6 +884,7 @@ export default class MemberManager extends FeatureManager{
                 console.log(`쿠폰 테이블 조회 성공. 조회한 쿠폰\n${JSON.stringify(coupons, null, 2)}`)
                 success.data = coupons
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
