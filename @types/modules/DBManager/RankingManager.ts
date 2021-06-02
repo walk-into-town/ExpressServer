@@ -143,9 +143,6 @@ export default class Rankingmanager extends FeatureManager{
                 await this.Dynamodb.update(updateParams).promise()
             }
             console.log('랭킹 갱신 성공')
-            success.data = '랭킹 갱신 성공'
-            this.res.status(201).send(success)
-            successInit(success)
         }
         run()
         return;

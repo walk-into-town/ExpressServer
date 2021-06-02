@@ -153,9 +153,6 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                 yield this.Dynamodb.update(updateParams).promise();
             }
             console.log('랭킹 갱신 성공');
-            result_1.success.data = '랭킹 갱신 성공';
-            this.res.status(201).send(result_1.success);
-            responseInit_1.successInit(result_1.success);
         });
         run();
         return;
