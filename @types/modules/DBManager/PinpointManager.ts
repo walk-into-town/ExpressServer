@@ -514,8 +514,9 @@ export default class PinpointManager extends FeatureManager{
 
                 // 랭킹에 핀포인트 클리어 적용
                 let rankingDB = new Rankingmanager(this.req, this.res)
-                rankingDB.insert('')
-
+                const rankInsert = async () => {rankingDB.insert('')}
+                rankInsert().then(() => {rankingDB.update('')})
+                
                 let coupon = []         // 등록된 쿠폰을 담는 배열
                 if(isCampClear == true && campcoupon.length != 0){    //캠페인 클리어이며 캠페인 쿠폰이 있는 경우 캠페인 쿠폰 등록
                     coupon.push({
