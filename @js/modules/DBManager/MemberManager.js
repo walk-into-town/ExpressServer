@@ -493,6 +493,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
+                result_1.success.data = {};
                 let pinpoint2respond = [];
                 console.log('참여중인 캠페인 목록 조회중');
                 let memberResult = yield this.Dynamodb.query(memberParam).promise();
@@ -507,28 +508,28 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('캠페인 조회 parameter 생성중');
                 let playingPinpoints = []; // 클리어한 핀포인트를 담는 배열
                 for (const camp of playing) { // 참여중 캠페인에 대해서
-                    if (camp.cleared == true) { // 클리어한 경우 통과
-                        continue;
-                    } // 클리어하지 않은 경우
+                    // if(camp.cleared == true){           // 클리어한 경우 통과
+                    //     continue
+                    // }                                   // 클리어하지 않은 경우
                     playingPinpoints.push(...camp.pinpoints); // 클리어한 핀포인트 추가
                     let obj = { id: camp.id };
                     campaignParam.RequestItems.Campaign.Keys.push(obj); // 캠페인 요청 parameter에 id 추가
                 }
-                if (campaignParam.RequestItems.Campaign.Keys.length == 0) { // 추가된 id가 없는 경우 = 모든 캠페인 클리어
-                    result_1.fail.error = result_1.error.invalReq;
-                    result_1.fail.errdesc = '모든 캠페인을 클리어했습니다.';
-                    this.res.status(200).send(result_1.fail);
-                    return;
-                }
+                // if(campaignParam.RequestItems.Campaign.Keys.length == 0){   // 추가된 id가 없는 경우 = 모든 캠페인 클리어
+                //     fail.error = error.invalReq
+                //     fail.errdesc = '모든 캠페인을 클리어했습니다.'
+                //     this.res.status(200).send(fail)
+                //     return;
+                // }
                 console.log('캠페인 조회 param 생성 완료\n캠페인의 핀포인트 id 조회 시작');
                 let campaignResult = yield this.Dynamodb.batchGet(campaignParam).promise();
                 let campaigns = campaignResult.Responses.Campaign;
                 for (const camp of campaigns) { // 조회한 캠페인에 대해
                     for (const pid of camp.pinpoints) { // 조회한 캠페인의 핀포인트에 대해
-                        let pos = playingPinpoints.indexOf(pid); // 클리어한 핀포인트가 있는지 조회
-                        if (pos != -1) { // 이미 클리어한 핀포인트인 경우 통과
-                            continue;
-                        }
+                        // let pos = playingPinpoints.indexOf(pid)     // 클리어한 핀포인트가 있는지 조회
+                        // if(pos != -1){                          // 이미 클리어한 핀포인트인 경우 통과
+                        //     continue;
+                        // }
                         let obj = {
                             'id': pid
                         };
@@ -540,7 +541,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     pinpoint2respond.push(...pinpoints);
                     pinpointParam.RequestItems.Pinpoint.Keys = []; // 요청 parameter의 id 초기화
                 }
-                result_1.success.data = pinpoint2respond;
+                result_1.success.data.clearedPinpoins = playingPinpoints;
+                result_1.success.data.pinpoints = pinpoint2respond;
                 this.res.status(200).send(result_1.success);
                 responseInit_1.successInit(result_1.success);
             }
