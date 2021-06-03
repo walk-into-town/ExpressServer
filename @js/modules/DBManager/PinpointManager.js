@@ -582,6 +582,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     batchCoupon.RequestItems.Coupon.Keys.push(obj);
                 }
                 if (batchCoupon.RequestItems.Coupon.Keys.length == 0) {
+                    yield this.Dynamodb.update(updateParams).promise();
                     result_1.success.data.coupons = [];
                     this.res.status(201).send(result_1.success);
                     responseInit_1.successInit(result_1.success);

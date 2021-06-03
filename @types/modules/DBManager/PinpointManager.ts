@@ -583,6 +583,7 @@ export default class PinpointManager extends FeatureManager{
                     batchCoupon.RequestItems.Coupon.Keys.push(obj)
                 }
                 if(batchCoupon.RequestItems.Coupon.Keys.length == 0){
+                    await this.Dynamodb.update(updateParams).promise()
                     success.data.coupons = []
                     this.res.status(201).send(success)
                     successInit(success)
