@@ -743,6 +743,10 @@ export default class PinpointManager extends FeatureManager{
                         this.res.status(400).send(fail)
                         return;
                     }
+                    else{
+                        let pos = failedQuiz.indexOf(quiz)
+                        failedQuiz.splice(pos, 1)
+                    }
                 }
             }
         }

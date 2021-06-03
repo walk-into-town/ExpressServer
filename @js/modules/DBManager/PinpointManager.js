@@ -743,6 +743,10 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                         this.res.status(400).send(result_1.fail);
                         return;
                     }
+                    else {
+                        let pos = failedQuiz.indexOf(quiz);
+                        failedQuiz.splice(pos, 1);
+                    }
                 }
             }
         }
