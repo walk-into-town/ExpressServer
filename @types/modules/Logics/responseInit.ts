@@ -1,8 +1,8 @@
 export let successInit = function(success: any){
-    success.data = null
+    success.data = {}
 }
 
 export let failInit = function(fail: any){
-    fail.error = null
-    fail.errdesc = null
+    fail.error = ''
+    fail.errdesc = ''
 }

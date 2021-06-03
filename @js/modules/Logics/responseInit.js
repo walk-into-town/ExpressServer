@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.failInit = exports.successInit = void 0;
 let successInit = function (success) {
-    success.data = null;
+    success.data = {};
 };
 exports.successInit = successInit;
 let failInit = function (fail) {
-    fail.error = null;
-    fail.errdesc = null;
+    fail.error = '';
+    fail.errdesc = '';
 };
 exports.failInit = failInit;
