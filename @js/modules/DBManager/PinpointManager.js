@@ -735,7 +735,6 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     checkQuiz(params) {
         let failedQuiz = this.req.session.passport.user.quiz;
         params.pid = nbsp_1.nbsp2plus(params.pid);
-        let campparam = {};
         if (failedQuiz.length != 0) { // 실패한 핀포인트가 있는 경우
             for (const quiz of failedQuiz) { // 실패한 핀포인트에 대해
                 if (quiz.id == params.pid) { // 현재 핀포인트와 같은 경우
@@ -758,6 +757,10 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
             }
         }
+        this.req.session.passport.user.quiz.push({
+            id: params.pid,
+            time: new Date(Date.now() + 9 * 60 * 60 * 1000 + 1000 * 60 * 3).toISOString()
+        });
         result_1.success.data = "참여 가능한 퀴즈에요.";
         this.res.status(200).send(result_1.success);
     }
