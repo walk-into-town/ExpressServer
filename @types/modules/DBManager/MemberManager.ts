@@ -483,7 +483,10 @@ export default class MemberManager extends FeatureManager{
 
         const run = async() => {
             try{
-                success.data = {}
+                success.data = {
+                    clearedPinpoints: [],
+                    pinpoints: []
+                }
                 let pinpoint2respond = []
                 console.log('참여중인 캠페인 목록 조회중')
                 let memberResult = await this.Dynamodb.query(memberParam).promise()

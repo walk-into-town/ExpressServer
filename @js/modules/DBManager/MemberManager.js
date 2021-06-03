@@ -498,7 +498,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                result_1.success.data = {};
+                result_1.success.data = {
+                    clearedPinpoints: [],
+                    pinpoints: []
+                };
                 let pinpoint2respond = [];
                 console.log('참여중인 캠페인 목록 조회중');
                 let memberResult = yield this.Dynamodb.query(memberParam).promise();
