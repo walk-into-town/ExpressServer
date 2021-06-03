@@ -75,6 +75,7 @@ export default class MemberManager extends FeatureManager{
                 this.Dynamodb.put(queryParams, this.onInsert.bind(this))
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -164,6 +165,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -252,6 +254,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -366,6 +369,7 @@ export default class MemberManager extends FeatureManager{
                 }
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -441,6 +445,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(err)
@@ -532,6 +537,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -606,6 +612,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(err)
@@ -746,6 +753,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -781,6 +789,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -839,6 +848,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -889,6 +899,7 @@ export default class MemberManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)

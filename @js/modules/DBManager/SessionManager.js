@@ -53,6 +53,7 @@ class SessionManager {
                 });
             }
             catch (err) {
+                console.log(err);
                 let result = {
                     result: 'failed',
                     error: 'User Id Search Failed'
@@ -84,6 +85,7 @@ class SessionManager {
                 this.res.locals.result = result.Items[0];
             }
             catch (err) {
+                console.log(err);
                 let result = {
                     result: 'failed',
                     error: 'Session Id Search Failed'
@@ -114,6 +116,7 @@ class SessionManager {
                     yield this.Dynamodb.delete(queryParams).promise();
                 }
                 catch (err) {
+                    console.log(err);
                     console.log(err);
                 }
             });

@@ -46,6 +46,7 @@ export default class Rankingmanager extends FeatureManager{
                     return                        
                 }
                 catch(err){
+                console.log(err)
                     fail.error = error.dbError
                     fail.errdesc = err
                     this.res.status(521).send(fail)
@@ -96,6 +97,7 @@ export default class Rankingmanager extends FeatureManager{
                     return;
                 }
                 catch(err){
+                console.log(err)
                     fail.error = error.dbError
                     fail.errdesc = err
                     this.res.status(521).send(fail)

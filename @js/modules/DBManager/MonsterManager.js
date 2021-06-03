@@ -32,6 +32,7 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -64,6 +65,7 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);

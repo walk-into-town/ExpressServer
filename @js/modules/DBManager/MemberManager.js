@@ -102,6 +102,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 this.Dynamodb.put(queryParams, this.onInsert.bind(this));
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -187,6 +188,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -273,6 +275,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -384,6 +387,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -458,6 +462,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(err);
@@ -547,6 +552,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -620,6 +626,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(err);
@@ -756,6 +763,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -790,6 +798,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -847,6 +856,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -896,6 +906,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);

@@ -42,7 +42,8 @@ export default class CouponManager extends FeatureManager{
                 // }
                 // this.res.status(201).send(result)
             }
-            catch(err){                 //DB에러 발생
+            catch(err){
+                console.log(err)                 //DB에러 발생
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -72,6 +73,7 @@ export default class CouponManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -153,6 +155,7 @@ export default class CouponManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -228,6 +231,7 @@ export default class CouponManager extends FeatureManager{
             successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)

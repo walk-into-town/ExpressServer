@@ -91,6 +91,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
@@ -134,6 +135,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
@@ -453,6 +455,31 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let isCampClear = false; //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
+                if (this.req.session.user == undefined) {
+                    this.req.session.user = {
+                        quizTry: 0
+                    };
+                }
+                this.req.session.user.quizTry += 1;
+                console.log(this.req.session.user.quizTry);
+                if (this.req.session.user.quizTry > 10) {
+                    let memberResult = yield this.Dynamodb.query(memberparams).promise();
+                    let playing = memberResult.Items[0].playingCampaigns;
+                    for (const camp of playing) {
+                        if (camp.id == params.caid) {
+                            camp.pinpoints.push(params.pid);
+                        }
+                    }
+                    updateParams.ExpressionAttributeValues[":newPlaying"] = playing;
+                    updateParams.ExpressionAttributeValues[":newcoupon"] = [];
+                    console.log(playing);
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '퀴즈 참여 한도 초과';
+                    //await this.Dynamodb.update(updateParams).promise()
+                    this.res.status(400).send(result_1.fail);
+                    responseInit_1.failInit(result_1.fail);
+                    return;
+                }
                 result_1.success.data = {};
                 result_1.success.data.isClear = false;
                 console.log('참여중 캠페인 조회중');
@@ -568,6 +595,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 if (err.code != 'ConditionalCheckFailedException') { // 쿠폰 발급 개수 초과 에러가 아닌 경우
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
@@ -662,7 +690,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                             });
                         }.bind(this));
                     }
-                    catch (err) { // 발급할 쿠폰이 없는 경우
+                    catch (err) {
+                        console.log(err); // 발급할 쿠폰이 없는 경우
                         updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns;
                         updateParams.ExpressionAttributeValues[":newcoupon"] = [];
                         for (const coup of this.res.locals.coupon2insert) {
@@ -752,6 +781,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
@@ -781,6 +811,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
@@ -849,6 +880,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
@@ -914,6 +946,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);
@@ -1027,6 +1060,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(400).send(result_1.fail);

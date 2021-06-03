@@ -47,6 +47,7 @@ export default class SessionManager {
                 })
             }
             catch(err){
+                console.log(err)
                 let result = {
                     result: 'failed',
                     error: 'User Id Search Failed'
@@ -79,6 +80,7 @@ export default class SessionManager {
                 this.res.locals.result = result.Items[0]
             }
             catch(err){
+                console.log(err)
                 let result = {
                     result: 'failed',
                     error: 'Session Id Search Failed'
@@ -110,6 +112,7 @@ export default class SessionManager {
                     await this.Dynamodb.delete(queryParams).promise()
                 }
                 catch(err){
+                console.log(err)
                     console.log(err)
                 }
             }

@@ -56,6 +56,7 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     return;
                 }
                 catch (err) {
+                    console.log(err);
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
                     this.res.status(521).send(result_1.fail);
@@ -106,6 +107,7 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     return;
                 }
                 catch (err) {
+                    console.log(err);
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
                     this.res.status(521).send(result_1.fail);

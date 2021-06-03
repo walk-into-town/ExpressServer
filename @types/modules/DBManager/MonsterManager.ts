@@ -23,6 +23,7 @@ export default class MonsterManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
@@ -55,6 +56,7 @@ export default class MonsterManager extends FeatureManager{
                 successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
