@@ -33,10 +33,16 @@ router.put('/', isAuthenticated, function(req: express.Request, res: express.Res
     DBManager.updateQuiz(query)
 })
 
-router.post('/check', isAuthenticated, function(req: express.Request, res: express.Response){
+router.post('/solve', isAuthenticated, function(req: express.Request, res: express.Response){
     let query = req.body
     let DBManager = new PinpointManager(req, res)
     DBManager.solveQuiz(query)
+})
+
+router.get('/check', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.query
+    let DBManager = new PinpointManager(req, res)
+    DBManager.checkQuiz(query)
 })
 
 module.exports = router
