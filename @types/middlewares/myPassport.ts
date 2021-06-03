@@ -61,7 +61,8 @@ module.exports = () => {
                 id: username,
                 nickname: result.Items[0].nickname,
                 profileImg: result.Items[0].profileImg,
-                selfIntroduction: result.Items[0].selfIntroduction
+                selfIntroduction: result.Items[0].selfIntroduction,
+                quiz: []
             }
             console.log('PW 일치')
             return done(null, user)
@@ -112,7 +113,8 @@ module.exports = () => {
             id: username,
             nickname: query.nickname,
             profileImg: query.profileImg,
-            selfIntroduction: ''
+            selfIntroduction: '',
+            quiz: []
           }
           return cb(null, user)
         }
@@ -122,7 +124,8 @@ module.exports = () => {
             id: username,
             nickname: result.nickname,
             profileImg: result.profileImg,
-            selfIntroduction: result.selfIntroduction           
+            selfIntroduction: result.selfIntroduction,
+            quiz: []
           }
           return cb(null, user)
         }
@@ -170,7 +173,8 @@ module.exports = () => {
             id: username,
             nickname: query.nickname,
             profileImg: query.profileImg,
-            selfIntroduction: ''
+            selfIntroduction: '',
+            quiz: []
           }
           return cb(null, user)
         }
@@ -180,7 +184,8 @@ module.exports = () => {
             id: username,
             nickname: result.nickname,
             profileImg: result.profileImg,
-            selfIntroduction: result.selfIntroduction           
+            selfIntroduction: result.selfIntroduction,
+            quiz: []
           }
           return cb(null, user)
         }
