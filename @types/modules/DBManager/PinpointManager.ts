@@ -451,31 +451,30 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async() => {
             try{
-                let isCampClear = false         //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
-                if(this.req.session.user == undefined){
-                    this.req.session.user = {
-                        quizTry: 0
-                    }
-                }
-                this.req.session.user.quizTry += 1
-                console.log(this.req.session.user.quizTry)
-                if(this.req.session.user.quizTry > 10){
-                    let memberResult = await this.Dynamodb.query(memberparams).promise()
-                    let playing = memberResult.Items[0].playingCampaigns
-                    for(const camp of playing){
-                        if(camp.id == params.caid){
-                            camp.pinpoints.push(params.pid)
+                let isCampClear: boolean = false         //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
+                let failedQuiz: Array<any> = this.req.session.passport.user.quiz
+                if(failedQuiz.length != 0){   // 실패한 핀포인트가 있는 경우
+                    for(const quiz of failedQuiz){      // 실패한 핀포인트에 대해
+                        if(quiz.id == params.pid){      // 현재 핀포인트와 같은 경우
+                            let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+                            let limitTime = new Date(quiz.time).getTime()
+                            if(limitTime > currTime){    // 퀴즈 제한시간이 안지난 경우
+                                console.log('퀴즈 참여 제한시간')
+                                let diff = limitTime - currTime
+                                let min = Math.floor(diff / 1000 / 60)
+                                let sec = Math.floor(diff / 1000) % 60
+                                fail.error = error.invalReq
+                                fail.errdesc = `퀴즈 참여 제한시간이 ${min}분 ${sec}초 남았어요.`
+                                this.res.status(400).send(fail)
+                                return;
+                            }
+                            else{           // 제한 시간이 지난 경우 초기화
+                                let pos = failedQuiz.indexOf(quiz)
+                                failedQuiz.splice(pos, 1)
+                                break;
+                            }
                         }
                     }
-                    updateParams.ExpressionAttributeValues[":newPlaying"] = playing
-                    updateParams.ExpressionAttributeValues[":newcoupon"] = []
-                    console.log(playing)
-                    fail.error = error.invalReq
-                    fail.errdesc = '퀴즈 참여 한도 초과'
-                    //await this.Dynamodb.update(updateParams).promise()
-                    this.res.status(400).send(fail)
-                    failInit(fail)
-                    return;
                 }
                 success.data = {}
                 success.data.isClear = false
@@ -522,6 +521,10 @@ export default class PinpointManager extends FeatureManager{
                 if(quiz.answer != params.answer){      //정답이 아닌 경우 틀림 메시지 전달 후 종료
                     fail.error = error.invalKey
                     fail.errdesc = '틀렸습니다.'
+                    this.req.session.passport.user.quiz.push({
+                        id: params.pid,
+                        time: new Date(Date.now() + 9 * 60 * 60 * 1000 + 1000 * 60 * 3).toISOString()
+                    })
                     this.res.status(400).send(fail)
                     successInit(success)
                     return;
