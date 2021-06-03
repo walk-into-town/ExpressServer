@@ -581,6 +581,12 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                     };
                     batchCoupon.RequestItems.Coupon.Keys.push(obj);
                 }
+                if (batchCoupon.RequestItems.Coupon.Keys.length == 0) {
+                    result_1.success.data.coupons = [];
+                    this.res.status(201).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
+                    return;
+                }
                 let getCoupon = yield this.Dynamodb.batchGet(batchCoupon).promise();
                 let getCoupons = getCoupon.Responses.Coupon;
                 let answer = []; // 응답에 쓰일 쿠폰 정보를 담는 배열

@@ -582,6 +582,12 @@ export default class PinpointManager extends FeatureManager{
                     }
                     batchCoupon.RequestItems.Coupon.Keys.push(obj)
                 }
+                if(batchCoupon.RequestItems.Coupon.Keys.length == 0){
+                    success.data.coupons = []
+                    this.res.status(201).send(success)
+                    successInit(success)
+                    return;
+                }
                 let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
                 let getCoupons = getCoupon.Responses.Coupon
                 let answer = []                             // 응답에 쓰일 쿠폰 정보를 담는 배열
