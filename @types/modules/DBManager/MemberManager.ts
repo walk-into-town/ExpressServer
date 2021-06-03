@@ -129,10 +129,6 @@ export default class MemberManager extends FeatureManager{
         run()
     }
 
-    public findMember(id: string){
-        
-    }
-
     public read(params: any): void {
         let id = this.req.session.passport.user.id
         let queryParams = {

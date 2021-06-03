@@ -153,8 +153,6 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    findMember(id) {
-    }
     read(params) {
         let id = this.req.session.passport.user.id;
         let queryParams = {
