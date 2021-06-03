@@ -727,6 +727,7 @@ export default class PinpointManager extends FeatureManager{
 
     public checkQuiz(params: any){
         let failedQuiz: Array<any> = this.req.session.passport.user.quiz
+        params.pid = nbsp2plus(params.pid)
         if(failedQuiz.length != 0){   // 실패한 핀포인트가 있는 경우
             for(const quiz of failedQuiz){      // 실패한 핀포인트에 대해
                 if(quiz.id == params.pid){      // 현재 핀포인트와 같은 경우
