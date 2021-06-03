@@ -42,7 +42,8 @@ export default class Rankingmanager extends FeatureManager{
                     let member = memberResult.Items[0]
                     ranking.nickname = member.nickname
                     ranking.profileImg = member.profileImg
-                    this.res.status(200).send(ranking)
+                    success.data = ranking
+                    this.res.status(200).send(success)
                     return                        
                 }
                 catch(err){
