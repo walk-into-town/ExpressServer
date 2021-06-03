@@ -481,6 +481,10 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = {};
                 result_1.success.data.isClear = false;
+                this.req.session.passport.user.quiz.push({
+                    id: params.pid,
+                    time: new Date(Date.now() + 9 * 60 * 60 * 1000 + 1000 * 60 * 3).toISOString()
+                });
                 console.log('참여중 캠페인 조회중');
                 let memberResult = yield this.Dynamodb.query(memberparams).promise();
                 let playingCampaigns = memberResult.Items[0].playingCampaigns;
@@ -523,10 +527,6 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
                 if (quiz.answer != params.answer) { //정답이 아닌 경우 틀림 메시지 전달 후 종료
                     result_1.fail.error = result_1.error.invalKey;
                     result_1.fail.errdesc = '틀렸습니다.';
-                    this.req.session.passport.user.quiz.push({
-                        id: params.pid,
-                        time: new Date(Date.now() + 9 * 60 * 60 * 1000 + 1000 * 60 * 3).toISOString()
-                    });
                     this.res.status(400).send(result_1.fail);
                     responseInit_1.successInit(result_1.success);
                     return;
@@ -735,6 +735,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
     checkQuiz(params) {
         let failedQuiz = this.req.session.passport.user.quiz;
         params.pid = nbsp_1.nbsp2plus(params.pid);
+        let campparam = {};
         if (failedQuiz.length != 0) { // 실패한 핀포인트가 있는 경우
             for (const quiz of failedQuiz) { // 실패한 핀포인트에 대해
                 if (quiz.id == params.pid) { // 현재 핀포인트와 같은 경우
