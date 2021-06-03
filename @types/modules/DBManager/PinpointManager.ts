@@ -725,6 +725,30 @@ export default class PinpointManager extends FeatureManager{
         run()
     }
 
+    public checkQuiz(params: any){
+        let failedQuiz: Array<any> = this.req.session.passport.user.quiz
+        if(failedQuiz.length != 0){   // 실패한 핀포인트가 있는 경우
+            for(const quiz of failedQuiz){      // 실패한 핀포인트에 대해
+                if(quiz.id == params.pid){      // 현재 핀포인트와 같은 경우
+                    let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+                    let limitTime = new Date(quiz.time).getTime()
+                    if(limitTime > currTime){    // 퀴즈 제한시간이 안지난 경우
+                        console.log('퀴즈 참여 제한시간')
+                        let diff = limitTime - currTime
+                        let min = Math.floor(diff / 1000 / 60)
+                        let sec = Math.floor(diff / 1000) % 60
+                        fail.error = error.invalReq
+                        fail.errdesc = `퀴즈 참여 제한시간이 ${min}분 ${sec}초 남았어요.`
+                        this.res.status(400).send(fail)
+                        return;
+                    }
+                }
+            }
+        }
+        success.data = "참여 가능한 퀴즈에요."
+        this.res.status(200).send(success)
+    }
+
     /**
      * 핀포인트 댓글 API
      */
