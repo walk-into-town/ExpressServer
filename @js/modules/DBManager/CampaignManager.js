@@ -34,6 +34,7 @@ const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
 const Sorter_1 = require("../Logics/Sorter");
 const responseInit_1 = require("../Logics/responseInit");
+const recommender_1 = require("../Logics/recommender");
 class CampaignManager extends FeatureManager_1.FeatureManager {
     /**
      * 캠페인 생성 로직
@@ -402,6 +403,22 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
             }
+        });
+        run();
+    }
+    readRecommend(params) {
+        let region = params.region;
+        let queryParam = {
+            TableName: 'Campaign',
+            FilterExpression: '#region = :region',
+            ExpressionAttributeNames: { '#region': 'region' },
+            ExpressionAttributeValues: { ':region': params.region }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let campResult = yield this.Dynamodb.scan(queryParam).promise();
+            let camps = campResult.Items;
+            camps = recommender_1.recommend(camps);
+            this.res.status(200).send(camps);
         });
         run();
     }

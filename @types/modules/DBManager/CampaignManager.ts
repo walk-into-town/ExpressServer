@@ -4,6 +4,7 @@ import { error, fail, success } from "../../static/result"
 import {nbsp2plus} from '../Logics/nbsp'
 import { campaignSort } from "../Logics/Sorter"
 import { successInit } from "../Logics/responseInit"
+import { recommend } from "../Logics/recommender"
 
 
 export default class CampaignManager extends FeatureManager{
@@ -386,6 +387,23 @@ export default class CampaignManager extends FeatureManager{
                 fail.errdesc = err
                 this.res.status(521).send(fail)
             }
+        }
+        run()
+    }
+
+    public readRecommend(params: any){
+        let region = params.region
+        let queryParam = {
+            TableName: 'Campaign',
+            FilterExpression: '#region = :region',
+            ExpressionAttributeNames: {'#region': 'region'},
+            ExpressionAttributeValues: {':region': params.region}
+        }
+        const run = async () => {
+            let campResult = await this.Dynamodb.scan(queryParam).promise()
+            let camps = campResult.Items
+            camps = recommend(camps)
+            this.res.status(200).send(camps)
         }
         run()
     }
