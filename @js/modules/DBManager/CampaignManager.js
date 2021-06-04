@@ -417,6 +417,12 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             let campResult = yield this.Dynamodb.scan(queryParam).promise();
             let camps = campResult.Items;
+            if (camps.length == 0) {
+                result_1.fail.error = result_1.error.dataNotFound;
+                result_1.fail.errdesc = '지역을 찾을 수 없습니다.';
+                this.res.status(400).send(result_1.fail);
+                return;
+            }
             camps = recommender_1.recommend(camps);
             this.res.status(200).send(camps);
         });

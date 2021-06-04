@@ -402,6 +402,12 @@ export default class CampaignManager extends FeatureManager{
         const run = async () => {
             let campResult = await this.Dynamodb.scan(queryParam).promise()
             let camps = campResult.Items
+            if(camps.length == 0){
+                fail.error = error.dataNotFound
+                fail.errdesc = '지역을 찾을 수 없습니다.'
+                this.res.status(400).send(fail)
+                return;
+            }
             camps = recommend(camps)
             this.res.status(200).send(camps)
         }
