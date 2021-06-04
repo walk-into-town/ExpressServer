@@ -21,3 +21,15 @@ export const rankingSort = function(a, b){
     return 0
   }
 }
+
+export const recommendSort = function(a, b){
+  if(a.score > b.score){
+    return -1
+  }
+  if(a.score < b.score){
+    return 1
+  }
+  if(a.score == b.score){
+    return 0
+  }
+}
