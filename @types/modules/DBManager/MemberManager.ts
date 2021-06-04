@@ -392,7 +392,7 @@ export default class MemberManager extends FeatureManager{
             RequestItems:{
                 'Campaign':{
                     Keys: null,
-                    ProjectionExpression: 'id, #name, imgs, description, #region',
+                    ProjectionExpression: 'id, #name, imgs, description, #region, pinpoints',
                     ExpressionAttributeNames: {'#name': 'name', '#region': 'region'},
                 }
             }
@@ -407,8 +407,8 @@ export default class MemberManager extends FeatureManager{
                     return;
                 }
                 console.log(`DB 읽어오는중...`)
-                let result = await this.Dynamodb.query(queryParams).promise()
-                if(result.Items[0].playingCampaigns.length == 0){
+                let result = await this.Dynamodb.query(queryParams).promise()       // 사용자의 플레이중 캠페인 가져오기
+                if(result.Items[0].playingCampaigns.length == 0){           // 없는 경우 빈 배열 반환
                     success.data = []
                     this.res.status(200).send(success)
                     successInit(success)
@@ -416,7 +416,7 @@ export default class MemberManager extends FeatureManager{
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns, null, 2)}`)
                 let keys = []
-                for(const campaign of result.Items[0].playingCampaigns){
+                for(const campaign of result.Items[0].playingCampaigns){        // 플레이중 캠페인의 id로 batchget
                     let obj = {
                         'id': campaign.id
                     }
@@ -424,15 +424,17 @@ export default class MemberManager extends FeatureManager{
                 }
                 campaignParams.RequestItems.Campaign.Keys = keys
                 let data = result.Items[0].playingCampaigns
-                let camp = await this.Dynamodb.batchGet(campaignParams).promise()
+                let camp = await this.Dynamodb.batchGet(campaignParams).promise()       // 캠페인 정보를 가져오기
                 let campaigns = camp.Responses.Campaign
-                for(const campaign of campaigns){
-                    for(let i =0; i < data.length; i++){
-                        if(data[i].id == campaign.id){
+                for(const campaign of campaigns){                   // 가져온 캠페인에 대해서
+                    for(let i =0; i < data.length; i++){            // 사용자의 캠페인에 대해서
+                        if(data[i].id == campaign.id){              // 참여중 캠페인 = 조회한 캠페인의 경우
                             data[i].name = campaign.name
                             data[i].imgs = campaign.imgs
                             data[i].description = campaign.description
                             data[i].region = campaign.region
+                            data[i].clearedPinpoints = data[i].pinpoints
+                            data[i].pinpoints = campaign.pinpoints
                         }
                     }
                 }
