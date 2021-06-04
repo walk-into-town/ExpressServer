@@ -453,35 +453,27 @@ export default class PinpointManager extends FeatureManager{
             try{
                 let isCampClear: boolean = false         //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
                 let failedQuiz: Array<any> = this.req.session.passport.user.quiz
-                if(failedQuiz.length != 0){   // 실패한 핀포인트가 있는 경우
-                    for(const quiz of failedQuiz){      // 실패한 핀포인트에 대해
-                        if(quiz.id == params.pid){      // 현재 핀포인트와 같은 경우
+                if(failedQuiz.length != 0){
+                    for(const quiz of failedQuiz){
+                        if(quiz.id == params.pid){
                             let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
                             let limitTime = new Date(quiz.time).getTime()
-                            if(limitTime > currTime){    // 퀴즈 제한시간이 안지난 경우
-                                console.log('퀴즈 참여 제한시간')
-                                let diff = limitTime - currTime
-                                let min = Math.floor(diff / 1000 / 60)
-                                let sec = Math.floor(diff / 1000) % 60
+                            let diff = currTime - limitTime
+                            if(diff < 180000){
+                                quiz.time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+                                break;
+                            }
+                            else{
                                 fail.error = error.invalReq
-                                fail.errdesc = `퀴즈 참여 제한시간이 ${min}분 ${sec}초 남았어요.`
+                                fail.errdesc = '시간초과!'
                                 this.res.status(400).send(fail)
                                 return;
-                            }
-                            else{           // 제한 시간이 지난 경우 초기화
-                                let pos = failedQuiz.indexOf(quiz)
-                                failedQuiz.splice(pos, 1)
-                                break;
                             }
                         }
                     }
                 }
                 success.data = {}
                 success.data.isClear = false
-                this.req.session.passport.user.quiz.push({
-                    id: params.pid,
-                    time: new Date(Date.now() + 9 * 60 * 60 * 1000 + 1000 * 60 * 3).toISOString()
-                })
                 console.log('참여중 캠페인 조회중')
                 let memberResult = await this.Dynamodb.query(memberparams).promise()
                 let playingCampaigns = memberResult.Items[0].playingCampaigns
@@ -733,6 +725,25 @@ export default class PinpointManager extends FeatureManager{
     }
 
     public checkQuiz(params: any){
+        let campParam = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': params.caid}
+        }
+        let memberParam = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': this.req.session.passport.user.id}
+        }
+        const run = async () => {
+            let campResult = await this.Dynamodb.query(campParam).promise()
+            let memberResult = await this.Dynamodb.query(memberParam).promise()
+            let pinpoints = campResult.Items[0].pinpoints
+            let playing = memberResult.Items[0].playingCampaigns
+            for(let i = 0; i < playing.length; i++){
+                if(playing.id == params.caid&& playing.pinpoints.length){}
+            }
+        }
         let failedQuiz: Array<any> = this.req.session.passport.user.quiz
         params.pid = nbsp2plus(params.pid)
         if(failedQuiz.length != 0){   // 실패한 핀포인트가 있는 경우
@@ -740,9 +751,9 @@ export default class PinpointManager extends FeatureManager{
                 if(quiz.id == params.pid){      // 현재 핀포인트와 같은 경우
                     let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
                     let limitTime = new Date(quiz.time).getTime()
-                    if(limitTime > currTime){    // 퀴즈 제한시간이 안지난 경우
+                    if((currTime - limitTime) < 180000){    // 퀴즈 제한시간이 안지난 경우
                         console.log('퀴즈 참여 제한시간')
-                        let diff = limitTime - currTime
+                        let diff = 180000 - (currTime - limitTime)
                         let min = Math.floor(diff / 1000 / 60)
                         let sec = Math.floor(diff / 1000) % 60
                         fail.error = error.invalReq
@@ -751,15 +762,14 @@ export default class PinpointManager extends FeatureManager{
                         return;
                     }
                     else{
-                        let pos = failedQuiz.indexOf(quiz)
-                        failedQuiz.splice(pos, 1)
+                        quiz.time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                     }
                 }
             }
         }
         this.req.session.passport.user.quiz.push({
             id: params.pid,
-            time: new Date(Date.now() + 9 * 60 * 60 * 1000 + 1000 * 60 * 3).toISOString()
+            time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
         })
         success.data = "참여 가능한 퀴즈에요."
         this.res.status(200).send(success)
