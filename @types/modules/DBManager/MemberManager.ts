@@ -686,7 +686,7 @@ export default class MemberManager extends FeatureManager{
                 let delMember = deleteItems.users
                 if(delCoupon.length != 0){
                     console.log('캠페인 쿠폰 삭제중')
-                    deleteparam.TableName = 'Coupon'
+                    deleteparam.TableName = ''
                     for(let i =0; i < delCoupon.length; i++){
                         deleteparam.Key.id = delCoupon[i]
                         console.log(`${i}번째 캠페인 쿠폰 삭제중`)
@@ -899,6 +899,14 @@ export default class MemberManager extends FeatureManager{
                 let couponResult = await this.Dynamodb.batchGet(couponBatch).promise()
                 let coupons = couponResult.Responses.Coupon
                 console.log(`쿠폰 테이블 조회 성공. 조회한 쿠폰\n${JSON.stringify(coupons, null, 2)}`)
+                for(const coupon of coupons){
+                    for(const c of couponIds){
+                        if(c.id == coupon.id){
+                            coupon.used = c.used
+                            break;
+                        }
+                    }
+                }
                 success.data = coupons
                 this.res.status(200).send(success)
                 successInit(success)
