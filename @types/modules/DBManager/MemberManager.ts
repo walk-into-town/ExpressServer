@@ -775,6 +775,12 @@ export default class MemberManager extends FeatureManager{
                 let result = await this.Dynamodb.query(queryParams).promise()
                 let playing = result.Items[0].playingCampaigns
                 console.log(playing)
+                if(playing.length == 0){
+                    fail.error = error.invalReq
+                    fail.errdesc = '참여중인 캠페인이 없습니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
                 for(const camp of playing){
                     if(camp.id == params.caid){
                         success.data = '이미 참여중인 캠페인 입니다.'
@@ -905,6 +911,42 @@ export default class MemberManager extends FeatureManager{
             }
         }
 
+        run()
+    }
+
+    public checkCampaign(params: any){
+        params.caid = nbsp2plus(params.caid)
+        let memberparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': this.req.session.passport.user.id},
+            ProjectionExpression: 'playingCampaigns'
+        }
+        const run = async() => {
+            let memberResult = await this.Dynamodb.query(memberparams).promise()
+            let playing = memberResult.Items[0].playingCampaigns
+            if(playing.length == 0){
+                fail.error = error.invalReq
+                fail.errdesc = '참여중인 캠페인이 없습니다.'
+                this.res.status(400).send(fail)
+                return;
+            }
+            for(const camp of playing){
+                if(camp.id == params.caid && camp.cleared == true){
+                    success.data = '클리어한 캠페인입니다.'
+                    this.res.status(200).send(success)
+                    return;
+                }
+                if(camp.id == params.caid && camp.cleared == false){
+                    success.data = '클리어하지 않은 캠페인입니다.'
+                    this.res.status(200).send(success)
+                    return;
+                }
+            }
+            fail.error = error.dataNotFound
+            fail.errdesc = '캠페인 id를 찾을 수 없습니다.'
+            this.res.status(400).send(fail)
+        }
         run()
     }
 }
