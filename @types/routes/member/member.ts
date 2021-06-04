@@ -141,4 +141,10 @@ router.get('/checkplaying', isAuthenticated, function(req: express.Request, res:
     memberDB.checkPlaying(query)
 })
 
+router.get('/checkcampaign', isAuthenticated, function(req: express.Request, res: express.Response){
+    let query = req.query
+    let memberDB = new MemberManager(req, res)
+    memberDB.checkCampaign(query)
+})
+
 module.exports = router
