@@ -220,6 +220,8 @@ export default class Reportmanager extends FeatureManager{
                 }
                 await this.Dynamodb.put(insertParam).promise()
                 await this.Dynamodb.update(updateParam).promise()
+                success.data = '신고 처리 완료!'
+                this.res.status(201).send(success)
             }
             catch(err){
                 fail.error = error.dbError

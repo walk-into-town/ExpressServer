@@ -248,6 +248,8 @@ class Reportmanager extends FeatureManager_1.FeatureManager {
                 }
                 yield this.Dynamodb.put(insertParam).promise();
                 yield this.Dynamodb.update(updateParam).promise();
+                result_1.success.data = '신고 처리 완료!';
+                this.res.status(201).send(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
