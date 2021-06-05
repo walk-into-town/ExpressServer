@@ -159,13 +159,14 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             TableName: 'Member',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: { ':id': id },
-            ProjectionExpression: 'myCampaigns, playingCampaigns'
+            ProjectionExpression: 'myCampaigns, playingCampaigns, badge'
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let result = yield this.Dynamodb.query(queryParams).promise();
                 let myCampaign = result.Items[0].myCampaigns.length;
                 let playingCampaign = result.Items[0].playingCampaigns;
+                let badge = result.Items[0].badge;
                 let participateCamp = [];
                 let clearCamp = [];
                 playingCampaign.forEach(campaign => {
@@ -179,7 +180,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let data = {
                     playingCampaign: playingCampaign.length,
                     myCampaign: myCampaign,
-                    clearCampaign: clearCamp.length
+                    clearCampaign: clearCamp.length,
+                    badge: badge
                 };
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
