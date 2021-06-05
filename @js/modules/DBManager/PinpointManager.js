@@ -725,54 +725,60 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         run();
     }
     checkQuiz(params) {
-        let campParam = {
-            TableName: 'Campaign',
-            KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.caid }
-        };
         let memberParam = {
-            TableName: 'Campaign',
+            TableName: 'Member',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: { ':id': this.req.session.passport.user.id }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
-            let campResult = yield this.Dynamodb.query(campParam).promise();
-            let memberResult = yield this.Dynamodb.query(memberParam).promise();
-            let pinpoints = campResult.Items[0].pinpoints;
+            console.log('참여중 캠페인 정보 가져오는중');
+            let memberResult = yield this.Dynamodb.query(memberParam).promise(); // 참여중인 캠페인 정보 가져오기
             let playing = memberResult.Items[0].playingCampaigns;
-            for (let i = 0; i < playing.length; i++) {
-                if (playing.id == params.caid && playing.pinpoints.length) { }
-            }
-        });
-        let failedQuiz = this.req.session.passport.user.quiz;
-        params.pid = nbsp_1.nbsp2plus(params.pid);
-        if (failedQuiz.length != 0) { // 실패한 핀포인트가 있는 경우
-            for (const quiz of failedQuiz) { // 실패한 핀포인트에 대해
-                if (quiz.id == params.pid) { // 현재 핀포인트와 같은 경우
-                    let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime();
-                    let limitTime = new Date(quiz.time).getTime();
-                    if ((currTime - limitTime) < 180000) { // 퀴즈 제한시간이 안지난 경우
-                        console.log('퀴즈 참여 제한시간');
-                        let diff = 180000 - (currTime - limitTime);
-                        let min = Math.floor(diff / 1000 / 60);
-                        let sec = Math.floor(diff / 1000) % 60;
+            console.log(`가져오기 완료${JSON.stringify(playing, null, 2)}`);
+            console.log('클리어한 핀포인트 여부 확인중');
+            for (const camp of playing) { // 참여중인 캠페인에 대해 순회
+                for (const id of camp.pinpoints) { // 참여중인 캠페인의 클리어한 핀포인트에 대해
+                    if (id == params.pid) { // 참여하고자 하는 퀴즈와 동일한 경우 클리어
                         result_1.fail.error = result_1.error.invalReq;
-                        result_1.fail.errdesc = `퀴즈 참여 제한시간이 ${min}분 ${sec}초 남았어요.`;
+                        result_1.fail.errdesc = '이미 클리어한 핀포인트입니다.';
                         this.res.status(400).send(result_1.fail);
                         return;
                     }
-                    else {
-                        quiz.time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
+                }
+            }
+            console.log('클리어 여부 통과. 클리어하지 않은 핀포인트입니다.');
+            let failedQuiz = this.req.session.passport.user.quiz;
+            console.log(`퀴즈 제한시간 확인중\n${JSON.stringify(failedQuiz, null, 2)}`);
+            params.pid = nbsp_1.nbsp2plus(params.pid);
+            if (failedQuiz.length != 0) { // 실패한 핀포인트가 있는 경우
+                for (const quiz of failedQuiz) { // 실패한 핀포인트에 대해
+                    if (quiz.id == params.pid) { // 현재 핀포인트와 같은 경우
+                        let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime();
+                        let limitTime = new Date(quiz.time).getTime();
+                        if ((currTime - limitTime) < 180000) { // 퀴즈 제한시간이 안지난 경우
+                            console.log('퀴즈 참여 제한시간');
+                            let diff = 180000 - (currTime - limitTime);
+                            let min = Math.floor(diff / 1000 / 60);
+                            let sec = Math.floor(diff / 1000) % 60;
+                            result_1.fail.error = result_1.error.invalReq;
+                            result_1.fail.errdesc = `퀴즈 참여 제한시간이 ${min}분 ${sec}초 남았어요.`;
+                            this.res.status(400).send(result_1.fail);
+                            return;
+                        }
+                        else {
+                            quiz.time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
+                        }
                     }
                 }
             }
-        }
-        this.req.session.passport.user.quiz.push({
-            id: params.pid,
-            time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+            this.req.session.passport.user.quiz.push({
+                id: params.pid,
+                time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+            });
+            result_1.success.data = "참여 가능한 퀴즈에요.";
+            this.res.status(200).send(result_1.success);
         });
-        result_1.success.data = "참여 가능한 퀴즈에요.";
-        this.res.status(200).send(result_1.success);
+        run();
     }
     /**
      * 핀포인트 댓글 API
