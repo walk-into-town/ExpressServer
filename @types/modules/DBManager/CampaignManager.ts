@@ -871,6 +871,12 @@ export default class CampaignManager extends FeatureManager{
                     let uid = comments.Items[0].comments[i].userId
                     if(rid == params.rid && uid == params.uid){
                         console.log('조건 만족')
+                        if(comments.Items[0].comments[i].text == '관리자에의해 삭제되었습니다.'){
+                            fail.error = error.invalReq
+                            fail.errdesc = '삭제된 리뷰입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
                         if(params.text == undefined){
                             comments.Items[0].comments[i].rated = params.rated
                             comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
