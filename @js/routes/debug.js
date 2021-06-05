@@ -66,6 +66,10 @@ router.get('/scan/Report', function (req, res) {
     let scanner = new scan_1.default(req, res);
     scanner.report();
 });
+router.get('/scan/prison', function (req, res) {
+    let scanner = new scan_1.default(req, res);
+    scanner.prison();
+});
 router.get('/session', upload.array('img'), function (req, res) {
     res.status(200).send(req.session);
 });

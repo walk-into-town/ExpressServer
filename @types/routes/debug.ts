@@ -53,6 +53,11 @@ router.get('/scan/Report', function(req: Express.Request, res: Express.Response)
     scanner.report()
 })
 
+router.get('/scan/prison', function(req: Express.Request, res: Express.Response){
+    let scanner = new Scan(req, res)
+    scanner.prison()
+})
+
 router.get('/session', upload.array('img'), function(req: express.Request, res: express.Response){
     res.status(200).send(req.session)
 })
