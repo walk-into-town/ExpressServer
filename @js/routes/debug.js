@@ -62,6 +62,10 @@ router.get('/scan/Ranking', function (req, res) {
     let scanner = new scan_1.default(req, res);
     scanner.ranking();
 });
+router.get('/scan/Report', function (req, res) {
+    let scanner = new scan_1.default(req, res);
+    scanner.report();
+});
 router.get('/session', upload.array('img'), function (req, res) {
     res.status(200).send(req.session);
 });
