@@ -430,8 +430,8 @@ export default class PinpointManager extends FeatureManager{
             Key: {
                 id: this.req.session.passport.user.id
             },
-            UpdateExpression: 'set coupons = list_append(if_not_exists(coupons, :emptylist), :newcoupon), playingCampaigns = :newPlaying',
-            ExpressionAttributeValues: {':emptylist' : [], ':newcoupon' : null, ':newPlaying' : null},
+            UpdateExpression: 'set coupons = list_append(if_not_exists(coupons, :emptylist), :newcoupon), playingCampaigns = :newPlaying, badge = list_append(badge, :newbadge)',
+            ExpressionAttributeValues: {':emptylist' : [], ':newcoupon' : null, ':newPlaying' : null, ':newbadge': null},
             ConditionExpression: 'attribute_exists(id)'
         }
         let couponParams = {            // 쿠폰의 발급량을 늘리는 변수
@@ -451,6 +451,12 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async() => {
             try{
+                if(params.monsterImg == undefined){
+                    fail.error = error.invalReq
+                    fail.errdesc = 'No Monster Img Info'
+                    this.res.status(400).send(fail)
+                    return;
+                }
                 let isCampClear: boolean = false         //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
                 let failedQuiz: Array<any> = this.req.session.passport.user.quiz
                 if(failedQuiz.length != 0){
@@ -521,7 +527,9 @@ export default class PinpointManager extends FeatureManager{
                     successInit(success)
                     return;
                 }
-               
+                // 이하 정답인 경우
+                updateParams.ExpressionAttributeValues[":newbadge"] = [params.monsterImg]
+
                 // 캠페인 클리어인 경우 cleared를 true로
                 for(const camp of playingCampaigns){
                     if(camp.id == params.caid){
