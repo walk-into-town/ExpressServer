@@ -112,7 +112,7 @@ export default class Reportmanager extends FeatureManager{
                 console.log('신고 등록 시작')
                 await this.Dynamodb.put(insertParams).promise()
                 console.log('신고 등록 성공')
-                success.data = '신고 등록 성공'
+                success.data = id
                 this.res.status(201).send(success)
             }
             catch(err){

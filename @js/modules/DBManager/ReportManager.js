@@ -140,7 +140,7 @@ class Reportmanager extends FeatureManager_1.FeatureManager {
                 console.log('신고 등록 시작');
                 yield this.Dynamodb.put(insertParams).promise();
                 console.log('신고 등록 성공');
-                result_1.success.data = '신고 등록 성공';
+                result_1.success.data = id;
                 this.res.status(201).send(result_1.success);
             }
             catch (err) {
