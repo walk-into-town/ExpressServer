@@ -732,20 +732,32 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async () => {
             params.pid = nbsp2plus(params.pid)
+            params.caid = nbsp2plus(params.caid)
             console.log('참여중 캠페인 정보 가져오는중')
             let memberResult = await this.Dynamodb.query(memberParam).promise()     // 참여중인 캠페인 정보 가져오기
-            let playing = memberResult.Items[0].playingCampaigns
+            let playing: Array<any> = memberResult.Items[0].playingCampaigns
             console.log(`가져오기 완료${JSON.stringify(playing, null, 2)}`)
             console.log('클리어한 핀포인트 여부 확인중')
-            for(const camp of playing){                     // 참여중인 캠페인에 대해 순회
-                for(const id of camp.pinpoints){            // 참여중인 캠페인의 클리어한 핀포인트에 대해
-                    if(id == params.pid){                   // 참여하고자 하는 퀴즈와 동일한 경우 클리어
-                        fail.error = error.invalReq
-                        fail.errdesc = '이미 클리어한 핀포인트입니다.'
-                        this.res.status(400).send(fail)
-                        return;
+            for(let i = 0; i < playing.length; i++){     // 참여중인 캠페인에 대해
+                if(playing[i].id == params.caid){        // 이미 참여중인 캪페인인 경우
+                    for(const id of playing[i].pinpoints){  // 해당 캠페인의 클리어한 핀포인트 목록을 순회
+                        if(id == params.pid){               // 클리어한 핀포인트인 경우
+                            console.log('클리어한 핀포인트!')
+                            fail.error = error.invalReq
+                            fail.errdesc = '이미 클리어한 핀포인트입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
                     }
-                }   
+                    break;
+                }
+                if(i == playing.length - 1){
+                    console.log('참여중인 캠페인 아님!')
+                    fail.error = error.invalReq
+                    fail.errdesc = '참여중인 캠페인이 아닙니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
             }
             console.log('클리어 여부 통과. 클리어하지 않은 핀포인트입니다.')
             let failedQuiz: Array<any> = this.req.session.passport.user.quiz
