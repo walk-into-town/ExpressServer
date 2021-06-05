@@ -1002,6 +1002,12 @@ export default class PinpointManager extends FeatureManager{
                     let uid = comments.Items[0].comments[i].userId
                     if(cid == params.coid && uid == params.uid){
                         console.log('조건 만족')
+                        if(comments.Items[0].comments[i].text == '관리자에의해 삭제되었습니다.'){
+                            fail.error = error.invalReq
+                            fail.errdesc = '삭제된 댓글입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
                         comments.Items[0].comments[i].text = params.text;
                         comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                         success.data = comments.Items[0].comments[i]
