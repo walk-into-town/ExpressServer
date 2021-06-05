@@ -40,7 +40,9 @@ export default class Reportmanager extends FeatureManager{
                 targetUser: targetUser,
                 date: date,
                 type: type,
-                processed: processed
+                typeId: typeId,
+                processed: processed,
+                imgs: null
             },
             ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
         }
@@ -86,6 +88,7 @@ export default class Reportmanager extends FeatureManager{
                             this.res.status(400).send(fail)
                             return
                         }
+                        insertParams.Item.imgs = comments[i].imgs
                         console.log('targetId 유효함')
                         break;
                     }
@@ -203,6 +206,18 @@ export default class Reportmanager extends FeatureManager{
             ExpressionAttributeValues: {':processed': true},
             ExpressionAttributeNames: {'#processed': 'processed'}
         }
+        let commentParam = {
+            TableName: null,
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': null},
+            ProjectionExpression: 'comments'
+        }
+        let commentUpdateParam = {
+            TableName: null,
+            Key: {id : null},
+            UpdateExpression: 'set comments = :newComment',
+            ExpressionAttributeValues: {':newComment': null}
+        }
         const run = async() => {
             try{
                 let result = await this.Dynamodb.query(reportParam).promise()
@@ -224,6 +239,23 @@ export default class Reportmanager extends FeatureManager{
                     this.res.status(400).send(fail)
                     return;
                 }
+                console.log('댓글 삭제 시작')
+                commentParam.TableName = result.Items[0].type
+                commentParam.ExpressionAttributeValues[":id"] = result.Items[0].typeId
+                let commentResult = await this.Dynamodb.query(commentParam).promise()
+                let comments = commentResult.Items[0]
+                for(const comment of comments.comments){
+                    if(comment.id == result.Items[0].targetId){
+                        comment.text = '관리자에의해 삭제되었습니다.'
+                        comment.imgs = []
+                        commentUpdateParam.TableName = result.Items[0].type
+                        commentUpdateParam.Key.id = result.Items[0].typeId
+                        commentUpdateParam.ExpressionAttributeValues[":newComment"] = comments.comments
+                        await this.Dynamodb.update(commentUpdateParam).promise()
+                        break;
+                    }
+                }
+                console.log('댓글 삭제 완료')
                 await this.Dynamodb.put(insertParam).promise()
                 await this.Dynamodb.update(updateParam).promise()
                 success.data = '신고 처리 완료!'
