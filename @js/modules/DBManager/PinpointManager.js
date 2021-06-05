@@ -731,6 +731,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
             ExpressionAttributeValues: { ':id': this.req.session.passport.user.id }
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
+            params.pid = nbsp_1.nbsp2plus(params.pid);
             console.log('참여중 캠페인 정보 가져오는중');
             let memberResult = yield this.Dynamodb.query(memberParam).promise(); // 참여중인 캠페인 정보 가져오기
             let playing = memberResult.Items[0].playingCampaigns;
