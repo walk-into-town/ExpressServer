@@ -218,6 +218,12 @@ export default class Reportmanager extends FeatureManager{
                     this.res.status(400).send(fail)
                     return;
                 }
+                if(result.Items[0].processed == true){
+                    fail.error = error.invalReq
+                    fail.errdesc = '이미 처리한 신고입니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
                 await this.Dynamodb.put(insertParam).promise()
                 await this.Dynamodb.update(updateParam).promise()
                 success.data = '신고 처리 완료!'

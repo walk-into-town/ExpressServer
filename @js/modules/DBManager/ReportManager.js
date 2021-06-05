@@ -246,6 +246,12 @@ class Reportmanager extends FeatureManager_1.FeatureManager {
                     this.res.status(400).send(result_1.fail);
                     return;
                 }
+                if (result.Items[0].processed == true) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '이미 처리한 신고입니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
                 yield this.Dynamodb.put(insertParam).promise();
                 yield this.Dynamodb.update(updateParam).promise();
                 result_1.success.data = '신고 처리 완료!';
