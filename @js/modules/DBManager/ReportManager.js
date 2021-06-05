@@ -31,6 +31,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const result_1 = require("../../static/result");
 const CryptoJS = __importStar(require("crypto-js"));
 const FeatureManager_1 = require("./FeatureManager");
+const nbsp_1 = require("../Logics/nbsp");
 class Reportmanager extends FeatureManager_1.FeatureManager {
     insert(params) {
         let hash = CryptoJS.SHA256(Date().toString() + params.targetId + Math.random());
@@ -151,10 +152,110 @@ class Reportmanager extends FeatureManager_1.FeatureManager {
         run();
     }
     read(params, ReadType) {
-        throw new Error("Method not implemented.");
+        params.type = nbsp_1.nbsp2plus(params.type);
+        let type = params.type;
+        if (type != 'list' && type != 'single') {
+            result_1.fail.error = result_1.error.typeMiss;
+            result_1.fail.errdesc = 'type은 list | single 중 하나여야합니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (type == 'list') {
+                    let queryParams = {
+                        TableName: 'Report'
+                    };
+                    let result = yield this.Dynamodb.scan(queryParams).promise();
+                    result_1.success.data = result.Items;
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                else {
+                    params.reid = nbsp_1.nbsp2plus(params.reid);
+                    let queryParams = {
+                        TableName: 'Report',
+                        KeyConditionExpression: 'id = :id',
+                        ExpressionAttributeValues: { ':id': params.reid }
+                    };
+                    let result = yield this.Dynamodb.query(queryParams).promise();
+                    if (result.Items[0] == undefined) {
+                        result_1.fail.error = result_1.error.dataNotFound;
+                        result_1.fail.errdesc = '신고를 찾을 수 없습니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                    result_1.success.data = result.Items[0];
+                    this.res.status(200).send(result_1.success);
+                }
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     update(params) {
-        throw new Error("Method not implemented.");
+        let id = params.reid;
+        let uid = this.req.session.passport.user.id;
+        let time = Number(params.time);
+        let targetUser = params.targetUser;
+        let startTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
+        if (time < 0 || params.time == undefined) {
+            console.log('시간이 잘못되었습니다.');
+            result_1.fail.error = result_1.error.invalReq;
+            result_1.fail.errdesc = '시간이 잘못되었습니다.';
+            this.res.status(400).send(result_1.fail);
+            return;
+        }
+        let reportParam = {
+            TableName: 'Report',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': params.reid }
+        };
+        let insertParam = {
+            TableName: 'Prison',
+            Item: {
+                id: targetUser,
+                time: time,
+                startTime: startTime
+            },
+            ConditionExpression: "attribute_not_exists(id)" //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+        };
+        let updateParam = {
+            TableName: 'Report',
+            Key: { id: id },
+            UpdateExpression: 'set #processed = :processed',
+            ExpressionAttributeValues: { ':processed': true },
+            ExpressionAttributeNames: { '#processed': 'processed' }
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let result = yield this.Dynamodb.query(reportParam).promise();
+                if (result.Items[0] == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = '신고를 찾을 수 없습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                if (result.Items[0].targetUser != targetUser) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '잘못된 targetUser입니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                yield this.Dynamodb.put(insertParam).promise();
+                yield this.Dynamodb.update(updateParam).promise();
+            }
+            catch (err) {
+                result_1.fail.error = result_1.error.dbError;
+                result_1.fail.errdesc = err;
+                this.res.status(521).send(result_1.fail);
+            }
+        });
+        run();
     }
     delete(params) {
         throw new Error("Method not implemented.");

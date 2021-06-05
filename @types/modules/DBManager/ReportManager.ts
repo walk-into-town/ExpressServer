@@ -1,6 +1,7 @@
 import { error, fail, success } from "../../static/result";
 import * as CryptoJS from 'crypto-js'
 import { FeatureManager, toRead } from "./FeatureManager";
+import { nbsp2plus } from "../Logics/nbsp";
 
 export default class Reportmanager extends FeatureManager{
     public insert(params: any): void {
@@ -123,10 +124,110 @@ export default class Reportmanager extends FeatureManager{
         run()
     }
     public read(params: any, ReadType?: toRead): void {
-        throw new Error("Method not implemented.");
+        params.type = nbsp2plus(params.type)
+        let type = params.type
+        if(type != 'list' && type != 'single'){
+            fail.error = error.typeMiss
+            fail.errdesc = 'type은 list | single 중 하나여야합니다.'
+            this.res.status(400).send(fail)
+            return;
+        }
+        const run = async() => {
+            try{
+                if(type == 'list'){
+                    let queryParams = {
+                        TableName: 'Report'
+                    }
+                    let result = await this.Dynamodb.scan(queryParams).promise()
+                    success.data = result.Items
+                    this.res.status(200).send(success)
+                    return;
+                }
+                else{
+                    params.reid = nbsp2plus(params.reid)
+                    let queryParams = {
+                        TableName: 'Report',
+                        KeyConditionExpression: 'id = :id',
+                        ExpressionAttributeValues: {':id': params.reid}
+                    }
+                    let result = await this.Dynamodb.query(queryParams).promise()
+                    if(result.Items[0] == undefined){
+                        fail.error = error.dataNotFound
+                        fail.errdesc = '신고를 찾을 수 없습니다.'
+                        this.res.status(400).send(fail)
+                        return;
+                    }
+                    success.data = result.Items[0]
+                    this.res.status(200).send(success)
+                }
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
     public update(params: any): void {
-        throw new Error("Method not implemented.");
+        let id = params.reid
+        let uid = this.req.session.passport.user.id
+        let time = Number(params.time)
+        let targetUser = params.targetUser
+        let startTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+        if(time < 0 || params.time == undefined){
+            console.log('시간이 잘못되었습니다.')
+            fail.error = error.invalReq
+            fail.errdesc = '시간이 잘못되었습니다.'
+            this.res.status(400).send(fail)
+            return;
+        }
+        let reportParam = {
+            TableName: 'Report',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': params.reid}
+        }
+        let insertParam = {
+            TableName: 'Prison',
+            Item: {
+                id: targetUser,
+                time: time,
+                startTime: startTime
+            },
+            ConditionExpression: "attribute_not_exists(id)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+        }
+        let updateParam = {
+            TableName: 'Report',
+            Key: {id: id},
+            UpdateExpression: 'set #processed = :processed',
+            ExpressionAttributeValues: {':processed': true},
+            ExpressionAttributeNames: {'#processed': 'processed'}
+        }
+        const run = async() => {
+            try{
+                let result = await this.Dynamodb.query(reportParam).promise()
+                if(result.Items[0] == undefined){
+                    fail.error = error.dataNotFound
+                    fail.errdesc = '신고를 찾을 수 없습니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+                if(result.Items[0].targetUser != targetUser){
+                    fail.error = error.invalReq
+                    fail.errdesc = '잘못된 targetUser입니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+                await this.Dynamodb.put(insertParam).promise()
+                await this.Dynamodb.update(updateParam).promise()
+            }
+            catch(err){
+                fail.error = error.dbError
+                fail.errdesc = err
+                this.res.status(521).send(fail)
+            }
+        }
+        run()
     }
     public delete(params: any): void {
         throw new Error("Method not implemented.");
