@@ -67,6 +67,31 @@ module.exports = () => {
             });
             let doclient = new AWS.DynamoDB.DocumentClient();
             console.log('로컬 계정 로그인');
+            let prisonResult = yield doclient.query({
+                TableName: 'Prison',
+                KeyConditionExpression: 'id = :id',
+                ExpressionAttributeValues: { ':id': username }
+            }).promise();
+            let prison = prisonResult.Items[0];
+            if (prison != undefined) {
+                let endTime = new Date(prison.startTime).getTime() + prison.time;
+                let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime();
+                if (endTime > currTime) {
+                    let diff = endTime - currTime;
+                    let hour = Math.floor(diff / 1000 / 60 / 60);
+                    let min = Math.floor(diff / 1000 / 60);
+                    let sec = Math.floor(diff / 1000) % 60;
+                    console.log('차단된 유저입니다.');
+                    return done(null, false, { message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초` });
+                }
+                else {
+                    let deleteParam = {
+                        TableName: 'Prison',
+                        Key: { id: username }
+                    };
+                    yield doclient.delete(deleteParam).promise();
+                }
+            }
             let result = yield doclient.query({
                 TableName: 'Member',
                 KeyConditionExpression: 'id = :id',
@@ -118,6 +143,31 @@ module.exports = () => {
             const getRandomNumber = () => {
                 return Math.floor(Math.random() * (999999 - 100000)) + 100000;
             };
+            let prisonResult = yield doclient.query({
+                TableName: 'Prison',
+                KeyConditionExpression: 'id = :id',
+                ExpressionAttributeValues: { ':id': username }
+            }).promise();
+            let prison = prisonResult.Items[0];
+            if (prison != undefined) {
+                let endTime = new Date(prison.startTime).getTime() + prison.time;
+                let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime();
+                if (endTime > currTime) {
+                    let diff = endTime - currTime;
+                    let hour = Math.floor(diff / 1000 / 60 / 60);
+                    let min = Math.floor(diff / 1000 / 60);
+                    let sec = Math.floor(diff / 1000) % 60;
+                    console.log('차단된 유저입니다.');
+                    return cb(null, false, { message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초` });
+                }
+                else {
+                    let deleteParam = {
+                        TableName: 'Prison',
+                        Key: { id: username }
+                    };
+                    yield doclient.delete(deleteParam).promise();
+                }
+            }
             let data = yield doclient.query(params).promise();
             let result = data.Items[0];
             if (result.Items[0].nickname == '(알수없음)') {
@@ -177,6 +227,31 @@ module.exports = () => {
                 const getRandomNumber = () => {
                     return Math.floor(Math.random() * (999999 - 100000)) + 100000;
                 };
+                let prisonResult = yield doclient.query({
+                    TableName: 'Prison',
+                    KeyConditionExpression: 'id = :id',
+                    ExpressionAttributeValues: { ':id': username }
+                }).promise();
+                let prison = prisonResult.Items[0];
+                if (prison != undefined) {
+                    let endTime = new Date(prison.startTime).getTime() + prison.time;
+                    let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime();
+                    if (endTime > currTime) {
+                        let diff = endTime - currTime;
+                        let hour = Math.floor(diff / 1000 / 60 / 60);
+                        let min = Math.floor(diff / 1000 / 60);
+                        let sec = Math.floor(diff / 1000) % 60;
+                        console.log('차단된 유저입니다.');
+                        return cb(null, false, { message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초` });
+                    }
+                    else {
+                        let deleteParam = {
+                            TableName: 'Prison',
+                            Key: { id: username }
+                        };
+                        yield doclient.delete(deleteParam).promise();
+                    }
+                }
                 let data = yield doclient.query(params).promise();
                 let result = data.Items[0];
                 if (result.Items[0].nickname == '(알수없음)') {
