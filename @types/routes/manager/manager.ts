@@ -14,11 +14,15 @@ router.post('/report', isAuthenticated, function(req: express.Request, res: expr
 })
 
 router.get('/report', isAuthenticated, function(req: express.Request, res: express.Response){
-
+    let reportDB = new Reportmanager(req, res)
+    let query = req.query
+    reportDB.read(query)
 })
 
 router.put('/report', isAuthenticated, function(req: express.Request, res: express.Response){
-    
+    let reportDB = new Reportmanager(req, res)
+    let query = req.body
+    reportDB.update(query)
 })
 
 router.put('/report/process', isAuthenticated, function(req: express.Request, res: express.Response){

@@ -35,8 +35,14 @@ router.post('/report', authentication_1.default, function (req, res) {
     reportDB.insert(query);
 });
 router.get('/report', authentication_1.default, function (req, res) {
+    let reportDB = new ReportManager_1.default(req, res);
+    let query = req.query;
+    reportDB.read(query);
 });
 router.put('/report', authentication_1.default, function (req, res) {
+    let reportDB = new ReportManager_1.default(req, res);
+    let query = req.body;
+    reportDB.update(query);
 });
 router.put('/report/process', authentication_1.default, function (req, res) {
 });
