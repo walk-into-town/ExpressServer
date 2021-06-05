@@ -174,7 +174,6 @@ export default class Reportmanager extends FeatureManager{
     }
     public update(params: any): void {
         let id = params.reid
-        let uid = this.req.session.passport.user.id
         let time = Number(params.time)
         let targetUser = params.targetUser
         let startTime = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
