@@ -510,8 +510,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let playing = memberResult.Items[0].playingCampaigns;
                 console.log(`참여중인 캠페인 목록 조회 성공\n${JSON.stringify(playing, null, 2)}`);
                 if (playing.length == 0) {
-                    result_1.success.data = [];
+                    result_1.success.data.clearedPinpoints = [];
+                    result_1.success.data.pinpoints = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 console.log('캠페인 조회 parameter 생성중');
