@@ -493,9 +493,8 @@ export default class MemberManager extends FeatureManager{
                 let playing: Array<any> = memberResult.Items[0].playingCampaigns
                 console.log(`참여중인 캠페인 목록 조회 성공\n${JSON.stringify(playing, null, 2)}`)
                 if(playing.length == 0){
-                    fail.error = error.dataNotFound
-                    fail.errdesc = '참여중인 캠페인이 없습니다.'
-                    this.res.status(400).send(fail)
+                    success.data = []
+                    this.res.status(200).send(success)
                     return;
                 }
                 console.log('캠페인 조회 parameter 생성중')
