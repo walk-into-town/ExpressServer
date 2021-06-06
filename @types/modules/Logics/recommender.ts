@@ -49,14 +49,6 @@ export let recommend = function(camps: Array<any>){
         camp.score = score
     }
     camps.sort(recommendSort)
-    while(true){
-        if(camps[camps.length - 1].score == 0){
-            camps.pop()
-        }
-        else{
-            break;
-        }
-    }
     for(const camp of camps){
         delete camp.score
     }
