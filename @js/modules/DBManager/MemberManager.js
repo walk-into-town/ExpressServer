@@ -840,6 +840,18 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             RetrunValues: 'ALL_NEW',
             ConditionExpression: 'attribute_exists(id)'
         };
+        let getCampParam = {
+            TableName: 'Campaign',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': caid }
+        };
+        let campUpdateParam = {
+            TableName: 'Campaign',
+            Key: { id: caid },
+            UpdateExpression: 'set #users = :users',
+            ExpressionAttributeValues: { ':users': null },
+            ExpressionAttributeNames: { '#users': 'users' }
+        };
         var insertParams = {
             TableName: 'Block',
             Item: {
@@ -867,6 +879,18 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                         return;
                     }
                 }
+                console.log('캠페인 users 수정중');
+                let updateCampResult = yield this.Dynamodb.query(getCampParam).promise();
+                let users = updateCampResult.Items[0].users;
+                for (let i = 0; i < users.length; i++) {
+                    if (users[i] == uid) {
+                        users.splice(i, 1);
+                        break;
+                    }
+                }
+                campUpdateParam.ExpressionAttributeValues[":users"] = users;
+                yield this.Dynamodb.update(campUpdateParam).promise();
+                console.log('캠페인 users 수정완료');
                 updateParams.UpdateExpression = 'SET playingCampaigns = :playingCamp';
                 updateParams.ExpressionAttributeValues = { ':playingCamp': playingCamps };
                 console.log('참여중 캠페인 삭제중');
