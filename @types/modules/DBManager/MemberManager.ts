@@ -781,20 +781,19 @@ export default class MemberManager extends FeatureManager{
                 let playing = result.Items[0].playingCampaigns
                 console.log(playing)
                 if(playing.length == 0){
-                    fail.error = error.invalReq
-                    fail.errdesc = '참여중인 캠페인이 없습니다.'
-                    this.res.status(400).send(fail)
+                    success.data = []
+                    this.res.status(200).send(success)
                     return;
                 }
                 for(const camp of playing){
                     if(camp.id == params.caid){
-                        success.data = '이미 참여중인 캠페인 입니다.'
+                        success.data = false
                         this.res.status(200).send(success)
                         successInit(success)
                         return;
                     }
                 }
-                success.data = '참여 가능한 캠페인 입니다.'
+                success.data = true
                 this.res.status(200).send(success)
                 successInit(success)
             }
