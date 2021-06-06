@@ -636,6 +636,15 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             ReturnValues: 'UPDATED_NEW',
             ConditionExpression: 'attribute_exists(id)'
         };
+        let blockParam = {
+            TableName: 'Block',
+            KeyConditionExpression: 'uid = :uid and tid = :tid',
+            ExpressionAttributeValues: { ':uid': this.req.session.passport.user.id, ':tid': params.caid }
+        };
+        let deleteParam = {
+            TableName: 'Block',
+            Key: { uid: this.req.session.passport.user.id, tid: params.caid }
+        };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log('캠페인 존재 여부 확인중...');
@@ -661,6 +670,27 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 console.log('본인 제작 여부 통과');
+                console.log('차단 여부 확인중');
+                let blockResult = yield this.Dynamodb.query(blockParam).promise();
+                let block = blockResult.Items[0];
+                if (block != undefined) {
+                    let end = new Date(block.start).getTime() + block.time;
+                    let curr = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime();
+                    if (curr < end) {
+                        let diff = end - curr;
+                        let day = Math.floor(diff / 1000 / 60 / 60 / 24);
+                        let hour = Math.floor(diff / 1000 / 60 / 60) % 60;
+                        let min = Math.floor(diff / 1000 / 60) % 60;
+                        let sec = Math.floor(diff / 1000) % 60;
+                        result_1.fail.error = result_1.error.invalReq;
+                        result_1.fail.errdesc = `탈퇴한지 얼마 안된 캠페인이에요. ${day}일 ${hour}시간 ${min}분 ${sec}초 남았어요.`;
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                    else {
+                        yield this.Dynamodb.delete(deleteParam).promise();
+                    }
+                }
                 console.log('참여중 여부 확인중...');
                 for (let i = 0; i < playingCampaigns.length; i++) {
                     if (playingCampaigns[i].id == cId) {
