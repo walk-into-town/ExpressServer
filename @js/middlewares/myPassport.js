@@ -79,7 +79,7 @@ module.exports = () => {
                 if (endTime > currTime) {
                     let diff = endTime - currTime;
                     let hour = Math.floor(diff / 1000 / 60 / 60);
-                    let min = Math.floor(diff / 1000 / 60);
+                    let min = Math.floor(diff / 1000 / 60) % 60;
                     let sec = Math.floor(diff / 1000) % 60;
                     console.log('차단된 유저입니다.');
                     return done(null, false, { message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초` });
@@ -155,7 +155,7 @@ module.exports = () => {
                 if (endTime > currTime) {
                     let diff = endTime - currTime;
                     let hour = Math.floor(diff / 1000 / 60 / 60);
-                    let min = Math.floor(diff / 1000 / 60);
+                    let min = Math.floor(diff / 1000 / 60) % 60;
                     let sec = Math.floor(diff / 1000) % 60;
                     console.log('차단된 유저입니다.');
                     return cb(null, false, { message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초` });
@@ -239,7 +239,7 @@ module.exports = () => {
                     if (endTime > currTime) {
                         let diff = endTime - currTime;
                         let hour = Math.floor(diff / 1000 / 60 / 60);
-                        let min = Math.floor(diff / 1000 / 60);
+                        let min = Math.floor(diff / 1000 / 60) % 60;
                         let sec = Math.floor(diff / 1000) % 60;
                         console.log('차단된 유저입니다.');
                         return cb(null, false, { message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초` });
