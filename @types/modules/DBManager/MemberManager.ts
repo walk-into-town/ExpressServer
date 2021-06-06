@@ -830,6 +830,16 @@ export default class MemberManager extends FeatureManager{
             RetrunValues: 'ALL_NEW',
             ConditionExpression: 'attribute_exists(id)'
         }
+        var insertParams = {
+            TableName: 'Block',
+            Item: {
+                uid: this.req.session.passport.user.id,
+                tid: params.caid,
+                start: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(),
+                time: 1000 * 60 * 60 * 24 * 3
+            },
+            ConditionExpression: "attribute_not_exists(uid) and attribute_not_exists(tid)"      //항목 추가하기 전에 이미 존재하는 항목이 있을 경우 pk가 있을 때 조건 실패. pk는 반드시 있어야 하므로 replace를 방지
+        }
         const run = async() => {
             try{
                 console.log('참여중 캠페인 검색중')
@@ -852,6 +862,9 @@ export default class MemberManager extends FeatureManager{
                 console.log('참여중 캠페인 삭제중')
                 await this.Dynamodb.update(updateParams).promise()
                 success.data = '삭제 성공'
+                console.log('재참여 제한 설정중')
+                await this.Dynamodb.put(insertParams).promise()
+                console.log('재참여 재한 성공')
                 this.res.status(200).send(success)
                 successInit(success)
             }
