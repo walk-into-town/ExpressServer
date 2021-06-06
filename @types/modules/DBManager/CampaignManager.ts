@@ -409,7 +409,8 @@ export default class CampaignManager extends FeatureManager{
                 return;
             }
             camps = recommend(camps)
-            this.res.status(200).send(camps)
+            success.data = camps
+            this.res.status(200).send(success)
         }
         run()
     }

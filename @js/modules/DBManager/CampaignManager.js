@@ -424,7 +424,8 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                 return;
             }
             camps = recommender_1.recommend(camps);
-            this.res.status(200).send(camps);
+            result_1.success.data = camps;
+            this.res.status(200).send(result_1.success);
         });
         run();
     }
