@@ -129,7 +129,7 @@ export default class Reportmanager extends FeatureManager{
     public read(params: any, ReadType?: toRead): void {
         params.type = nbsp2plus(params.type)
         let type = params.type
-        if(type != 'list' && type != 'single'){
+        if(type != 'list' && type != 'single' && type != 'userId'){
             fail.error = error.typeMiss
             fail.errdesc = 'type은 list | single 중 하나여야합니다.'
             this.res.status(400).send(fail)
@@ -146,12 +146,29 @@ export default class Reportmanager extends FeatureManager{
                     this.res.status(200).send(success)
                     return;
                 }
+                if(type == 'userId'){
+                    params.value = nbsp2plus(params.value)
+                    let scanParam = {
+                        TableName: 'Report',
+                        FilterExpression: 'userId = :id',
+                        ExpressionAttributeValues: {':id': params.value}
+                    }
+                    let result = await this.Dynamodb.scan(scanParam).promise()
+                    if(result.Items.length == 0){
+                        success.data = []
+                        this.res.status(200).send(success)
+                        return;
+                    }
+                    success.data = result.Items
+                    this.res.status(200).send(success)
+                    return;
+                }
                 else{
-                    params.reid = nbsp2plus(params.reid)
+                    params.reid = nbsp2plus(params.value)
                     let queryParams = {
                         TableName: 'Report',
                         KeyConditionExpression: 'id = :id',
-                        ExpressionAttributeValues: {':id': params.reid}
+                        ExpressionAttributeValues: {':id': params.value}
                     }
                     let result = await this.Dynamodb.query(queryParams).promise()
                     if(result.Items[0] == undefined){

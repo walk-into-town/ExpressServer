@@ -157,7 +157,7 @@ class Reportmanager extends FeatureManager_1.FeatureManager {
     read(params, ReadType) {
         params.type = nbsp_1.nbsp2plus(params.type);
         let type = params.type;
-        if (type != 'list' && type != 'single') {
+        if (type != 'list' && type != 'single' && type != 'userId') {
             result_1.fail.error = result_1.error.typeMiss;
             result_1.fail.errdesc = 'type은 list | single 중 하나여야합니다.';
             this.res.status(400).send(result_1.fail);
@@ -174,12 +174,29 @@ class Reportmanager extends FeatureManager_1.FeatureManager {
                     this.res.status(200).send(result_1.success);
                     return;
                 }
+                if (type == 'userId') {
+                    params.value = nbsp_1.nbsp2plus(params.value);
+                    let scanParam = {
+                        TableName: 'Report',
+                        FilterExpression: 'userId = :id',
+                        ExpressionAttributeValues: { ':id': params.value }
+                    };
+                    let result = yield this.Dynamodb.scan(scanParam).promise();
+                    if (result.Items.length == 0) {
+                        result_1.success.data = [];
+                        this.res.status(200).send(result_1.success);
+                        return;
+                    }
+                    result_1.success.data = result.Items;
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
                 else {
-                    params.reid = nbsp_1.nbsp2plus(params.reid);
+                    params.reid = nbsp_1.nbsp2plus(params.value);
                     let queryParams = {
                         TableName: 'Report',
                         KeyConditionExpression: 'id = :id',
-                        ExpressionAttributeValues: { ':id': params.reid }
+                        ExpressionAttributeValues: { ':id': params.value }
                     };
                     let result = yield this.Dynamodb.query(queryParams).promise();
                     if (result.Items[0] == undefined) {
