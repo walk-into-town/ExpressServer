@@ -945,12 +945,12 @@ export default class MemberManager extends FeatureManager{
             }
             for(const camp of playing){
                 if(camp.id == params.caid && camp.cleared == true){
-                    success.data = '클리어한 캠페인입니다.'
+                    success.data = true
                     this.res.status(200).send(success)
                     return;
                 }
                 if(camp.id == params.caid && camp.cleared == false){
-                    success.data = '클리어하지 않은 캠페인입니다.'
+                    success.data = false
                     this.res.status(200).send(success)
                     return;
                 }
