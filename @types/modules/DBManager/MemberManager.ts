@@ -937,8 +937,9 @@ export default class MemberManager extends FeatureManager{
             let memberResult = await this.Dynamodb.query(memberparams).promise()
             let playing = memberResult.Items[0].playingCampaigns
             if(playing.length == 0){
-                success.data = []
-                this.res.status(200).send(success)
+                fail.error = error.invalReq
+                fail.errdesc = '참여중인 캠페인이 없습니다.'
+                this.res.status(400).send(fail)
                 return;
             }
             for(const camp of playing){
