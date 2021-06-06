@@ -98,4 +98,14 @@ export default class Scan{
         }
         run()
     }
+
+    public block(){
+        const run = async() => {
+            let result = await doclient.scan({TableName: 'Block'}).promise()
+            console.log(result.Items)
+            success.data = result.Items
+            this.res.status(200).send(success)
+        }
+        run()
+    }
 }
