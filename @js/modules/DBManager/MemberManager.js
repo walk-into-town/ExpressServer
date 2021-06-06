@@ -852,9 +852,8 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                         break;
                     }
                     if (i == playingCamps.length - 1) {
-                        result_1.fail.error = result_1.error.invalKey;
-                        result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
-                        this.res.status(400).send(result_1.fail);
+                        result_1.success.data = [];
+                        this.res.status(400).send(result_1.success);
                         return;
                     }
                 }
