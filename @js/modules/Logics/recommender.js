@@ -60,8 +60,8 @@ let recommend = function (camps) {
     for (const camp of camps) {
         delete camp.score;
     }
-    let mid = Math.ceil(camps.length / 2);
-    camps = camps.splice(0, mid);
+    let pos = 10;
+    camps = camps.splice(0, pos);
     return camps;
 };
 exports.recommend = recommend;
