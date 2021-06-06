@@ -53,6 +53,7 @@ class SessionManager {
                 });
             }
             catch (err) {
+                console.log(err);
                 let result = {
                     result: 'failed',
                     error: 'User Id Search Failed'
@@ -84,6 +85,7 @@ class SessionManager {
                 this.res.locals.result = result.Items[0];
             }
             catch (err) {
+                console.log(err);
                 let result = {
                     result: 'failed',
                     error: 'Session Id Search Failed'
@@ -102,23 +104,26 @@ class SessionManager {
      * 2. 비동기 처리를 위해 forEach대신 for문 사용
      */
     deleteSession(id) {
-        for (let i = 0; i < id.length; i++) {
-            let queryParams = {
-                TableName: 'Session',
-                Key: {
-                    'id': id[i].id
-                }
-            };
-            const run = () => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    yield this.Dynamodb.delete(queryParams).promise();
-                }
-                catch (err) {
-                    console.log(err);
-                }
-            });
-            run();
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            for (let i = 0; i < id.length; i++) {
+                let queryParams = {
+                    TableName: 'Session',
+                    Key: {
+                        'id': id[i].id
+                    }
+                };
+                const run = () => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        yield this.Dynamodb.delete(queryParams).promise();
+                    }
+                    catch (err) {
+                        console.log(err);
+                        console.log(err);
+                    }
+                });
+                run();
+            }
+        });
     }
 }
 exports.default = SessionManager;

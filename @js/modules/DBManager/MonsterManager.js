@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const FeatureManager_1 = require("./FeatureManager");
 const result_1 = require("../../static/result");
+const responseInit_1 = require("../Logics/responseInit");
 class MonsterManager extends FeatureManager_1.FeatureManager {
     insert(params) {
         params.number = parseInt(params.number);
@@ -28,8 +29,10 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
                 let data = yield this.Dynamodb.update(queryParams).promise();
                 result_1.success.data = data.Attributes.imgs;
                 this.res.status(201).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -49,7 +52,6 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let result = yield this.Dynamodb.query(queryParams).promise();
-                console.log(result.Items[0].imgs);
                 let url = null;
                 const getRandomNumber = () => {
                     return Math.floor(Math.random() * (result.Items[0].imgs.length - 0)) + 0;
@@ -57,10 +59,13 @@ class MonsterManager extends FeatureManager_1.FeatureManager {
                 url = result.Items[0].imgs[getRandomNumber()];
                 let test = url.substr(url.length - 14, 14);
                 let debugUrl = process.env.domain + 'images/' + test;
+                console.log(debugUrl);
                 result_1.success.data = debugUrl;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);

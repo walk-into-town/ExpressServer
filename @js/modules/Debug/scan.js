@@ -70,5 +70,32 @@ class Scan {
         });
         run();
     }
+    ranking() {
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let result = yield doclient.scan({ TableName: "Ranking" }).promise();
+            console.log(result.Items);
+            result_1.success.data = result.Items;
+            this.res.status(200).send(result_1.success);
+        });
+        run();
+    }
+    report() {
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let result = yield doclient.scan({ TableName: 'Report' }).promise();
+            console.log(result.Items);
+            result_1.success.data = result.Items;
+            this.res.status(200).send(result_1.success);
+        });
+        run();
+    }
+    prison() {
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let result = yield doclient.scan({ TableName: 'Prison' }).promise();
+            console.log(result.Items);
+            result_1.success.data = result.Items;
+            this.res.status(200).send(result_1.success);
+        });
+        run();
+    }
 }
 exports.default = Scan;

@@ -3,6 +3,8 @@ import * as CryptoJS from 'crypto-js'
 import { error, fail, success } from "../../static/result"
 import {nbsp2plus} from '../Logics/nbsp'
 import { campaignSort } from "../Logics/Sorter"
+import { successInit } from "../Logics/responseInit"
+import { recommend } from "../Logics/recommender"
 
 
 export default class CampaignManager extends FeatureManager{
@@ -187,6 +189,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log('제작 캠페인 업데이트 완료')
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 for (const id of this.res.locals.cids) {
@@ -319,12 +322,14 @@ export default class CampaignManager extends FeatureManager{
                     success.data = result.Items
                     console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 if(result.Items.length == 0){
                     success.data = []
                     console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 let toSort = []
@@ -338,13 +343,14 @@ export default class CampaignManager extends FeatureManager{
                     }
                 }
                 console.log('정렬 시작')
-                toSort = await campaignSort(toSort)
-                primearr = await campaignSort(primearr)
+                toSort.sort(campaignSort)
+                primearr.sort(campaignSort)
                 primearr.push(...toSort)
                 console.log(`정렬 완료. 정렬된 배열\n${JSON.stringify(primearr, null, 2)}`)
                 success.data = primearr
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 console.log(err)
@@ -369,16 +375,41 @@ export default class CampaignManager extends FeatureManager{
                 if(queryResult.Items.length == 0){
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 success.data = queryResult.Items[0]
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(521).send(fail)
             }
+        }
+        run()
+    }
+
+    public readRecommend(params: any){
+        let region = params.region
+        let queryParam = {
+            TableName: 'Campaign',
+            FilterExpression: '#region = :region',
+            ExpressionAttributeNames: {'#region': 'region'},
+            ExpressionAttributeValues: {':region': params.region}
+        }
+        const run = async () => {
+            let campResult = await this.Dynamodb.scan(queryParam).promise()
+            let camps = campResult.Items
+            if(camps.length == 0){
+                fail.error = error.dataNotFound
+                fail.errdesc = '지역을 찾을 수 없습니다.'
+                this.res.status(400).send(fail)
+                return;
+            }
+            camps = recommend(camps)
+            this.res.status(200).send(camps)
         }
         run()
     }
@@ -394,6 +425,7 @@ export default class CampaignManager extends FeatureManager{
                 success.data = queryResult.Items
                 console.log(`조회 성공. 응답 JSON\n${JSON.stringify(success, null, 2)}`)
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -421,6 +453,7 @@ export default class CampaignManager extends FeatureManager{
             }
             console.log(`조회 성공. 응답 JSON\n${JSON.stringify(success, null, 2)}`)
             this.res.status(200).send(success)
+            successInit(success)
         }
     }
 
@@ -467,6 +500,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`)
                 success.data = result.Attributes
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -479,13 +513,13 @@ export default class CampaignManager extends FeatureManager{
     public delete(params: any): void {
         
     }
-
+    // 참여중인 회원 조회
     public readPlaying(params: any):void {
         params.caid = nbsp2plus(params.caid)
         let campaignParams = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
-            ProjectionExpression: '#users',
+            ProjectionExpression: '#users, pinpoints',
             ExpressionAttributeValues: {':id': params.caid},
             ExpressionAttributeNames: {'#users': 'users'}
         }
@@ -493,25 +527,28 @@ export default class CampaignManager extends FeatureManager{
             RequestItems:{
                 'Member':{
                     Keys: [],
-                    ProjectionExpression: 'nickname, profileImg'
+                    ProjectionExpression: 'nickname, profileImg, playingCampaigns'
                 }
             }
         }
         const run = async() => {
             try{
                 console.log('캠페인 검색중')
-                let campResult = await this.Dynamodb.query(campaignParams).promise()
+                let campResult = await this.Dynamodb.query(campaignParams).promise()        // 캠페인의 참여중 회원, 핀포인트 검색
                 console.log('캠페인 검색 완료')
                 if(campResult.Items.length == 0){
-                    fail.error = error.invalReq
+                    fail.error = error.dataNotFound
                     fail.errdesc = '캠페인을 찾을 수 없습니다.'
                     this.res.status(400).send(fail)
                     return;                    
                 }
-                let users = campResult.Items[0].users
-                if(users.length == 0){
+                let users = campResult.Items[0].users           // 참여중 회원
+                let pinpoints = campResult.Items[0].pinpoints   // 캠페인의 핀포인트
+                if(users.length == 0){                      // 참여중인 회원이 없는 경우
+                    console.log('참여중인 회원이 없습니다.')
                     success.data = []
                     this.res.status(200).send(success)
+                    successInit(success)
                     return;
                 }
                 console.log('회원정보 쿼리 생성중')
@@ -520,9 +557,26 @@ export default class CampaignManager extends FeatureManager{
                 }
                 console.log('회원정보 쿼리 생성 완료\n회원 조회중')
                 let result = await this.Dynamodb.batchGet(MemberParams).promise()
-                console.log(`회원정보 조회 성공\n${JSON.stringify(result.Responses.Member, null, 2)}`)
-                success.data = result.Responses.Member
+                let member = result.Responses.Member
+                let response = []
+                console.log(`회원정보 조회 성공\n${JSON.stringify(member, null, 2)}`)
+                for(const mem of member){
+                    let playing = mem.playingCampaigns
+                    for(const camp of playing){
+                        if(camp.id == params.caid){
+                            camp.clearedPinpoints = camp.pinpoints
+                            camp.pinpoints = pinpoints
+                            camp.nickname = mem.nickname
+                            camp.profileImg = mem.profileImg
+                            delete camp.id
+                            response.push(camp)
+                            break;
+                        }
+                    }
+                }
+                success.data = response
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -623,6 +677,7 @@ export default class CampaignManager extends FeatureManager{
                 success.data = partiResult.Attributes
                 console.log(`DB 반영 완료.\n응답 JSOn\n${JSON.stringify(success.data, null, 2)}`)
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -714,6 +769,7 @@ export default class CampaignManager extends FeatureManager{
                 let updateMember = await this.Dynamodb.update(memberParam).promise()
                 success.data = comment[0]
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -745,6 +801,8 @@ export default class CampaignManager extends FeatureManager{
                 console.log(`조회 결과\n${JSON.stringify(result.Items, null, 2)}`)
                 success.data = result.Items[0].comments
                 this.res.status(200).send(success)
+                successInit(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -813,6 +871,12 @@ export default class CampaignManager extends FeatureManager{
                     let uid = comments.Items[0].comments[i].userId
                     if(rid == params.rid && uid == params.uid){
                         console.log('조건 만족')
+                        if(comments.Items[0].comments[i].text == '관리자에의해 삭제되었습니다.'){
+                            fail.error = error.invalReq
+                            fail.errdesc = '삭제된 리뷰입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
                         if(params.text == undefined){
                             comments.Items[0].comments[i].rated = params.rated
                             comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
@@ -847,6 +911,7 @@ export default class CampaignManager extends FeatureManager{
                 console.log('댓글 수정중...')
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError
@@ -933,6 +998,7 @@ export default class CampaignManager extends FeatureManager{
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 success.data = updateResult.Attributes.comments
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
                 fail.error = error.dbError

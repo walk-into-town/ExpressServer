@@ -32,6 +32,7 @@ const FeatureManager_1 = require("./FeatureManager");
 const bcrypt = __importStar(require("bcrypt"));
 const result_1 = require("../../static/result");
 const nbsp_1 = require("../Logics/nbsp");
+const responseInit_1 = require("../Logics/responseInit");
 class MemberManager extends FeatureManager_1.FeatureManager {
     /**
      * 회원가입 로직
@@ -101,6 +102,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 this.Dynamodb.put(queryParams, this.onInsert.bind(this));
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -117,6 +119,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         else {
             result_1.success.data = '회원가입 성공';
             this.res.status(201).send(result_1.success);
+            responseInit_1.successInit(result_1.success);
         }
     }
     /**
@@ -139,6 +142,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('로그아웃 성공');
                 console.log(`응답 JSON\n${JSON.stringify(result_1.success, null, 2)}`);
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
                 return;
             }
             result_1.fail.error = result_1.error.invalAcc;
@@ -149,21 +153,20 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         });
         run();
     }
-    findMember(id) {
-    }
     read(params) {
         let id = this.req.session.passport.user.id;
         let queryParams = {
             TableName: 'Member',
             KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: { ':id': id },
-            ProjectionExpression: 'myCampaigns, playingCampaigns'
+            ProjectionExpression: 'myCampaigns, playingCampaigns, badge'
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let result = yield this.Dynamodb.query(queryParams).promise();
                 let myCampaign = result.Items[0].myCampaigns.length;
                 let playingCampaign = result.Items[0].playingCampaigns;
+                let badge = result.Items[0].badge;
                 let participateCamp = [];
                 let clearCamp = [];
                 playingCampaign.forEach(campaign => {
@@ -177,12 +180,15 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let data = {
                     playingCampaign: playingCampaign.length,
                     myCampaign: myCampaign,
-                    clearCampaign: clearCamp.length
+                    clearCampaign: clearCamp.length,
+                    badge: badge
                 };
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -266,8 +272,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log(`회원정보 수정 성공.${JSON.stringify(result, null, 2)}`);
                 result_1.success.data = { profileImg };
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -332,6 +340,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('회원 삭제 성공');
                 result_1.success.data = '탈퇴 성공';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
@@ -373,10 +382,12 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 else {
                     result_1.success.data = '가능해요';
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -402,7 +413,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
             RequestItems: {
                 'Campaign': {
                     Keys: null,
-                    ProjectionExpression: 'id, #name, imgs, description, #region',
+                    ProjectionExpression: 'id, #name, imgs, description, #region, pinpoints',
                     ExpressionAttributeNames: { '#name': 'name', '#region': 'region' },
                 }
             }
@@ -417,15 +428,16 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     return;
                 }
                 console.log(`DB 읽어오는중...`);
-                let result = yield this.Dynamodb.query(queryParams).promise();
-                if (result.Items[0].playingCampaigns.length == 0) {
+                let result = yield this.Dynamodb.query(queryParams).promise(); // 사용자의 플레이중 캠페인 가져오기
+                if (result.Items[0].playingCampaigns.length == 0) { // 없는 경우 빈 배열 반환
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].playingCampaigns, null, 2)}`);
                 let keys = [];
-                for (const campaign of result.Items[0].playingCampaigns) {
+                for (const campaign of result.Items[0].playingCampaigns) { // 플레이중 캠페인의 id로 batchget
                     let obj = {
                         'id': campaign.id
                     };
@@ -433,22 +445,26 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
                 campaignParams.RequestItems.Campaign.Keys = keys;
                 let data = result.Items[0].playingCampaigns;
-                let camp = yield this.Dynamodb.batchGet(campaignParams).promise();
+                let camp = yield this.Dynamodb.batchGet(campaignParams).promise(); // 캠페인 정보를 가져오기
                 let campaigns = camp.Responses.Campaign;
-                for (const campaign of campaigns) {
-                    for (let i = 0; i < data.length; i++) {
-                        if (data[i].id == campaign.id) {
+                for (const campaign of campaigns) { // 가져온 캠페인에 대해서
+                    for (let i = 0; i < data.length; i++) { // 사용자의 캠페인에 대해서
+                        if (data[i].id == campaign.id) { // 참여중 캠페인 = 조회한 캠페인의 경우
                             data[i].name = campaign.name;
                             data[i].imgs = campaign.imgs;
                             data[i].description = campaign.description;
                             data[i].region = campaign.region;
+                            data[i].clearedPinpoints = data[i].pinpoints;
+                            data[i].pinpoints = campaign.pinpoints;
                         }
                     }
                 }
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(err);
@@ -484,6 +500,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
+                result_1.success.data = {
+                    clearedPinpoints: [],
+                    pinpoints: []
+                };
                 let pinpoint2respond = [];
                 console.log('참여중인 캠페인 목록 조회중');
                 let memberResult = yield this.Dynamodb.query(memberParam).promise();
@@ -498,28 +518,28 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('캠페인 조회 parameter 생성중');
                 let playingPinpoints = []; // 클리어한 핀포인트를 담는 배열
                 for (const camp of playing) { // 참여중 캠페인에 대해서
-                    if (camp.cleared == true) { // 클리어한 경우 통과
-                        continue;
-                    } // 클리어하지 않은 경우
+                    // if(camp.cleared == true){           // 클리어한 경우 통과
+                    //     continue
+                    // }                                   // 클리어하지 않은 경우
                     playingPinpoints.push(...camp.pinpoints); // 클리어한 핀포인트 추가
                     let obj = { id: camp.id };
                     campaignParam.RequestItems.Campaign.Keys.push(obj); // 캠페인 요청 parameter에 id 추가
                 }
-                if (campaignParam.RequestItems.Campaign.Keys.length == 0) { // 추가된 id가 없는 경우 = 모든 캠페인 클리어
-                    result_1.fail.error = result_1.error.invalReq;
-                    result_1.fail.errdesc = '모든 캠페인을 클리어했습니다.';
-                    this.res.status(200).send(result_1.fail);
-                    return;
-                }
+                // if(campaignParam.RequestItems.Campaign.Keys.length == 0){   // 추가된 id가 없는 경우 = 모든 캠페인 클리어
+                //     fail.error = error.invalReq
+                //     fail.errdesc = '모든 캠페인을 클리어했습니다.'
+                //     this.res.status(200).send(fail)
+                //     return;
+                // }
                 console.log('캠페인 조회 param 생성 완료\n캠페인의 핀포인트 id 조회 시작');
                 let campaignResult = yield this.Dynamodb.batchGet(campaignParam).promise();
                 let campaigns = campaignResult.Responses.Campaign;
                 for (const camp of campaigns) { // 조회한 캠페인에 대해
                     for (const pid of camp.pinpoints) { // 조회한 캠페인의 핀포인트에 대해
-                        let pos = playingPinpoints.indexOf(pid); // 클리어한 핀포인트가 있는지 조회
-                        if (pos != -1) { // 이미 클리어한 핀포인트인 경우 통과
-                            continue;
-                        }
+                        // let pos = playingPinpoints.indexOf(pid)     // 클리어한 핀포인트가 있는지 조회
+                        // if(pos != -1){                          // 이미 클리어한 핀포인트인 경우 통과
+                        //     continue;
+                        // }
                         let obj = {
                             'id': pid
                         };
@@ -531,10 +551,13 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                     pinpoint2respond.push(...pinpoints);
                     pinpointParam.RequestItems.Pinpoint.Keys = []; // 요청 parameter의 id 초기화
                 }
-                result_1.success.data = pinpoint2respond;
+                result_1.success.data.clearedPinpoints = playingPinpoints;
+                result_1.success.data.pinpoints = pinpoint2respond;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -579,6 +602,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (result.Items[0].myCampaigns.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 console.log(`읽기 성공! 결과 JSON\n${JSON.stringify(result.Items[0].myCampaigns)}`);
@@ -604,8 +628,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 }
                 result_1.success.data = data;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(err);
@@ -679,7 +705,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let delMember = deleteItems.users;
                 if (delCoupon.length != 0) {
                     console.log('캠페인 쿠폰 삭제중');
-                    deleteparam.TableName = 'Coupon';
+                    deleteparam.TableName = '';
                     for (let i = 0; i < delCoupon.length; i++) {
                         deleteparam.Key.id = delCoupon[i];
                         console.log(`${i}번째 캠페인 쿠폰 삭제중`);
@@ -739,8 +765,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 console.log('캠페인 삭제 성공');
                 result_1.success.data = '제작한 캠페인 삭제 성공';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -762,17 +790,26 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let result = yield this.Dynamodb.query(queryParams).promise();
                 let playing = result.Items[0].playingCampaigns;
                 console.log(playing);
+                if (playing.length == 0) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '참여중인 캠페인이 없습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
                 for (const camp of playing) {
                     if (camp.id == params.caid) {
                         result_1.success.data = '이미 참여중인 캠페인 입니다.';
                         this.res.status(200).send(result_1.success);
+                        responseInit_1.successInit(result_1.success);
                         return;
                     }
                 }
                 result_1.success.data = '참여 가능한 캠페인 입니다.';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -827,8 +864,10 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 yield this.Dynamodb.update(updateParams).promise();
                 result_1.success.data = '삭제 성공';
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
@@ -860,6 +899,7 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 if (couponIds.length == 0) {
                     result_1.success.data = [];
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 for (const coupon of couponIds) {
@@ -872,14 +912,59 @@ class MemberManager extends FeatureManager_1.FeatureManager {
                 let couponResult = yield this.Dynamodb.batchGet(couponBatch).promise();
                 let coupons = couponResult.Responses.Coupon;
                 console.log(`쿠폰 테이블 조회 성공. 조회한 쿠폰\n${JSON.stringify(coupons, null, 2)}`);
+                for (const coupon of coupons) {
+                    for (const c of couponIds) {
+                        if (c.id == coupon.id) {
+                            coupon.used = c.used;
+                            break;
+                        }
+                    }
+                }
                 result_1.success.data = coupons;
                 this.res.status(200).send(result_1.success);
+                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
+                console.log(err);
                 result_1.fail.error = result_1.error.dbError;
                 result_1.fail.errdesc = err;
                 this.res.status(521).send(result_1.fail);
             }
+        });
+        run();
+    }
+    checkCampaign(params) {
+        params.caid = nbsp_1.nbsp2plus(params.caid);
+        let memberparams = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': this.req.session.passport.user.id },
+            ProjectionExpression: 'playingCampaigns'
+        };
+        const run = () => __awaiter(this, void 0, void 0, function* () {
+            let memberResult = yield this.Dynamodb.query(memberparams).promise();
+            let playing = memberResult.Items[0].playingCampaigns;
+            if (playing.length == 0) {
+                result_1.fail.error = result_1.error.invalReq;
+                result_1.fail.errdesc = '참여중인 캠페인이 없습니다.';
+                this.res.status(400).send(result_1.fail);
+                return;
+            }
+            for (const camp of playing) {
+                if (camp.id == params.caid && camp.cleared == true) {
+                    result_1.success.data = true;
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+                if (camp.id == params.caid && camp.cleared == false) {
+                    result_1.success.data = false;
+                    this.res.status(200).send(result_1.success);
+                    return;
+                }
+            }
+            result_1.fail.error = result_1.error.dataNotFound;
+            result_1.fail.errdesc = '캠페인 id를 찾을 수 없습니다.';
+            this.res.status(400).send(result_1.fail);
         });
         run();
     }

@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const result_1 = require("../../static/result");
+const responseInit_1 = require("../Logics/responseInit");
 const Sorter_1 = require("../Logics/Sorter");
 const FeatureManager_1 = require("./FeatureManager");
 class Rankingmanager extends FeatureManager_1.FeatureManager {
@@ -51,10 +52,12 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     let member = memberResult.Items[0];
                     ranking.nickname = member.nickname;
                     ranking.profileImg = member.profileImg;
-                    this.res.status(200).send(ranking);
+                    result_1.success.data = ranking;
+                    this.res.status(200).send(result_1.success);
                     return;
                 }
                 catch (err) {
+                    console.log(err);
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
                     this.res.status(521).send(result_1.fail);
@@ -82,7 +85,7 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     for (const item of result.Items) {
                         ranking.push(item);
                     }
-                    ranking = yield Sorter_1.rankingSort(ranking);
+                    ranking.sort(Sorter_1.rankingSort);
                     for (const rank of ranking) {
                         memberparams.RequestItems.Member.Keys.push({ id: rank.userId });
                     }
@@ -98,11 +101,14 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                             }
                         }
                     }
+                    ranking.sort(Sorter_1.rankingSort);
                     result_1.success.data = ranking;
                     this.res.status(200).send(result_1.success);
+                    responseInit_1.successInit(result_1.success);
                     return;
                 }
                 catch (err) {
+                    console.log(err);
                     result_1.fail.error = result_1.error.dbError;
                     result_1.fail.errdesc = err;
                     this.res.status(521).send(result_1.fail);
@@ -128,8 +134,11 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             let rankResult = yield this.Dynamodb.scan(queryParams).promise();
-            let ranks = rankResult.Items;
-            ranks = yield Sorter_1.rankingSort(ranks);
+            let ranks = [];
+            for (const rank of rankResult.Items) {
+                ranks.push(rank);
+            }
+            ranks.sort(Sorter_1.rankingSort);
             for (let i = 0; i < ranks.length; i++) { // 전체 정렬된 랭킹에 대하여
                 if (i == 0) { // 배열의 0번째 원소 = 1등
                     ranks[0].rank = 1;
@@ -147,8 +156,6 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                 yield this.Dynamodb.update(updateParams).promise();
             }
             console.log('랭킹 갱신 성공');
-            result_1.success.data = '랭킹 갱신 성공';
-            this.res.status(201).send(result_1.success);
         });
         run();
         return;

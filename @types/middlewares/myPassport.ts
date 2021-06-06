@@ -39,6 +39,31 @@ module.exports = () => {
         })
         let doclient = new AWS.DynamoDB.DocumentClient()
         console.log('로컬 계정 로그인')
+        let prisonResult = await doclient.query({
+          TableName: 'Prison',
+          KeyConditionExpression: 'id = :id',
+          ExpressionAttributeValues: {':id': username}
+        }).promise()
+        let prison = prisonResult.Items[0]
+        if(prison != undefined){
+          let endTime = new Date(prison.startTime).getTime() + prison.time
+          let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+          if(endTime > currTime){
+            let diff = endTime - currTime
+            let hour = Math.floor(diff / 1000 / 60 / 60)
+            let min = Math.floor(diff / 1000 / 60) % 60
+            let sec = Math.floor(diff / 1000) % 60
+            console.log('차단된 유저입니다.')
+            return done(null, false, {message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초`})
+          }
+          else{
+            let deleteParam = {
+              TableName: 'Prison',
+              Key: {id: username}
+            }
+            await doclient.delete(deleteParam).promise()
+          }
+        }
         let result = await doclient.query({
           TableName: 'Member',
           KeyConditionExpression: 'id = :id',
@@ -61,7 +86,8 @@ module.exports = () => {
                 id: username,
                 nickname: result.Items[0].nickname,
                 profileImg: result.Items[0].profileImg,
-                selfIntroduction: result.Items[0].selfIntroduction
+                selfIntroduction: result.Items[0].selfIntroduction,
+                quiz: []
             }
             console.log('PW 일치')
             return done(null, user)
@@ -91,6 +117,31 @@ module.exports = () => {
         const getRandomNumber = () => {           //GUEST 계정을 위한 닉네임 번호 생성
           return Math.floor(Math.random() * (999999 - 100000)) + 100000
         }
+        let prisonResult = await doclient.query({
+          TableName: 'Prison',
+          KeyConditionExpression: 'id = :id',
+          ExpressionAttributeValues: {':id': username}
+        }).promise()
+        let prison = prisonResult.Items[0]
+        if(prison != undefined){
+          let endTime = new Date(prison.startTime).getTime() + prison.time
+          let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+          if(endTime > currTime){
+            let diff = endTime - currTime
+            let hour = Math.floor(diff / 1000 / 60 / 60)
+            let min = Math.floor(diff / 1000 / 60) % 60
+            let sec = Math.floor(diff / 1000) % 60
+            console.log('차단된 유저입니다.')
+            return cb(null, false, {message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초`})
+          }
+          else{
+            let deleteParam = {
+              TableName: 'Prison',
+              Key: {id: username}
+            }
+            await doclient.delete(deleteParam).promise()
+          }
+        }
         let data = await doclient.query(params).promise()
         let result = data.Items[0]
         if(result.Items[0].nickname == '(알수없음)'){
@@ -112,7 +163,8 @@ module.exports = () => {
             id: username,
             nickname: query.nickname,
             profileImg: query.profileImg,
-            selfIntroduction: ''
+            selfIntroduction: '',
+            quiz: []
           }
           return cb(null, user)
         }
@@ -122,7 +174,8 @@ module.exports = () => {
             id: username,
             nickname: result.nickname,
             profileImg: result.profileImg,
-            selfIntroduction: result.selfIntroduction           
+            selfIntroduction: result.selfIntroduction,
+            quiz: []
           }
           return cb(null, user)
         }
@@ -149,6 +202,31 @@ module.exports = () => {
         const getRandomNumber = () => {           //GUEST 계정을 위한 닉네임 번호 생성
           return Math.floor(Math.random() * (999999 - 100000)) + 100000
         }
+        let prisonResult = await doclient.query({
+          TableName: 'Prison',
+          KeyConditionExpression: 'id = :id',
+          ExpressionAttributeValues: {':id': username}
+        }).promise()
+        let prison = prisonResult.Items[0]
+        if(prison != undefined){
+          let endTime = new Date(prison.startTime).getTime() + prison.time
+          let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+          if(endTime > currTime){
+            let diff = endTime - currTime
+            let hour = Math.floor(diff / 1000 / 60 / 60)
+            let min = Math.floor(diff / 1000 / 60) % 60
+            let sec = Math.floor(diff / 1000) % 60
+            console.log('차단된 유저입니다.')
+            return cb(null, false, {message: `차단된 사용자입니다. 남은 시간 : ${hour}시간 ${min}분 ${sec}초`})
+          }
+          else{
+            let deleteParam = {
+              TableName: 'Prison',
+              Key: {id: username}
+            }
+            await doclient.delete(deleteParam).promise()
+          }
+        }
         let data = await doclient.query(params).promise()
         let result = data.Items[0]
         if(result.Items[0].nickname == '(알수없음)'){
@@ -170,7 +248,8 @@ module.exports = () => {
             id: username,
             nickname: query.nickname,
             profileImg: query.profileImg,
-            selfIntroduction: ''
+            selfIntroduction: '',
+            quiz: []
           }
           return cb(null, user)
         }
@@ -180,7 +259,8 @@ module.exports = () => {
             id: username,
             nickname: result.nickname,
             profileImg: result.profileImg,
-            selfIntroduction: result.selfIntroduction           
+            selfIntroduction: result.selfIntroduction,
+            quiz: []
           }
           return cb(null, user)
         }

@@ -47,6 +47,7 @@ export default class SessionManager {
                 })
             }
             catch(err){
+                console.log(err)
                 let result = {
                     result: 'failed',
                     error: 'User Id Search Failed'
@@ -79,6 +80,7 @@ export default class SessionManager {
                 this.res.locals.result = result.Items[0]
             }
             catch(err){
+                console.log(err)
                 let result = {
                     result: 'failed',
                     error: 'Session Id Search Failed'
@@ -97,7 +99,7 @@ export default class SessionManager {
      * 1. 입력받은 id를 이용해 세션 삭제
      * 2. 비동기 처리를 위해 forEach대신 for문 사용
      */
-    public deleteSession(id: Array<any>) {
+    public async deleteSession(id: Array<any>) {
         for(let i =0; i < id.length; i++) {
             let queryParams = {
                 TableName: 'Session',
@@ -110,6 +112,7 @@ export default class SessionManager {
                     await this.Dynamodb.delete(queryParams).promise()
                 }
                 catch(err){
+                console.log(err)
                     console.log(err)
                 }
             }

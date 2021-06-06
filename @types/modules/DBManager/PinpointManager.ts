@@ -3,6 +3,7 @@ import * as CryptoJS from 'crypto-js'
 import {success, fail, error} from '../../static/result'
 import { nbsp2plus } from "../Logics/nbsp";
 import Rankingmanager from "./RankingManager";
+import { failInit, successInit } from "../Logics/responseInit";
 
 
 export default class PinpointManager extends FeatureManager{
@@ -57,9 +58,11 @@ export default class PinpointManager extends FeatureManager{
                 let queryResult = await this.Dynamodb.put(queryParams).promise()
                 success.result = params.id
                 this.res.status(201).send(success)
+                successInit(success)
                 console.log(`응답 JSON\n${JSON.stringify(success, null, 2)}`)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)
@@ -102,8 +105,10 @@ export default class PinpointManager extends FeatureManager{
                 }
                 success.data = this.res.locals.result.Pinpoint
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)
@@ -179,6 +184,7 @@ export default class PinpointManager extends FeatureManager{
         else{
             success.data = data.Attributes
             this.res.status(201).send(success)
+            successInit(success)
         }
     }
 
@@ -209,6 +215,7 @@ export default class PinpointManager extends FeatureManager{
         else{
             success.data = data.Attributes
             this.res.status(200).send(success)
+            successInit(success)
         }
     }
 
@@ -251,6 +258,7 @@ export default class PinpointManager extends FeatureManager{
         else{
             success.data = data.Item
             this.res.status(201).send(success)
+            successInit(success)
         }
 
     }
@@ -283,6 +291,7 @@ export default class PinpointManager extends FeatureManager{
         else{
             success.data = data.Attributes
             this.res.status(201).send(success)
+            successInit(success)
         }
     }
 
@@ -318,6 +327,7 @@ export default class PinpointManager extends FeatureManager{
         else{
             success.data = data.Attributes
             this.res.status(201).send(success)
+            successInit(success)
         }
     }
 
@@ -353,6 +363,7 @@ export default class PinpointManager extends FeatureManager{
             }
             success.data = quiz
             this.res.status(201).send(success)
+            successInit(success)
         }
     }
 
@@ -384,6 +395,7 @@ export default class PinpointManager extends FeatureManager{
         else{
             success.data = data.Attributes
             this.res.status(201).send(success)
+            successInit(success)
         }
     }
 
@@ -418,8 +430,8 @@ export default class PinpointManager extends FeatureManager{
             Key: {
                 id: this.req.session.passport.user.id
             },
-            UpdateExpression: 'set coupons = list_append(if_not_exists(coupons, :emptylist), :newcoupon), playingCampaigns = :newPlaying',
-            ExpressionAttributeValues: {':emptylist' : [], ':newcoupon' : null, ':newPlaying' : null},
+            UpdateExpression: 'set coupons = list_append(if_not_exists(coupons, :emptylist), :newcoupon), playingCampaigns = :newPlaying, badge = list_append(badge, :newbadge)',
+            ExpressionAttributeValues: {':emptylist' : [], ':newcoupon' : null, ':newPlaying' : null, ':newbadge': null},
             ConditionExpression: 'attribute_exists(id)'
         }
         let couponParams = {            // 쿠폰의 발급량을 늘리는 변수
@@ -439,7 +451,35 @@ export default class PinpointManager extends FeatureManager{
         }
         const run = async() => {
             try{
-                let isCampClear = false         //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
+                if(params.monsterImg == undefined){
+                    fail.error = error.invalReq
+                    fail.errdesc = 'No Monster Img Info'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+                let isCampClear: boolean = false         //캠페인 클리어 여부. true인 경우 캠페인의 쿠폰 발급 + 캠페인 클리어 표시. default는 false
+                let failedQuiz: Array<any> = this.req.session.passport.user.quiz
+                if(failedQuiz.length != 0){
+                    for(const quiz of failedQuiz){
+                        if(quiz.id == params.pid){
+                            let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+                            let limitTime = new Date(quiz.time).getTime()
+                            let diff = currTime - limitTime
+                            if(diff < 180000){
+                                quiz.time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+                                break;
+                            }
+                            else{
+                                fail.error = error.invalReq
+                                fail.errdesc = '시간초과!'
+                                this.res.status(400).send(fail)
+                                return;
+                            }
+                        }
+                    }
+                }
+                success.data = {}
+                success.data.isClear = false
                 console.log('참여중 캠페인 조회중')
                 let memberResult = await this.Dynamodb.query(memberparams).promise()
                 let playingCampaigns = memberResult.Items[0].playingCampaigns
@@ -454,6 +494,7 @@ export default class PinpointManager extends FeatureManager{
                             fail.error = error.invalReq
                             fail.errdesc = '이미 클리어한 캠페인입니다.'
                             this.res.status(400).send(fail)
+                            successInit(success)
                             return;
                         }
                         for(const id of camp.pinpoints){            // 클리어 하지 않은 경우 핀포인트 클리어 여부 체크
@@ -462,6 +503,7 @@ export default class PinpointManager extends FeatureManager{
                                 fail.error = error.invalReq
                                 fail.errdesc = '이미 클리어한 핀포인트입니다.'
                                 this.res.status(400).send(fail)
+                                successInit(success)
                                 return;
                             }
                         }
@@ -482,15 +524,19 @@ export default class PinpointManager extends FeatureManager{
                     fail.error = error.invalKey
                     fail.errdesc = '틀렸습니다.'
                     this.res.status(400).send(fail)
+                    successInit(success)
                     return;
                 }
-               
+                // 이하 정답인 경우
+                updateParams.ExpressionAttributeValues[":newbadge"] = [params.monsterImg]
+
                 // 캠페인 클리어인 경우 cleared를 true로
                 for(const camp of playingCampaigns){
                     if(camp.id == params.caid){
                         camp.pinpoints.push(params.pid)
                         if(isCampClear == true){
                             camp.cleared = true;
+                            success.data.isClear = true
                         }
                         break;
                     }
@@ -498,8 +544,9 @@ export default class PinpointManager extends FeatureManager{
 
                 // 랭킹에 핀포인트 클리어 적용
                 let rankingDB = new Rankingmanager(this.req, this.res)
-                rankingDB.insert('')
-
+                const rankInsert = async () => {rankingDB.insert('')}
+                rankInsert().then(() => {rankingDB.update('')})
+                
                 let coupon = []         // 등록된 쿠폰을 담는 배열
                 if(isCampClear == true && campcoupon.length != 0){    //캠페인 클리어이며 캠페인 쿠폰이 있는 경우 캠페인 쿠폰 등록
                     coupon.push({
@@ -535,6 +582,13 @@ export default class PinpointManager extends FeatureManager{
                     }
                     batchCoupon.RequestItems.Coupon.Keys.push(obj)
                 }
+                if(batchCoupon.RequestItems.Coupon.Keys.length == 0){
+                    await this.Dynamodb.update(updateParams).promise()
+                    success.data.coupons = []
+                    this.res.status(201).send(success)
+                    successInit(success)
+                    return;
+                }
                 let getCoupon = await this.Dynamodb.batchGet(batchCoupon).promise()
                 let getCoupons = getCoupon.Responses.Coupon
                 let answer = []                             // 응답에 쓰일 쿠폰 정보를 담는 배열
@@ -547,14 +601,17 @@ export default class PinpointManager extends FeatureManager{
                     answer.push(obj)
                 }
                 await this.Dynamodb.update(updateParams).promise()
-                success.data = answer
+                success.data.coupons = answer
                 this.res.status(201).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 if(err.code != 'ConditionalCheckFailedException'){      // 쿠폰 발급 개수 초과 에러가 아닌 경우
                     fail.error = error.dbError
                     fail.errdesc = err
                     this.res.status(521).send(fail)
+                    successInit(success)
                     return;
                 }
                 if(this.res.locals.coupon.length == 0){             // 발급할 쿠폰이 더이상 없는 경우
@@ -578,8 +635,9 @@ export default class PinpointManager extends FeatureManager{
                         answer.push(obj)
                     }
                     await this.Dynamodb.update(updateParams).promise()
-                    success.data = answer
+                    success.data.coupons = answer
                     this.res.status(201).send(success)
+                    successInit(success)
                     return;
                 }
                 else{                       // 등록할 쿠폰이 남아있는 경우
@@ -607,8 +665,9 @@ export default class PinpointManager extends FeatureManager{
                                     answer.push(obj)
                                 }
                                 await this.Dynamodb.update(updateParams).promise()
-                                success.data = answer
+                                success.data.coupons = answer
                                 this.res.status(201).send(success)
+                                successInit(success)
                                 return;
                             }
                             else{                           // 쿠폰 발급 성공
@@ -633,13 +692,15 @@ export default class PinpointManager extends FeatureManager{
                                     answer.push(obj)
                                 }
                                 await this.Dynamodb.update(updateParams).promise()
-                                success.data = answer
+                                success.data.coupons = answer
                                 this.res.status(201).send(success)
+                                successInit(success)
                                 return;
                             }
                         }.bind(this))
                     }
-                    catch(err){         // 발급할 쿠폰이 없는 경우
+                    catch(err){
+                console.log(err)         // 발급할 쿠폰이 없는 경우
                         updateParams.ExpressionAttributeValues[":newPlaying"] = this.res.locals.playingCampaigns
                         updateParams.ExpressionAttributeValues[":newcoupon"] = []
                         for(const coup of this.res.locals.coupon2insert){
@@ -660,12 +721,83 @@ export default class PinpointManager extends FeatureManager{
                             answer.push(obj)
                         }
                         await this.Dynamodb.update(updateParams).promise()
-                        success.data = answer
+                        success.data.coupons = answer
                         this.res.status(201).send(success)
+                        successInit(success)
                         return;
                     }
                 }
             }
+        }
+        run()
+    }
+
+    public checkQuiz(params: any){
+        let memberParam = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': this.req.session.passport.user.id}
+        }
+        const run = async () => {
+            params.pid = nbsp2plus(params.pid)
+            params.caid = nbsp2plus(params.caid)
+            console.log('참여중 캠페인 정보 가져오는중')
+            let memberResult = await this.Dynamodb.query(memberParam).promise()     // 참여중인 캠페인 정보 가져오기
+            let playing: Array<any> = memberResult.Items[0].playingCampaigns
+            console.log(`가져오기 완료${JSON.stringify(playing, null, 2)}`)
+            console.log('클리어한 핀포인트 여부 확인중')
+            for(let i = 0; i < playing.length; i++){     // 참여중인 캠페인에 대해
+                if(playing[i].id == params.caid){        // 이미 참여중인 캪페인인 경우
+                    for(const id of playing[i].pinpoints){  // 해당 캠페인의 클리어한 핀포인트 목록을 순회
+                        if(id == params.pid){               // 클리어한 핀포인트인 경우
+                            console.log('클리어한 핀포인트!')
+                            fail.error = error.invalReq
+                            fail.errdesc = '이미 클리어한 핀포인트입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
+                    }
+                    break;
+                }
+                if(i == playing.length - 1){
+                    console.log('참여중인 캠페인 아님!')
+                    fail.error = error.invalReq
+                    fail.errdesc = '참여중인 캠페인이 아닙니다.'
+                    this.res.status(400).send(fail)
+                    return;
+                }
+            }
+            console.log('클리어 여부 통과. 클리어하지 않은 핀포인트입니다.')
+            let failedQuiz: Array<any> = this.req.session.passport.user.quiz
+            console.log(`퀴즈 제한시간 확인중\n${JSON.stringify(failedQuiz, null, 2)}`)
+            params.pid = nbsp2plus(params.pid)
+            if(failedQuiz.length != 0){   // 실패한 핀포인트가 있는 경우
+                for(const quiz of failedQuiz){      // 실패한 핀포인트에 대해
+                    if(quiz.id == params.pid){      // 현재 핀포인트와 같은 경우
+                        let currTime = new Date(Date.now() + 9 * 60 * 60 * 1000).getTime()
+                        let limitTime = new Date(quiz.time).getTime()
+                        if((currTime - limitTime) < 180000){    // 퀴즈 제한시간이 안지난 경우
+                            console.log('퀴즈 참여 제한시간')
+                            let diff = 180000 - (currTime - limitTime)
+                            let min = Math.floor(diff / 1000 / 60)
+                            let sec = Math.floor(diff / 1000) % 60
+                            fail.error = error.invalReq
+                            fail.errdesc = `퀴즈 참여 제한시간이 ${min}분 ${sec}초 남았어요.`
+                            this.res.status(400).send(fail)
+                            return;
+                        }
+                        else{
+                            quiz.time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+                        }
+                    }
+                }
+            }
+            this.req.session.passport.user.quiz.push({
+                id: params.pid,
+                time: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+            })
+            success.data = "참여 가능한 퀴즈에요."
+            this.res.status(200).send(success)
         }
         run()
     }
@@ -727,8 +859,10 @@ export default class PinpointManager extends FeatureManager{
                 let queryResult = await this.Dynamodb.update(queryParams).promise()
                 success.data = comment[0]
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)
@@ -756,8 +890,10 @@ export default class PinpointManager extends FeatureManager{
                 }
                 success.data = result.Items[0].comments
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)
@@ -824,8 +960,10 @@ export default class PinpointManager extends FeatureManager{
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 success.data = updateResult.Attributes.comments
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)
@@ -872,6 +1010,12 @@ export default class PinpointManager extends FeatureManager{
                     let uid = comments.Items[0].comments[i].userId
                     if(cid == params.coid && uid == params.uid){
                         console.log('조건 만족')
+                        if(comments.Items[0].comments[i].text == '관리자에의해 삭제되었습니다.'){
+                            fail.error = error.invalReq
+                            fail.errdesc = '삭제된 댓글입니다.'
+                            this.res.status(400).send(fail)
+                            return;
+                        }
                         comments.Items[0].comments[i].text = params.text;
                         comments.Items[0].comments[i].time = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
                         success.data = comments.Items[0].comments[i]
@@ -889,8 +1033,10 @@ export default class PinpointManager extends FeatureManager{
                 console.log('댓글 수정중...')
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)
@@ -1003,8 +1149,10 @@ export default class PinpointManager extends FeatureManager{
                 console.log('댓글 수정중...')
                 let updateResult = await this.Dynamodb.update(updateParams).promise()
                 this.res.status(200).send(success)
+                successInit(success)
             }
             catch(err){
+                console.log(err)
                 fail.error = error.dbError
                 fail.errdesc = err
                 this.res.status(400).send(fail)

@@ -242,4 +242,9 @@ router.get('/playing', authentication_1.default, function (req, res) {
     let query = req.query;
     campaignDB.readPlaying(query);
 });
+router.get('/recommend', authentication_1.default, function (req, res) {
+    let campaignDB = new CampaignManager_1.default(req, res);
+    let query = req.query;
+    campaignDB.readRecommend(query);
+});
 module.exports = router;

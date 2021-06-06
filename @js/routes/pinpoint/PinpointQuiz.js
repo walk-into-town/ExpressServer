@@ -50,9 +50,14 @@ router.put('/', authentication_1.default, function (req, res) {
     let DBManager = new PinpointManager_1.default(req, res);
     DBManager.updateQuiz(query);
 });
-router.post('/check', authentication_1.default, function (req, res) {
+router.post('/solve', authentication_1.default, function (req, res) {
     let query = req.body;
     let DBManager = new PinpointManager_1.default(req, res);
     DBManager.solveQuiz(query);
+});
+router.get('/check', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let DBManager = new PinpointManager_1.default(req, res);
+    DBManager.checkQuiz(query);
 });
 module.exports = router;

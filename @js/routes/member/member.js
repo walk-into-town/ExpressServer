@@ -143,4 +143,9 @@ router.get('/checkplaying', authentication_1.default, function (req, res) {
     let memberDB = new MemberManager_1.default(req, res);
     memberDB.checkPlaying(query);
 });
+router.get('/checkcampaign', authentication_1.default, function (req, res) {
+    let query = req.query;
+    let memberDB = new MemberManager_1.default(req, res);
+    memberDB.checkCampaign(query);
+});
 module.exports = router;

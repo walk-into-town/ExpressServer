@@ -26,12 +26,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * /manager
  */
 const express = __importStar(require("express"));
-const authentication_1 = __importDefault(require("../../middlewares/authentication"));
+const ReportManager_1 = __importDefault(require("../../modules/DBManager/ReportManager"));
 var router = express.Router();
+router.post('/report', function (req, res) {
+    let reportDB = new ReportManager_1.default(req, res);
+    let query = req.body;
+    reportDB.insert(query);
+});
 router.get('/report', function (req, res) {
+    let reportDB = new ReportManager_1.default(req, res);
+    let query = req.query;
+    reportDB.read(query);
 });
-router.put('/report', authentication_1.default, function (req, res) {
+router.put('/report', function (req, res) {
+    let reportDB = new ReportManager_1.default(req, res);
+    let query = req.body;
+    reportDB.update(query);
 });
-router.put('/report/process', authentication_1.default, function (req, res) {
+router.put('/report/process', function (req, res) {
 });
 module.exports = router;

@@ -225,4 +225,10 @@ router.get('/playing', isAuthenticated, function(req: express.Request, res: expr
     campaignDB.readPlaying(query)
 })
 
+router.get('/recommend', isAuthenticated, function(req: express.Request, res: express.Response){
+    let campaignDB = new CampaignManager(req, res)
+    let query = req.query
+    campaignDB.readRecommend(query)
+})
+
 module.exports = router
