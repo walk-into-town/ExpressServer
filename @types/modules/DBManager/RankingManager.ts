@@ -39,7 +39,7 @@ export default class Rankingmanager extends FeatureManager{
                     let result = await this.Dynamodb.query(queryParams).promise()
                     let ranking = result.Items[0]
                     if(ranking == undefined){
-                        ranking = []
+                        ranking = {}
                     }
                     let memberResult = await this.Dynamodb.query(memberParams).promise()
                     let member = memberResult.Items[0]
