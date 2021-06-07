@@ -227,13 +227,6 @@ router.get('/scan', function (req, res) {
 router.put('/', authentication_1.default, upload.array('imgs'), function (req, res) {
     let query = req.body;
     let campaignDB = new CampaignManager_1.default(req, res);
-    let imgs = [];
-    if (req.files != undefined) {
-        for (let i = 0; i < req.files.length; i++) {
-            imgs.push(process.env.domain + req.files[i].filename);
-        }
-    }
-    query.imgs = imgs;
     campaignDB.update(query);
 });
 //플레이중 유저 조회

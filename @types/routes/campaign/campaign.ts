@@ -208,13 +208,6 @@ router.get('/scan', function(req: express.Request, res: express.Response){
 router.put('/',isAuthenticated, upload.array('imgs'), function(req: express.Request, res: express.Response){
     let query = req.body
     let campaignDB = new CampaignManager(req,res)
-    let imgs: Array<string> = []
-    if(req.files != undefined){
-        for(let i = 0; i < req.files.length; i++){
-            imgs.push(process.env.domain + req.files[i].filename)
-        }
-    }
-    query.imgs = imgs
     campaignDB.update(query)
 })
 
