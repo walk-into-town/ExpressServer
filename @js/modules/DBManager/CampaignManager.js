@@ -412,19 +412,35 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             TableName: 'Campaign',
             FilterExpression: '#region = :region',
             ExpressionAttributeNames: { '#region': 'region' },
-            ExpressionAttributeValues: { ':region': params.region }
+            ExpressionAttributeValues: { ':region': region }
+        };
+        let memParam = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': this.req.session.passport.user.id },
+            ProjectionExpression: 'playingCampaigns'
         };
         const run = () => __awaiter(this, void 0, void 0, function* () {
+            let memberResult = yield this.Dynamodb.query(memParam).promise();
+            let playing = memberResult.Items[0].playingCampaigns;
             let campResult = yield this.Dynamodb.scan(queryParam).promise();
             let camps = campResult.Items;
+            let camp2send = [];
             if (camps.length == 0) {
                 result_1.fail.error = result_1.error.dataNotFound;
                 result_1.fail.errdesc = '지역을 찾을 수 없습니다.';
                 this.res.status(400).send(result_1.fail);
                 return;
             }
-            camps = recommender_1.recommend(camps);
-            result_1.success.data = camps;
+            for (const camp of camps) {
+                for (const ca of playing) {
+                    if (camp.id == ca.id && ca.cleared == false) {
+                        camp2send.push(camp);
+                    }
+                }
+            }
+            camp2send = recommender_1.recommend(camp2send);
+            result_1.success.data = camp2send;
             this.res.status(200).send(result_1.success);
         });
         run();

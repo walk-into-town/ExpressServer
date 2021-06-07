@@ -397,19 +397,35 @@ export default class CampaignManager extends FeatureManager{
             TableName: 'Campaign',
             FilterExpression: '#region = :region',
             ExpressionAttributeNames: {'#region': 'region'},
-            ExpressionAttributeValues: {':region': params.region}
+            ExpressionAttributeValues: {':region': region}
+        }
+        let memParam = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {':id': this.req.session.passport.user.id},
+            ProjectionExpression: 'playingCampaigns'
         }
         const run = async () => {
+            let memberResult = await this.Dynamodb.query(memParam).promise()
+            let playing = memberResult.Items[0].playingCampaigns
             let campResult = await this.Dynamodb.scan(queryParam).promise()
             let camps = campResult.Items
+            let camp2send = []
             if(camps.length == 0){
                 fail.error = error.dataNotFound
                 fail.errdesc = '지역을 찾을 수 없습니다.'
                 this.res.status(400).send(fail)
                 return;
             }
-            camps = recommend(camps)
-            success.data = camps
+            for(const camp of camps){
+                for(const ca of playing){
+                    if(camp.id == ca.id && ca.cleared == false){
+                        camp2send.push(camp)
+                    }
+                }
+            }
+            camp2send = recommend(camp2send)
+            success.data = camp2send
             this.res.status(200).send(success)
         }
         run()
