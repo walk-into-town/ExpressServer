@@ -485,7 +485,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
         let couponParam = {
             TableName: 'Coupon',
             Key: { id: null },
-            UpdateExpression: 'set #name = :name, description = :desc, endDate = :end, goods = :goods, img = :img, #limit = :limit',
+            UpdateExpression: 'set #name = :name, description = :desc, endDate = :end, goods = :goods, imgs = :imgs, #limit = :limit',
             ExpressionAttributeNames: { '#name': 'name', '#limit': 'limit' },
             ExpressionAttributeValues: { ':name': null, ':desc': null, ':end': null, ':goods': null, ':img': null, ':limit': null }
         };
@@ -561,16 +561,19 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     }
                 }
                 console.log('핀포인트 유효성 검사 통과');
+                console.log('쿠폰 갱신 시작');
                 for (const coupon of coupons) {
                     couponParam.Key.id = coupon.id;
                     couponParam.ExpressionAttributeValues[":name"] = coupon.name;
                     couponParam.ExpressionAttributeValues[":desc"] = coupon.description;
                     couponParam.ExpressionAttributeValues[":end"] = coupon.endDate;
                     couponParam.ExpressionAttributeValues[":goods"] = coupon.goods;
-                    couponParam.ExpressionAttributeValues[":img"] = coupon.img;
+                    couponParam.ExpressionAttributeValues[":imgs"] = coupon.imgs;
                     couponParam.ExpressionAttributeValues[":limit"] = Number(coupon.limit);
                     yield this.Dynamodb.update(couponParam).promise();
                 }
+                console.log('쿠폰 갱신 성공');
+                console.log('핀포인트 갱신 시작');
                 for (const pinpoint of pinpoints) {
                     pinpointParam.Key.id = pinpoint.id;
                     pinpointParam.ExpressionAttributeValues[":name"] = pinpoint.name;
@@ -581,6 +584,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
                     pinpointParam.ExpressionAttributeValues[":quiz"] = pinpoint.quiz;
                     yield this.Dynamodb.update(pinpointParam).promise();
                 }
+                console.log('핀포인트 갱신 성공');
                 campaignParam.ExpressionAttributeValues[":desc"] = campaign.description;
                 campaignParam.ExpressionAttributeValues[":imgs"] = campaign.imgs;
                 campaignParam.ExpressionAttributeValues[":name"] = campaign.name;
