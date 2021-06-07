@@ -38,6 +38,9 @@ export default class Rankingmanager extends FeatureManager{
                 try{
                     let result = await this.Dynamodb.query(queryParams).promise()
                     let ranking = result.Items[0]
+                    if(ranking == undefined){
+                        ranking = []
+                    }
                     let memberResult = await this.Dynamodb.query(memberParams).promise()
                     let member = memberResult.Items[0]
                     ranking.nickname = member.nickname
@@ -74,6 +77,11 @@ export default class Rankingmanager extends FeatureManager{
                     let ranking = []
                     for(const item of result.Items){
                         ranking.push(item)
+                    }
+                    if(ranking.length == 0){
+                        success.data = []
+                        this.res.status(200).send(success)
+                        return;
                     }
                     ranking.sort(rankingSort)
                     for(const rank of ranking){

@@ -48,6 +48,9 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                 try {
                     let result = yield this.Dynamodb.query(queryParams).promise();
                     let ranking = result.Items[0];
+                    if (ranking == undefined) {
+                        ranking = [];
+                    }
                     let memberResult = yield this.Dynamodb.query(memberParams).promise();
                     let member = memberResult.Items[0];
                     ranking.nickname = member.nickname;
@@ -84,6 +87,11 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     let ranking = [];
                     for (const item of result.Items) {
                         ranking.push(item);
+                    }
+                    if (ranking.length == 0) {
+                        result_1.success.data = [];
+                        this.res.status(200).send(result_1.success);
+                        return;
                     }
                     ranking.sort(Sorter_1.rankingSort);
                     for (const rank of ranking) {
