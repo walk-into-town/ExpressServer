@@ -50,6 +50,8 @@ class Rankingmanager extends FeatureManager_1.FeatureManager {
                     let ranking = result.Items[0];
                     if (ranking == undefined) {
                         ranking = {};
+                        ranking.rank = 0;
+                        ranking.cleared = 0;
                     }
                     let memberResult = yield this.Dynamodb.query(memberParams).promise();
                     let member = memberResult.Items[0];
