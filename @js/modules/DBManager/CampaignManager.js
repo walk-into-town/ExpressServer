@@ -477,43 +477,117 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
      * 3. 결과 전달
      */
     update(params) {
-        let queryParams = {
+        let getCampParam = {
             TableName: 'Campaign',
             KeyConditionExpression: 'id = :id',
-            ExpressionAttributeValues: { ':id': params.cid }
+            ExpressionAttributeValues: { ':id': params.caid }
         };
-        let updateParams = {
+        let couponParam = {
+            TableName: 'Coupon',
+            Key: { id: null },
+            UpdateExpression: 'set #name = :name, description = :desc, endDate = :end, goods = :goods, img = :img, #limit = :limit',
+            ExpressionAttributeNames: { '#name': 'name', '#limit': 'limit' },
+            ExpressionAttributeValues: { ':name': null, ':desc': null, ':end': null, ':goods': null, ':img': null, ':limit': null }
+        };
+        let pinpointParam = {
+            TableName: 'Pinpoint',
+            Key: { id: null },
+            UpdateExpression: 'set #name = :name, description = :desc, imgs = :imgs, latitude = :latitude, longitude = :longitude, quiz = :quiz',
+            ExpressionAttributeNames: { '#name': 'name' },
+            ExpressionAttributeValues: { ':name': null, ':desc': null, ':imgs': null, ':latitude': null, ':longitude': null, ':quiz': null }
+        };
+        let campaignParam = {
             TableName: 'Campaign',
             Key: { id: params.caid },
-            UpdateExpression: null,
-            ExpressionAttributeValues: null,
-            ReturnValues: 'UPDATED_NEW'
+            UpdateExpression: 'set #name = :name, description = :desc, imgs = :imgs, #region = :region',
+            ExpressionAttributeNames: { '#name': 'name', '#region': 'region' },
+            ExpressionAttributeValues: { ':name': null, ':desc': null, ':imgs': null, ':region': null }
         };
-        let updateExp = 'SET ';
-        let expAttrVal = {};
+        let memParam = {
+            TableName: 'Member',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: { ':id': this.req.session.passport.user.id },
+            projectionExpression: 'myCampaigns'
+        };
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
-                if (params.description != '') {
-                    updateExp = updateExp + 'description = :newdesc ';
-                    expAttrVal[':newdesc'] = params.description;
+                let campaignResult = yield this.Dynamodb.query(getCampParam).promise();
+                let camp = campaignResult.Items[0];
+                if (camp == undefined) {
+                    result_1.fail.error = result_1.error.dataNotFound;
+                    result_1.fail.errdesc = '캠페인을 찾을 수 없습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
                 }
-                if (params.imgs.length != 0) {
-                    if (updateExp.length == 4) {
-                        updateExp += 'imgs = list_append(imgs, :newimgs) ';
-                        expAttrVal[':newimgs'] = params.imgs;
-                    }
-                    else {
-                        updateExp += ', imgs = list_append(imgs, :newimgs)';
-                        expAttrVal[':newimgs'] = params.imgs;
+                let campCoupon = [];
+                campCoupon.push(...camp.coupons);
+                campCoupon.push(...camp.pcoupons);
+                let campPinpoint = camp.pinpoints;
+                let coupons = params.coupons;
+                let pinpoints = params.pinpoints;
+                let campaign = params;
+                console.log('제작한 캠페인 여부 검사중');
+                let memResult = yield this.Dynamodb.query(memParam).promise();
+                let myCamp = memResult.Items[0].myCampaigns;
+                let pos = myCamp.indexOf(params.caid);
+                if (pos == -1) {
+                    result_1.fail.error = result_1.error.invalReq;
+                    result_1.fail.errdesc = '본인이 제작한 캠페인만 수정할 수 있습니다.';
+                    this.res.status(400).send(result_1.fail);
+                    return;
+                }
+                console.log('제작한 캠페인 여부 통과');
+                console.log('쿠폰 유효성 검사중');
+                for (const coupon of coupons) {
+                    let pos = campCoupon.indexOf(coupon.id);
+                    if (pos == -1) {
+                        console.log('유효하지 않은 쿠폰입니다.');
+                        result_1.fail.error = result_1.error.invalReq;
+                        result_1.fail.errdesc = '유효하지 않은 쿠폰입니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
                     }
                 }
-                updateParams.UpdateExpression = updateExp;
-                updateParams.ExpressionAttributeValues = expAttrVal;
-                let result = yield this.Dynamodb.update(updateParams).promise();
-                console.log(`업데이트된 요소\n${JSON.stringify(result.Attributes, null, 2)}`);
-                result_1.success.data = result.Attributes;
+                console.log('쿠폰 유효성 검사 통과');
+                console.log('핀포인트 유효성 검사중');
+                for (const pinpoint of pinpoints) {
+                    let pos = campPinpoint.indexOf(pinpoint.id);
+                    if (pos == -1) {
+                        console.log('유효하지 않은 핀포인트입니다.');
+                        result_1.fail.error = result_1.error.invalReq;
+                        result_1.fail.errdesc = '유효하지 않은 핀포인트입니다.';
+                        this.res.status(400).send(result_1.fail);
+                        return;
+                    }
+                }
+                console.log('핀포인트 유효성 검사 통과');
+                for (const coupon of coupons) {
+                    couponParam.Key.id = coupon.id;
+                    couponParam.ExpressionAttributeValues[":name"] = coupon.name;
+                    couponParam.ExpressionAttributeValues[":desc"] = coupon.description;
+                    couponParam.ExpressionAttributeValues[":end"] = coupon.endDate;
+                    couponParam.ExpressionAttributeValues[":goods"] = coupon.goods;
+                    couponParam.ExpressionAttributeValues[":img"] = coupon.img;
+                    couponParam.ExpressionAttributeValues[":limit"] = Number(coupon.limit);
+                    yield this.Dynamodb.update(couponParam).promise();
+                }
+                for (const pinpoint of pinpoints) {
+                    pinpointParam.Key.id = pinpoint.id;
+                    pinpointParam.ExpressionAttributeValues[":name"] = pinpoint.name;
+                    pinpointParam.ExpressionAttributeValues[":desc"] = pinpoint.description;
+                    pinpointParam.ExpressionAttributeValues[":imgs"] = pinpoint.imgs;
+                    pinpointParam.ExpressionAttributeValues[":latitude"] = Number(pinpoint.latitude);
+                    pinpointParam.ExpressionAttributeValues[":longitude"] = Number(pinpoint.longitude);
+                    pinpointParam.ExpressionAttributeValues[":quiz"] = pinpoint.quiz;
+                    yield this.Dynamodb.update(pinpointParam).promise();
+                }
+                campaignParam.ExpressionAttributeValues[":desc"] = campaign.description;
+                campaignParam.ExpressionAttributeValues[":imgs"] = campaign.imgs;
+                campaignParam.ExpressionAttributeValues[":name"] = campaign.name;
+                campaignParam.ExpressionAttributeValues[":region"] = campaign.region;
+                yield this.Dynamodb.update(campaignParam).promise();
+                result_1.success.data = '캠페인 수정 완료';
                 this.res.status(201).send(result_1.success);
-                responseInit_1.successInit(result_1.success);
             }
             catch (err) {
                 result_1.fail.error = result_1.error.dbError;
