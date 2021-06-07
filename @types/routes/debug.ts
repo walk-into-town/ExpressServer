@@ -2,7 +2,7 @@ import * as express from 'express'
 var router = express.Router()
 import Scan from '../modules/Debug/scan'
 import UploadFile from '../modules/FileManager/UploadFile'     //파일 업로드 클래스 import
-import isAuthenticated from '../middlewares/authentication'
+import { error, fail, success } from '../static/result'
 let uploader = new UploadFile()
 let upload = uploader.testupload()
 
@@ -65,6 +65,44 @@ router.get('/scan/block',function(req: Express.Request, res: Express.Response){
 
 router.get('/session', upload.array('img'), function(req: express.Request, res: express.Response){
     res.status(200).send(req.session)
+})
+
+router.post('/fix', function(req: express.Request, res: express.Response){
+    let query = req.body
+    let type = query.type
+    let id = query.caid
+    let time = query.time
+    var aws = require('aws-sdk')
+    var dotenv = require('dotenv')
+    dotenv.config()
+    aws.config.update({
+    accessKeyId: process.env.aws_access_key_id,
+    secretAccessKey: process.env.aws_secret_access_key,
+        region: 'us-east-1',
+        endpoint: 'http://localhost:8000'
+    })
+    let doclient = new aws.DynamoDB.DocumentClient()
+
+    let updateParam = {
+    TableName: type,
+    Key: {id: id},
+    UpdateExpression: 'set updateTime = :data',
+    ExpressionAttributeValues: {':data': time}
+    }
+
+    const run = async () => {
+        try{  
+            await doclient.update(updateParam).promise()
+            success.data = '성공'
+            res.status(201).send(success)
+        }
+        catch(err){
+            fail.error = error.dbError
+            fail.errdesc = err
+            res.status(521).send(fail)
+        }
+    }
+    run()
 })
 
 module.exports = router 

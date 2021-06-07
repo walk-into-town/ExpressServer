@@ -18,6 +18,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -26,6 +35,7 @@ const express = __importStar(require("express"));
 var router = express.Router();
 const scan_1 = __importDefault(require("../modules/Debug/scan"));
 const UploadFile_1 = __importDefault(require("../modules/FileManager/UploadFile")); //파일 업로드 클래스 import
+const result_1 = require("../static/result");
 let uploader = new UploadFile_1.default();
 let upload = uploader.testupload();
 router.post('/file', upload.array('img'), function (req, res) {
@@ -76,5 +86,40 @@ router.get('/scan/block', function (req, res) {
 });
 router.get('/session', upload.array('img'), function (req, res) {
     res.status(200).send(req.session);
+});
+router.post('/fix', function (req, res) {
+    let query = req.body;
+    let type = query.type;
+    let id = query.caid;
+    let time = query.time;
+    var aws = require('aws-sdk');
+    var dotenv = require('dotenv');
+    dotenv.config();
+    aws.config.update({
+        accessKeyId: process.env.aws_access_key_id,
+        secretAccessKey: process.env.aws_secret_access_key,
+        region: 'us-east-1',
+        endpoint: 'http://localhost:8000'
+    });
+    let doclient = new aws.DynamoDB.DocumentClient();
+    let updateParam = {
+        TableName: type,
+        Key: { id: id },
+        UpdateExpression: 'set updateTime = :data',
+        ExpressionAttributeValues: { ':data': time }
+    };
+    const run = () => __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield doclient.update(updateParam).promise();
+            result_1.success.data = '성공';
+            res.status(201).send(result_1.success);
+        }
+        catch (err) {
+            result_1.fail.error = result_1.error.dbError;
+            result_1.fail.errdesc = err;
+            res.status(521).send(result_1.fail);
+        }
+    });
+    run();
 });
 module.exports = router;
