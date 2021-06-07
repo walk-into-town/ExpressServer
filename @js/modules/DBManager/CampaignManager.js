@@ -487,7 +487,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             Key: { id: null },
             UpdateExpression: 'set #name = :name, description = :desc, endDate = :end, goods = :goods, imgs = :imgs, #limit = :limit',
             ExpressionAttributeNames: { '#name': 'name', '#limit': 'limit' },
-            ExpressionAttributeValues: { ':name': null, ':desc': null, ':end': null, ':goods': null, ':img': null, ':limit': null }
+            ExpressionAttributeValues: { ':name': null, ':desc': null, ':end': null, ':goods': null, ':imgs': null, ':limit': null }
         };
         let pinpointParam = {
             TableName: 'Pinpoint',
