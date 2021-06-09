@@ -425,7 +425,7 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             let playing = memberResult.Items[0].playingCampaigns;
             let campResult = yield this.Dynamodb.scan(queryParam).promise();
             let camps = campResult.Items;
-            let camp2send = [];
+            let camp2send = camps;
             if (camps.length == 0) {
                 result_1.fail.error = result_1.error.dataNotFound;
                 result_1.fail.errdesc = '지역을 찾을 수 없습니다.';
@@ -434,8 +434,9 @@ class CampaignManager extends FeatureManager_1.FeatureManager {
             }
             for (const camp of camps) {
                 for (const ca of playing) {
-                    if (camp.id == ca.id && ca.cleared == false) {
-                        camp2send.push(camp);
+                    if (camp.id == ca.id && ca.cleared == true) {
+                        let pos = camp2send.indexOf(camp);
+                        camp2send.splice(pos, 1);
                     }
                 }
             }

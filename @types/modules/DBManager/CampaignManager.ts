@@ -410,7 +410,7 @@ export default class CampaignManager extends FeatureManager{
             let playing = memberResult.Items[0].playingCampaigns
             let campResult = await this.Dynamodb.scan(queryParam).promise()
             let camps = campResult.Items
-            let camp2send = []
+            let camp2send = camps
             if(camps.length == 0){
                 fail.error = error.dataNotFound
                 fail.errdesc = '지역을 찾을 수 없습니다.'
@@ -419,8 +419,9 @@ export default class CampaignManager extends FeatureManager{
             }
             for(const camp of camps){
                 for(const ca of playing){
-                    if(camp.id == ca.id && ca.cleared == false){
-                        camp2send.push(camp)
+                    if(camp.id == ca.id && ca.cleared == true){
+                        let pos = camp2send.indexOf(camp)
+                        camp2send.splice(pos, 1)
                     }
                 }
             }
