@@ -21,7 +21,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = __importStar(require("express"));
 var router = express.Router();
-const testroute = require('./test');
 const campaign = require('./campaign/campaign');
 const game = require('./game/game');
 const member = require('./member/member');
@@ -33,7 +32,6 @@ const coupon = require('./coupon/coupon');
 const pinpoint = require('./pinpoint/pinpoint');
 const monster = require('./monster/monster');
 const file = require('./file/file');
-router.use('/test', testroute);
 router.use('/campaign', campaign);
 router.use('/pinpoint', pinpoint);
 router.use('/coupon', coupon);
