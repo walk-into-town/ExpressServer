@@ -410,6 +410,8 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
      * 4. 정답인 경우
      */
     solveQuiz(params) {
+	console.log(params)
+	console.log(typeof(params.answer))
         let queryParams = {
             TableName: 'Pinpoint',
             KeyConditionExpression: 'id = :id',
@@ -455,6 +457,7 @@ class PinpointManager extends FeatureManager_1.FeatureManager {
         const run = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 if (params.monsterImg == undefined) {
+		    console.log('몬스터 이미지 없음')
                     result_1.fail.error = result_1.error.invalReq;
                     result_1.fail.errdesc = 'No Monster Img Info';
                     this.res.status(400).send(result_1.fail);
