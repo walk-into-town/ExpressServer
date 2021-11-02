@@ -108,9 +108,9 @@ dist
 uploads/
 
 #test Files
-@types/routes/test.ts
-@js/routes/test.js
-temp.js
+# @types/routes/test.ts
+# @js/routes/test.js
+# temp.js
 
 #localhost cert Files
 certs/
