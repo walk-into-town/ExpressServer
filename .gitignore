@@ -117,3 +117,5 @@ certs/
 
 #typescript config
 tsconfig.json
+
+dynamodb_local_latest 2
